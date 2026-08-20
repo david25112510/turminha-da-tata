@@ -1,0 +1,9 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 640, "h": 900 },
+    { "file": "DirectionOrganic.dc.html", "x": 700, "y": 0, "w": 640, "h": 900 },
+    { "file": "DirectionGeometric.dc.html", "x": 1400, "y": 0, "w": 640, "h": 900 },
+    { "file": "DirectionWarm.dc.html", "x": 2100, "y": 0, "w": 640, "h": 900 }
+  ],
+  "launch": { "view": "canvas" }
+}

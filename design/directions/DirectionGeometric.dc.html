@@ -1,0 +1,85 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #1F8A63; } a:hover { color: #166B4C; }
+  </style>
+</helmet>
+<div style="width: 640px; height: 900px; background: #FAFAF6; font-family: 'Nunito', sans-serif; box-sizing: border-box; padding: 36px; display: flex; flex-direction: column; gap: 28px;">
+
+  <div style="display: flex; flex-direction: column; gap: 4px;">
+    <div style="display: inline-flex; align-self: flex-start; padding: 6px 14px; border-radius: 8px; background: #1F8A63; color: #FAFAF6; font-weight: 800; font-size: 13px; letter-spacing: 0.02em;">DIREÇÃO B</div>
+    <div style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 26px; color: #1F2A24;">Geométrico e Alegre</div>
+  </div>
+
+  <div style="display: flex; justify-content: center; align-items: center; background: #EFEFE6; border-radius: 16px; padding: 40px 0;">
+    <svg width="240" height="240" viewBox="0 0 200 200">
+      <circle cx="100" cy="100" r="94" fill="#FFC93C" opacity="0.18"></circle>
+      <circle cx="46" cy="52" r="22" fill="#1F8A63"></circle>
+      <circle cx="154" cy="52" r="22" fill="#1F8A63"></circle>
+      <rect x="28" y="44" width="144" height="132" rx="36" fill="#4CAF82"></rect>
+      <rect x="52" y="70" width="96" height="80" rx="24" fill="#FAFAF6"></rect>
+      <circle cx="82" cy="104" r="8" fill="#1F2A24"></circle>
+      <circle cx="118" cy="104" r="8" fill="#1F2A24"></circle>
+      <rect x="90" y="120" width="20" height="14" rx="7" fill="#FF6F71"></rect>
+      <rect x="80" y="150" width="40" height="10" rx="5" fill="#1F2A24"></rect>
+    </svg>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 6px; align-items: center;">
+    <div style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 44px; color: #1F2A24; line-height: 1;">Turminha da Tata</div>
+    <div style="font-weight: 700; font-size: 15px; color: #6B7A70; letter-spacing: 0.03em;">formas simples · cor chapada · ícone de app moderno</div>
+  </div>
+
+  <div style="display: flex; gap: 10px;">
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 6px; align-items: center;">
+      <div style="width: 100%; height: 56px; background: #4CAF82;"></div>
+      <div style="font-size: 12px; color: #55524A; font-weight: 700;">#4CAF82</div>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 6px; align-items: center;">
+      <div style="width: 100%; height: 56px; background: #FFC93C;"></div>
+      <div style="font-size: 12px; color: #55524A; font-weight: 700;">#FFC93C</div>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 6px; align-items: center;">
+      <div style="width: 100%; height: 56px; background: #FF6F71;"></div>
+      <div style="font-size: 12px; color: #55524A; font-weight: 700;">#FF6F71</div>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 6px; align-items: center;">
+      <div style="width: 100%; height: 56px; background: #4FB0E8;"></div>
+      <div style="font-size: 12px; color: #55524A; font-weight: 700;">#4FB0E8</div>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 6px; align-items: center;">
+      <div style="width: 100%; height: 56px; background: #FAFAF6; border: 1.5px solid #DEDED2;"></div>
+      <div style="font-size: 12px; color: #55524A; font-weight: 700;">#FAFAF6</div>
+    </div>
+  </div>
+
+  <div style="height: 1px; background: #DEDED2;"></div>
+
+  <div style="display: flex; flex-direction: column; gap: 10px;">
+    <div style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 15px; color: #1F2A24;">Aa Bb Cc — Fredoka / Nunito</div>
+    <div style="font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 15px; color: #3C463F; line-height: 1.6;">
+      Formas geométricas simples, cores em blocos chapados, sem gradientes. A mascote Tata vira um ícone reconhecível de longe — funciona bem como app icon e favicon.
+    </div>
+    <div style="font-size: 13px; color: #8A8A78; font-style: italic;">Trade-off: mais moderno e "produto de tecnologia", mas menos macio/afetivo que as outras direções — pede paleta e copy calorosas para compensar.</div>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

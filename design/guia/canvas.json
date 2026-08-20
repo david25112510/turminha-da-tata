@@ -1,0 +1,11 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 1950, "h": 1500 },
+    { "file": "Mascot.dc.html", "x": 2010, "y": 0, "w": 280, "h": 380 },
+    { "file": "AdminLogin.dc.html", "x": 2010, "y": 420, "w": 1200, "h": 720 },
+    { "file": "AdminDashboard.dc.html", "x": 2010, "y": 1180, "w": 1400, "h": 900 },
+    { "file": "AppPais.dc.html", "x": 3450, "y": 0, "w": 1400, "h": 800 },
+    { "file": "AppCuidadoras.dc.html", "x": 3450, "y": 850, "w": 1400, "h": 800 }
+  ],
+  "launch": { "view": "canvas" }
+}

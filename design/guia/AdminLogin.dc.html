@@ -1,0 +1,75 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #FFFDF8; } a:hover { color: #FFF7E6; }
+    input { font-family: 'Poppins', sans-serif; }
+  </style>
+</helmet>
+<div style="width: 1200px; height: 720px; background: #FFFDF8; font-family: 'Poppins', sans-serif; box-sizing: border-box; display: flex; border-radius: 28px; overflow: hidden; box-shadow: 0 20px 50px rgba(58,46,34,0.12);">
+
+  <div style="width: 460px; background: #1FA787; display: flex; flex-direction: column; justify-content: space-between; padding: 44px; box-sizing: border-box; position: relative; overflow: hidden;">
+    <svg width="180" height="180" viewBox="0 0 24 24" fill="rgba(255,255,255,0.08)" style="position: absolute; top: -30px; right: -40px;"><path d="M12 21s-7-4.35-9.5-8.5C.5 8 2.5 4 6 4c2 0 3.5 1.5 6 4 2.5-2.5 4-4 6-4 3.5 0 5.5 4 3.5 8.5C19 16.65 12 21 12 21Z"></path></svg>
+
+    <div style="display: flex; align-items: baseline; gap: 8px; font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 30px; color: #FFFDF8;">
+      <span>Turminha</span><span style="font-size: 18px; opacity: 0.85;">da</span><span>Tata</span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 18px;">
+      <div style="width: 210px; height: 280px; background: rgba(255,255,255,0.10); border-radius: 24px; display: flex; align-items: center; justify-content: center; padding: 10px;">
+        <dc-import name="Mascot" hint-size="188,254"></dc-import>
+      </div>
+      <div style="text-align: center; color: #FFFDF8; font-size: 15px; line-height: 1.6; max-width: 280px;">
+        Cuidado, segurança e alegria acompanhando cada criança, todos os dias.
+      </div>
+    </div>
+
+    <div style="color: rgba(255,253,248,0.7); font-size: 12px;">© 2026 Turminha da Tata</div>
+  </div>
+
+  <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 44px;">
+    <div style="width: 100%; max-width: 340px; display: flex; flex-direction: column; gap: 22px;">
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 26px; color: #2E2418;">Bem-vinda de volta</div>
+        <div style="font-size: 14px; color: #6B5D4A;">Entre para acessar a área administrativa.</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="font-size: 13px; font-weight: 600; color: #4A3F33;">E-mail</div>
+        <div style="border: 1.5px solid #ECE1CB; border-radius: 14px; padding: 13px 16px; font-size: 14px; color: #9A8A72; background: #FFFDF8;">nome@turminhadatata.com.br</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="font-size: 13px; font-weight: 600; color: #4A3F33;">Senha</div>
+        <div style="border: 1.5px solid #ECE1CB; border-radius: 14px; padding: 13px 16px; font-size: 14px; color: #9A8A72; background: #FFFDF8;">••••••••••</div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end;">
+        <div style="font-size: 13px; color: #1F8A6E; font-weight: 600;">Esqueci minha senha</div>
+      </div>
+
+      <div style="background: #FF7A8A; border-radius: 14px; padding: 15px; text-align: center; color: #FFFDF8; font-weight: 700; font-size: 15px; font-family: 'Fredoka', sans-serif;">Entrar</div>
+
+      <div style="text-align: center; font-size: 13px; color: #9A8A72;">Acesso restrito à equipe administrativa</div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>
