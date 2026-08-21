@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { todayDateOnly, formatTime } from "@/lib/date";
 import { notifyGuardians } from "@/lib/notifications";
-import { requireAuthorizedPickupPerson, requireCaregiver } from "@/lib/authz";
+import { requireAuthorizedPickupPerson } from "@/lib/authz";
 
 function parsePersonRef(formData: FormData) {
   const value = String(formData.get("personRef") ?? "");
@@ -16,8 +16,7 @@ function parsePersonRef(formData: FormData) {
 export async function checkInAction(formData: FormData) {
   const childId = String(formData.get("childId") ?? "");
   const { personType, personId } = parsePersonRef(formData);
-  const person = await requireAuthorizedPickupPerson(childId, personType, personId);
-  const caregiver = await requireCaregiver();
+  const { user: caregiver, person } = await requireAuthorizedPickupPerson(childId, personType, personId);
 
   const date = todayDateOnly();
   const now = new Date();
@@ -54,8 +53,7 @@ export async function checkInAction(formData: FormData) {
 export async function checkOutAction(formData: FormData) {
   const childId = String(formData.get("childId") ?? "");
   const { personType, personId } = parsePersonRef(formData);
-  const person = await requireAuthorizedPickupPerson(childId, personType, personId);
-  const caregiver = await requireCaregiver();
+  const { user: caregiver, person } = await requireAuthorizedPickupPerson(childId, personType, personId);
 
   const date = todayDateOnly();
   const now = new Date();
