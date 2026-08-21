@@ -38,9 +38,11 @@ export default async function ChildrenListPage() {
             </thead>
             <tbody>
               {children.map((child) => (
-                <tr key={child.id} className="border-b border-[#F3EEE1] last:border-0">
+                <tr key={child.id} className="border-b border-[#F3EEE1] last:border-0 hover:bg-[#FBF6EA]">
                   <td className="p-4 font-medium text-[#2E2418]">
-                    {child.preferredName || child.fullName}
+                    <Link href={`/admin/criancas/${child.id}`} className="hover:text-[#1FA787]">
+                      {child.preferredName || child.fullName}
+                    </Link>
                   </td>
                   <td className="p-4 text-[#6B5D4A]">
                     {new Intl.DateTimeFormat("pt-BR").format(child.birthDate)}

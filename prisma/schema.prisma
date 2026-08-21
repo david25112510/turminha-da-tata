@@ -24,6 +24,19 @@ model User {
 
   guardian Guardian?
 
+  attendanceCheckIns      Attendance[]              @relation("AttendanceCheckInBy")
+  attendanceCheckOuts     Attendance[]              @relation("AttendanceCheckOutBy")
+  mealRecords             MealRecord[]
+  sleepRecordsStarted     SleepRecord[]             @relation("SleepStartedBy")
+  sleepRecordsEnded       SleepRecord[]             @relation("SleepEndedBy")
+  hygieneRecords          HygieneRecord[]
+  activities              Activity[]
+  moodRecords             MoodRecord[]
+  healthLogs              HealthLog[]
+  medicationAdministrations MedicationAdministration[]
+  incidents               Incident[]
+  photos                  Photo[]
+
   @@map("users")
 }
 
@@ -78,6 +91,20 @@ model Child {
   guardians               GuardianChild[]
   authorizedPickupPeople  AuthorizedPickupPerson[]
 
+  attendances              Attendance[]
+  homeDepartures           HomeDeparture[]
+  meals                    MealRecord[]
+  sleeps                   SleepRecord[]
+  hygieneRecords           HygieneRecord[]
+  moods                    MoodRecord[]
+  activities               ActivityChild[]
+  healthProfile            HealthProfile?
+  healthLogs               HealthLog[]
+  medicationAuthorizations MedicationAuthorization[]
+  medicationAdministrations MedicationAdministration[]
+  incidents                Incident[]
+  photos                   Photo[]
+
   @@map("children")
 }
 
@@ -97,6 +124,10 @@ model Guardian {
   user     User?           @relation(fields: [userId], references: [id])
   children GuardianChild[]
   authorizedPeople AuthorizedPickupPerson[]
+
+  homeDepartures           HomeDeparture[]
+  medicationAuthorizations MedicationAuthorization[]
+  incidentsNotified        Incident[]
 
   @@map("guardians")
 }
@@ -151,4 +182,302 @@ model AuthorizedPickupPerson {
   authorizedBy    Guardian @relation(fields: [authorizedByGuardianId], references: [id])
 
   @@map("authorized_pickup_people")
+}
+
+// ---------------------------------------------------------------------------
+// Fase 4 — Operação
+// ---------------------------------------------------------------------------
+
+model Attendance {
+  id      String   @id @default(cuid())
+  childId String
+  date    DateTime @db.Date
+
+  checkInTime             DateTime?
+  checkInPersonName       String?
+  checkInPersonRelation   String?
+  checkInReceivedById     String?
+
+  checkOutTime            DateTime?
+  checkOutPersonName      String?
+  checkOutPersonRelation  String?
+  checkOutReceivedById    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  child            Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+  checkInReceivedBy  User? @relation("AttendanceCheckInBy", fields: [checkInReceivedById], references: [id])
+  checkOutReceivedBy User? @relation("AttendanceCheckOutBy", fields: [checkOutReceivedById], references: [id])
+
+  @@unique([childId, date])
+  @@map("attendances")
+}
+
+model HomeDeparture {
+  id        String   @id @default(cuid())
+  childId   String
+  guardianId String
+  time      DateTime @default(now())
+
+  child    Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  guardian Guardian @relation(fields: [guardianId], references: [id])
+
+  @@map("home_departures")
+}
+
+enum MealType {
+  BREAKFAST
+  SNACK
+  LUNCH
+  AFTERNOON_SNACK
+  DINNER
+  OTHER
+}
+
+enum ConsumptionLevel {
+  ALL
+  WELL
+  LITTLE
+  NONE
+}
+
+model MealRecord {
+  id         String           @id @default(cuid())
+  childId    String
+  time       DateTime         @default(now())
+  mealType   MealType
+  consumption ConsumptionLevel
+  notes      String?
+  recordedById String
+
+  child      Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+  recordedBy User  @relation(fields: [recordedById], references: [id])
+
+  @@map("meal_records")
+}
+
+model SleepRecord {
+  id        String    @id @default(cuid())
+  childId   String
+  startTime DateTime  @default(now())
+  endTime   DateTime?
+
+  startedById String
+  endedById   String?
+
+  child     Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+  startedBy User  @relation("SleepStartedBy", fields: [startedById], references: [id])
+  endedBy   User? @relation("SleepEndedBy", fields: [endedById], references: [id])
+
+  @@map("sleep_records")
+}
+
+enum HygieneType {
+  BATHROOM
+  DIAPER_CHANGE
+  PERSONAL_HYGIENE
+  HANDWASHING
+  TOOTHBRUSHING
+  OTHER
+}
+
+model HygieneRecord {
+  id           String      @id @default(cuid())
+  childId      String
+  time         DateTime    @default(now())
+  type         HygieneType
+  notes        String?
+  recordedById String
+
+  child      Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+  recordedBy User  @relation(fields: [recordedById], references: [id])
+
+  @@map("hygiene_records")
+}
+
+enum ActivityCategory {
+  PAINTING
+  DRAWING
+  MUSIC
+  STORY
+  GAMES
+  RECREATION
+  OUTDOOR
+  MOTOR_COORDINATION
+  PEDAGOGICAL
+  FREE_PLAY
+  OTHER
+}
+
+model Activity {
+  id           String           @id @default(cuid())
+  date         DateTime         @db.Date
+  time         DateTime         @default(now())
+  category     ActivityCategory
+  description  String?
+  notes        String?
+  recordedById String
+
+  recordedBy User            @relation(fields: [recordedById], references: [id])
+  children   ActivityChild[]
+  photos     Photo[]
+
+  @@map("activities")
+}
+
+model ActivityChild {
+  activityId String
+  childId    String
+
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  child    Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@id([activityId, childId])
+  @@map("activity_children")
+}
+
+enum Mood {
+  VERY_HAPPY
+  HAPPY
+  GOOD
+  NORMAL
+  TIRED
+  SAD
+  CRIED
+  IRRITATED
+  OTHER
+}
+
+model MoodRecord {
+  id           String   @id @default(cuid())
+  childId      String
+  time         DateTime @default(now())
+  mood         Mood
+  notes        String?
+  recordedById String
+
+  child      Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+  recordedBy User  @relation(fields: [recordedById], references: [id])
+
+  @@map("mood_records")
+}
+
+model HealthProfile {
+  id                    String   @id @default(cuid())
+  childId               String   @unique
+  allergies             String?
+  dietaryRestrictions   String?
+  authorizedMedications String?
+  importantInfo         String?
+  healthInsurance       String?
+  doctorName            String?
+  emergencyPhone        String?
+  notes                 String?
+  updatedAt             DateTime @updatedAt
+
+  child Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@map("health_profiles")
+}
+
+model HealthLog {
+  id           String   @id @default(cuid())
+  childId      String
+  time         DateTime @default(now())
+  temperature  Decimal? @db.Decimal(4, 1)
+  symptoms     String?
+  notes        String?
+  recordedById String
+
+  child      Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+  recordedBy User  @relation(fields: [recordedById], references: [id])
+
+  @@map("health_logs")
+}
+
+model MedicationAuthorization {
+  id                     String    @id @default(cuid())
+  childId                String
+  medication             String
+  dosage                 String
+  scheduleTime           String?
+  instructions           String?
+  authorizedByGuardianId String
+  documentUrl            String?
+  validFrom              DateTime
+  validUntil             DateTime?
+  active                 Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+
+  child           Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  authorizedBy    Guardian @relation(fields: [authorizedByGuardianId], references: [id])
+  administrations MedicationAdministration[]
+
+  @@map("medication_authorizations")
+}
+
+model MedicationAdministration {
+  id             String   @id @default(cuid())
+  authorizationId String
+  childId        String
+  time           DateTime @default(now())
+  administeredById String
+  notes          String?
+
+  authorization  MedicationAuthorization @relation(fields: [authorizationId], references: [id], onDelete: Cascade)
+  child          Child                   @relation(fields: [childId], references: [id], onDelete: Cascade)
+  administeredBy User                    @relation(fields: [administeredById], references: [id])
+
+  @@map("medication_administrations")
+}
+
+enum IncidentType {
+  FALL
+  ACCIDENT
+  CRYING
+  ILLNESS
+  FEVER
+  BEHAVIOR_CHANGE
+  INJURY
+  OTHER
+}
+
+model Incident {
+  id           String       @id @default(cuid())
+  childId      String
+  time         DateTime     @default(now())
+  type         IncidentType
+  description  String
+  actionsTaken String?
+  recordedById String
+
+  guardianNotifiedId String?
+  notifiedAt         DateTime?
+
+  child             Child     @relation(fields: [childId], references: [id], onDelete: Cascade)
+  recordedBy        User      @relation(fields: [recordedById], references: [id])
+  guardianNotified  Guardian? @relation(fields: [guardianNotifiedId], references: [id])
+  photos            Photo[]
+
+  @@map("incidents")
+}
+
+model Photo {
+  id           String   @id @default(cuid())
+  childId      String
+  activityId   String?
+  incidentId   String?
+  url          String
+  caption      String?
+  takenAt      DateTime @default(now())
+  uploadedById String
+
+  child      Child     @relation(fields: [childId], references: [id], onDelete: Cascade)
+  activity   Activity? @relation(fields: [activityId], references: [id])
+  incident   Incident? @relation(fields: [incidentId], references: [id])
+  uploadedBy User      @relation(fields: [uploadedById], references: [id])
+
+  @@map("photos")
 }
