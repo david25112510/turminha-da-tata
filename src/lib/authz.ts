@@ -35,34 +35,36 @@ export async function requireActiveChild(childId: string) {
 }
 
 export async function requireAdminChild(childId: string) {
-  await requireAdmin();
-  return requireActiveChild(childId);
+  const user = await requireAdmin();
+  const child = await requireActiveChild(childId);
+  return { user, child };
 }
 
 export async function requireCaregiverChild(childId: string) {
-  await requireCaregiver();
-  return requireActiveChild(childId);
+  const user = await requireCaregiver();
+  const child = await requireActiveChild(childId);
+  return { user, child };
 }
 
 export async function requireAuthorizedPickupPerson(childId: string, personType: string, personId: string) {
-  await requireCaregiverChild(childId);
+  const { user, child } = await requireCaregiverChild(childId);
   if (!personId) throw new Error("Pessoa responsável não informada.");
 
   if (personType === "GUARDIAN") {
     const link = await prisma.guardianChild.findUnique({
-      where: { guardianId_childId: { guardianId: personId, childId } },
+      where: { guardianId_childId: { guardianId: personId, childId: child.id } },
       include: { guardian: true },
     });
     if (!link) throw new Error("O responsável não está vinculado a esta criança.");
-    return { id: link.guardian.id, name: link.guardian.name, relationship: link.relationship };
+    return { user, person: { id: link.guardian.id, name: link.guardian.name, relationship: link.relationship } };
   }
 
   if (personType === "AUTHORIZED") {
     const person = await prisma.authorizedPickupPerson.findFirst({
-      where: { id: personId, childId, status: "ACTIVE" },
+      where: { id: personId, childId: child.id, status: "ACTIVE" },
     });
     if (!person) throw new Error("Pessoa não autorizada para retirar esta criança.");
-    return { id: person.id, name: person.name, relationship: person.relationship };
+    return { user, person: { id: person.id, name: person.name, relationship: person.relationship } };
   }
 
   throw new Error("Tipo de pessoa responsável inválido.");
