@@ -36,6 +36,7 @@ model User {
   medicationAdministrations MedicationAdministration[]
   incidents               Incident[]
   photos                  Photo[]
+  announcementsCreated    Announcement[]
 
   @@map("users")
 }
@@ -104,6 +105,8 @@ model Child {
   medicationAdministrations MedicationAdministration[]
   incidents                Incident[]
   photos                   Photo[]
+  announcementsTargeted    Announcement[]
+  notifications            Notification[]
 
   @@map("children")
 }
@@ -128,6 +131,8 @@ model Guardian {
   homeDepartures           HomeDeparture[]
   medicationAuthorizations MedicationAuthorization[]
   incidentsNotified        Incident[]
+  announcementsTargeted    Announcement[]
+  notifications            Notification[]
 
   @@map("guardians")
 }
@@ -480,4 +485,69 @@ model Photo {
   uploadedBy User      @relation(fields: [uploadedById], references: [id])
 
   @@map("photos")
+}
+
+// ---------------------------------------------------------------------------
+// Fase 5 — Portal dos pais
+// ---------------------------------------------------------------------------
+
+enum AnnouncementType {
+  ANNOUNCEMENT
+  NOTICE
+  REMINDER
+  EVENT
+  INFO
+}
+
+enum AnnouncementTarget {
+  ALL
+  GUARDIAN
+  CHILD
+}
+
+model Announcement {
+  id        String             @id @default(cuid())
+  title     String
+  body      String
+  type      AnnouncementType   @default(ANNOUNCEMENT)
+  target    AnnouncementTarget @default(ALL)
+  eventDate DateTime?
+
+  targetGuardianId String?
+  targetChildId    String?
+
+  createdById String
+  createdAt   DateTime @default(now())
+
+  createdBy      User     @relation(fields: [createdById], references: [id])
+  targetGuardian Guardian? @relation(fields: [targetGuardianId], references: [id])
+  targetChild    Child?    @relation(fields: [targetChildId], references: [id])
+
+  @@map("announcements")
+}
+
+enum NotificationType {
+  ARRIVAL
+  DEPARTURE
+  MEAL
+  SLEEP
+  PHOTO
+  INCIDENT
+  ANNOUNCEMENT
+}
+
+model Notification {
+  id         String           @id @default(cuid())
+  guardianId String
+  childId    String?
+  type       NotificationType
+  title      String
+  body       String
+  read       Boolean          @default(false)
+  createdAt  DateTime         @default(now())
+
+  guardian Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+  child    Child?   @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
 }

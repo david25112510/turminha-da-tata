@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { todayDateOnly } from "@/lib/date";
+import { todayDateOnly, formatTime } from "@/lib/date";
+import { notifyGuardians } from "@/lib/notifications";
 
 export async function checkInAction(formData: FormData) {
   const session = await auth();
@@ -15,24 +16,33 @@ export async function checkInAction(formData: FormData) {
   if (!childId || !personName) throw new Error("Criança e quem levou são obrigatórios.");
 
   const date = todayDateOnly();
+  const now = new Date();
 
-  await prisma.attendance.upsert({
+  const attendance = await prisma.attendance.upsert({
     where: { childId_date: { childId, date } },
     create: {
       childId,
       date,
-      checkInTime: new Date(),
+      checkInTime: now,
       checkInPersonName: personName,
       checkInPersonRelation: personRelation || null,
       checkInReceivedById: session.user.id,
     },
     update: {
-      checkInTime: new Date(),
+      checkInTime: now,
       checkInPersonName: personName,
       checkInPersonRelation: personRelation || null,
       checkInReceivedById: session.user.id,
     },
+    include: { child: true },
   });
+
+  await notifyGuardians(
+    childId,
+    "ARRIVAL",
+    "Chegada",
+    `${attendance.child.preferredName || attendance.child.fullName} chegou à Turminha da Tata às ${formatTime(now)}.`
+  );
 
   revalidatePath("/cuidadora");
 }
@@ -47,24 +57,33 @@ export async function checkOutAction(formData: FormData) {
   if (!childId || !personName) throw new Error("Criança e quem retirou são obrigatórios.");
 
   const date = todayDateOnly();
+  const now = new Date();
 
-  await prisma.attendance.upsert({
+  const attendance = await prisma.attendance.upsert({
     where: { childId_date: { childId, date } },
     create: {
       childId,
       date,
-      checkOutTime: new Date(),
+      checkOutTime: now,
       checkOutPersonName: personName,
       checkOutPersonRelation: personRelation || null,
       checkOutReceivedById: session.user.id,
     },
     update: {
-      checkOutTime: new Date(),
+      checkOutTime: now,
       checkOutPersonName: personName,
       checkOutPersonRelation: personRelation || null,
       checkOutReceivedById: session.user.id,
     },
+    include: { child: true },
   });
+
+  await notifyGuardians(
+    childId,
+    "DEPARTURE",
+    "Saída",
+    `${attendance.child.preferredName || attendance.child.fullName} saiu da Turminha da Tata às ${formatTime(now)}.`
+  );
 
   revalidatePath("/cuidadora");
 }

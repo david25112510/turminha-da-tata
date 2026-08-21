@@ -83,6 +83,20 @@ export const MOOD_LABELS: Record<string, string> = {
   OTHER: "Outro",
 };
 
+export const ANNOUNCEMENT_TYPE_LABELS: Record<string, string> = {
+  ANNOUNCEMENT: "Comunicado",
+  NOTICE: "Aviso",
+  REMINDER: "Lembrete",
+  EVENT: "Evento",
+  INFO: "Informação",
+};
+
+export const ANNOUNCEMENT_TARGET_LABELS: Record<string, string> = {
+  ALL: "Todos",
+  GUARDIAN: "Responsável específico",
+  CHILD: "Criança específica",
+};
+
 export const INCIDENT_TYPE_LABELS: Record<string, string> = {
   FALL: "Queda",
   ACCIDENT: "Acidente",

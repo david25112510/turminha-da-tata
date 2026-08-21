@@ -6,6 +6,7 @@ import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { notifyGuardians } from "@/lib/notifications";
 
 const MAX_SIZE_BYTES = 8 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -46,6 +47,13 @@ export async function uploadChildPhotoAction(formData: FormData) {
       uploadedById: session.user.id,
     },
   });
+
+  await notifyGuardians(
+    childId,
+    "PHOTO",
+    "Novo momento registrado",
+    `Novos momentos de ${child.preferredName || child.fullName} foram publicados.`
+  );
 
   revalidatePath(revalidateTo);
 }

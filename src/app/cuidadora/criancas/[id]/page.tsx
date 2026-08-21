@@ -1,7 +1,8 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { todayRange, formatTime, formatDuration } from "@/lib/date";
+import { todayRange, formatTime } from "@/lib/date";
+import { buildTimeline } from "@/lib/journey";
 import { uploadChildPhotoAction } from "@/lib/photo-actions";
 import {
   MEAL_TYPE_LABELS,
@@ -30,8 +31,6 @@ const smallBtn =
 const cardClass = "bg-[#FFFDF8] rounded-2xl shadow-sm p-4 flex flex-col gap-2";
 const cardTitle = "font-[family-name:var(--font-baloo)] font-semibold text-sm text-[#2E2418]";
 
-type TimelineEntry = { time: Date; label: string; detail: string };
-
 export default async function ChildJourneyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: childId } = await params;
   const { start, end } = todayRange();
@@ -39,95 +38,14 @@ export default async function ChildJourneyPage({ params }: { params: Promise<{ i
   const child = await prisma.child.findUnique({ where: { id: childId } });
   if (!child) notFound();
 
-  const [
-    attendance,
-    meals,
-    sleeps,
-    hygiene,
-    moods,
-    healthLogs,
-    incidents,
-    medicationAdmins,
-    activityLinks,
-    medicationAuthorizations,
-    photos,
-  ] = await Promise.all([
-    prisma.attendance.findFirst({ where: { childId, date: start } }),
-    prisma.mealRecord.findMany({ where: { childId, time: { gte: start, lt: end } } }),
+  const [timeline, sleeps, medicationAuthorizations, photos] = await Promise.all([
+    buildTimeline(childId, start, end),
     prisma.sleepRecord.findMany({ where: { childId, startTime: { gte: start, lt: end } } }),
-    prisma.hygieneRecord.findMany({ where: { childId, time: { gte: start, lt: end } } }),
-    prisma.moodRecord.findMany({ where: { childId, time: { gte: start, lt: end } } }),
-    prisma.healthLog.findMany({ where: { childId, time: { gte: start, lt: end } } }),
-    prisma.incident.findMany({ where: { childId, time: { gte: start, lt: end } } }),
-    prisma.medicationAdministration.findMany({
-      where: { childId, time: { gte: start, lt: end } },
-      include: { authorization: true },
-    }),
-    prisma.activityChild.findMany({
-      where: { childId, activity: { date: start } },
-      include: { activity: true },
-    }),
-    prisma.medicationAuthorization.findMany({
-      where: { childId, active: true },
-    }),
+    prisma.medicationAuthorization.findMany({ where: { childId, active: true } }),
     prisma.photo.findMany({ where: { childId, takenAt: { gte: start, lt: end } }, orderBy: { takenAt: "desc" } }),
   ]);
 
   const openSleep = sleeps.find((s) => !s.endTime);
-
-  const timeline: TimelineEntry[] = [];
-  if (attendance?.checkInTime) {
-    timeline.push({
-      time: attendance.checkInTime,
-      label: "Chegada",
-      detail: `Levado por ${attendance.checkInPersonName}${attendance.checkInPersonRelation ? ` — ${attendance.checkInPersonRelation}` : ""}`,
-    });
-  }
-  if (attendance?.checkOutTime) {
-    timeline.push({
-      time: attendance.checkOutTime,
-      label: "Saída",
-      detail: `Retirado por ${attendance.checkOutPersonName}${attendance.checkOutPersonRelation ? ` — ${attendance.checkOutPersonRelation}` : ""}`,
-    });
-  }
-  for (const m of meals) {
-    timeline.push({ time: m.time, label: MEAL_TYPE_LABELS[m.mealType], detail: CONSUMPTION_LABELS[m.consumption] });
-  }
-  for (const s of sleeps) {
-    timeline.push({
-      time: s.startTime,
-      label: "Soneca",
-      detail: s.endTime
-        ? `${formatTime(s.startTime)} → ${formatTime(s.endTime)} (${formatDuration(s.startTime.getTime(), s.endTime.getTime())})`
-        : "Em andamento",
-    });
-  }
-  for (const h of hygiene) {
-    timeline.push({ time: h.time, label: "Higiene", detail: HYGIENE_TYPE_LABELS[h.type] });
-  }
-  for (const mo of moods) {
-    timeline.push({ time: mo.time, label: "Humor", detail: MOOD_LABELS[mo.mood] });
-  }
-  for (const hl of healthLogs) {
-    timeline.push({
-      time: hl.time,
-      label: "Saúde",
-      detail: [hl.temperature ? `${hl.temperature}°C` : null, hl.symptoms].filter(Boolean).join(" — ") || "Registro",
-    });
-  }
-  for (const inc of incidents) {
-    timeline.push({ time: inc.time, label: "Ocorrência", detail: `${INCIDENT_TYPE_LABELS[inc.type]}: ${inc.description}` });
-  }
-  for (const md of medicationAdmins) {
-    timeline.push({ time: md.time, label: "Medicamento", detail: `${md.authorization.medication} — administrado` });
-  }
-  for (const al of activityLinks) {
-    timeline.push({ time: al.activity.time, label: "Atividade", detail: ACTIVITY_CATEGORY_LABELS[al.activity.category] });
-  }
-  for (const p of photos) {
-    timeline.push({ time: p.takenAt, label: "Foto", detail: p.caption || "Registrada" });
-  }
-  timeline.sort((a, b) => a.time.getTime() - b.time.getTime());
 
   return (
     <div className="p-6 grid grid-cols-[1fr_360px] gap-6 max-w-6xl mx-auto items-start">
