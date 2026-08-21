@@ -20,25 +20,33 @@ export async function checkInAction(formData: FormData) {
 
   const date = todayDateOnly();
   const now = new Date();
+  const existing = await prisma.attendance.findUnique({ where: { childId_date: { childId, date } } });
 
-  const attendance = await prisma.attendance.upsert({
-    where: { childId_date: { childId, date } },
-    create: {
-      childId,
-      date,
-      checkInTime: now,
-      checkInPersonName: person.name,
-      checkInPersonRelation: person.relationship,
-      checkInReceivedById: caregiver.id,
-    },
-    update: {
-      checkInTime: now,
-      checkInPersonName: person.name,
-      checkInPersonRelation: person.relationship,
-      checkInReceivedById: caregiver.id,
-    },
-    include: { child: true },
-  });
+  if (existing?.checkInTime) throw new Error("A chegada desta criança já foi registrada hoje.");
+  if (existing?.checkOutTime) throw new Error("Não é possível registrar chegada após uma saída.");
+
+  const attendance = existing
+    ? await prisma.attendance.update({
+        where: { id: existing.id },
+        data: {
+          checkInTime: now,
+          checkInPersonName: person.name,
+          checkInPersonRelation: person.relationship,
+          checkInReceivedById: caregiver.id,
+        },
+        include: { child: true },
+      })
+    : await prisma.attendance.create({
+        data: {
+          childId,
+          date,
+          checkInTime: now,
+          checkInPersonName: person.name,
+          checkInPersonRelation: person.relationship,
+          checkInReceivedById: caregiver.id,
+        },
+        include: { child: true },
+      });
 
   await notifyGuardians(
     childId,
@@ -59,12 +67,8 @@ export async function checkOutAction(formData: FormData) {
   const now = new Date();
   const existing = await prisma.attendance.findUnique({ where: { childId_date: { childId, date } } });
 
-  if (!existing?.checkInTime) {
-    throw new Error("Não é possível registrar a saída antes da chegada da criança.");
-  }
-  if (existing.checkOutTime) {
-    throw new Error("A saída desta criança já foi registrada hoje.");
-  }
+  if (!existing?.checkInTime) throw new Error("Não é possível registrar a saída antes da chegada da criança.");
+  if (existing.checkOutTime) throw new Error("A saída desta criança já foi registrada hoje.");
 
   const attendance = await prisma.attendance.update({
     where: { id: existing.id },
