@@ -3,8 +3,11 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { WEEKDAYS } from "@/lib/labels";
+import { requireAdmin } from "@/lib/authz";
 
 export async function createChildAction(formData: FormData) {
+  await requireAdmin();
+
   const fullName = String(formData.get("fullName") ?? "").trim();
   const preferredName = String(formData.get("preferredName") ?? "").trim();
   const birthDate = String(formData.get("birthDate") ?? "");
@@ -22,9 +25,11 @@ export async function createChildAction(formData: FormData) {
   const dueDay = Number(formData.get("dueDay") ?? 5);
   const imageAuthorized = formData.get("imageAuthorized") === "on";
 
-  if (!fullName || !birthDate) {
-    throw new Error("Nome completo e data de nascimento são obrigatórios.");
-  }
+  if (!fullName || !birthDate) throw new Error("Nome completo e data de nascimento são obrigatórios.");
+  if (!Number.isInteger(toleranceMinutes) || toleranceMinutes < 0) throw new Error("Tolerância inválida.");
+  if (!Number.isFinite(Number(monthlyFee)) || Number(monthlyFee) < 0) throw new Error("Mensalidade inválida.");
+  if (!Number.isFinite(Number(overtimeHourRate)) || Number(overtimeHourRate) < 0) throw new Error("Valor da hora excedente inválido.");
+  if (!Number.isInteger(dueDay) || dueDay < 1 || dueDay > 31) throw new Error("Dia de vencimento inválido.");
 
   await prisma.child.create({
     data: {
