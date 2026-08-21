@@ -1,3 +1,9 @@
+export const ROLE_LABELS: Record<string, string> = {
+  ADMIN: "Administrador",
+  CAREGIVER: "Cuidadora",
+  GUARDIAN: "Responsável",
+};
+
 export const RELATIONSHIP_LABELS: Record<string, string> = {
   MOTHER: "Mãe",
   FATHER: "Pai",
