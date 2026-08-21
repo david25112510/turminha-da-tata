@@ -1,19 +1,16 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { todayDateOnly, formatTime } from "@/lib/date";
 import { notifyGuardians } from "@/lib/notifications";
+import { requireAuthorizedPickupPerson, requireCaregiverChild } from "@/lib/authz";
 
 export async function checkInAction(formData: FormData) {
-  const session = await auth();
-  if (!session?.user) throw new Error("Não autenticado.");
-
   const childId = String(formData.get("childId") ?? "");
-  const personName = String(formData.get("personName") ?? "").trim();
-  const personRelation = String(formData.get("personRelation") ?? "").trim();
-  if (!childId || !personName) throw new Error("Criança e quem levou são obrigatórios.");
+  const personType = String(formData.get("personType") ?? "");
+  const personId = String(formData.get("personId") ?? "");
+  const person = await requireAuthorizedPickupPerson(childId, personType, personId);
 
   const date = todayDateOnly();
   const now = new Date();
@@ -24,15 +21,15 @@ export async function checkInAction(formData: FormData) {
       childId,
       date,
       checkInTime: now,
-      checkInPersonName: personName,
-      checkInPersonRelation: personRelation || null,
-      checkInReceivedById: session.user.id,
+      checkInPersonName: person.name,
+      checkInPersonRelation: person.relationship,
+      checkInReceivedById: (await requireCaregiverChild(childId)).id,
     },
     update: {
       checkInTime: now,
-      checkInPersonName: personName,
-      checkInPersonRelation: personRelation || null,
-      checkInReceivedById: session.user.id,
+      checkInPersonName: person.name,
+      checkInPersonRelation: person.relationship,
+      checkInReceivedById: (await requireCaregiverChild(childId)).id,
     },
     include: { child: true },
   });
@@ -48,32 +45,30 @@ export async function checkInAction(formData: FormData) {
 }
 
 export async function checkOutAction(formData: FormData) {
-  const session = await auth();
-  if (!session?.user) throw new Error("Não autenticado.");
-
   const childId = String(formData.get("childId") ?? "");
-  const personName = String(formData.get("personName") ?? "").trim();
-  const personRelation = String(formData.get("personRelation") ?? "").trim();
-  if (!childId || !personName) throw new Error("Criança e quem retirou são obrigatórios.");
+  const personType = String(formData.get("personType") ?? "");
+  const personId = String(formData.get("personId") ?? "");
+  const person = await requireAuthorizedPickupPerson(childId, personType, personId);
 
   const date = todayDateOnly();
   const now = new Date();
+  const caregiver = await requireCaregiverChild(childId);
+  const existing = await prisma.attendance.findUnique({ where: { childId_date: { childId, date } } });
 
-  const attendance = await prisma.attendance.upsert({
-    where: { childId_date: { childId, date } },
-    create: {
-      childId,
-      date,
+  if (!existing?.checkInTime) {
+    throw new Error("Não é possível registrar a saída antes da chegada da criança.");
+  }
+  if (existing.checkOutTime) {
+    throw new Error("A saída desta criança já foi registrada hoje.");
+  }
+
+  const attendance = await prisma.attendance.update({
+    where: { id: existing.id },
+    data: {
       checkOutTime: now,
-      checkOutPersonName: personName,
-      checkOutPersonRelation: personRelation || null,
-      checkOutReceivedById: session.user.id,
-    },
-    update: {
-      checkOutTime: now,
-      checkOutPersonName: personName,
-      checkOutPersonRelation: personRelation || null,
-      checkOutReceivedById: session.user.id,
+      checkOutPersonName: person.name,
+      checkOutPersonRelation: person.relationship,
+      checkOutReceivedById: caregiver.id,
     },
     include: { child: true },
   });
