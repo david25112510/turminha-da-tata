@@ -3,6 +3,7 @@
 Sistema de gestão e acompanhamento infantil — área administrativa, portal das cuidadoras e portal dos pais.
 
 Especificação completa: [docs/spec.md](docs/spec.md)
+Documentação técnica (arquitetura, modelo de dados, lógica de negócio): [docs/architecture.md](docs/architecture.md)
 Preparação para produção: [docs/deploy.md](docs/deploy.md)
 
 ## Stack
