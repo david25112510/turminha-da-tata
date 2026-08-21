@@ -22,5 +22,133 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  guardian Guardian?
+
   @@map("users")
+}
+
+enum Sex {
+  FEMALE
+  MALE
+}
+
+enum ChildStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum Relationship {
+  MOTHER
+  FATHER
+  GRANDMOTHER
+  GRANDFATHER
+  AUNT
+  UNCLE
+  SIBLING
+  LEGAL_GUARDIAN
+  OTHER
+}
+
+model Child {
+  id               String      @id @default(cuid())
+  fullName         String
+  preferredName    String?
+  photoUrl         String?
+  birthDate        DateTime
+  cpf              String?
+  birthCertificate String?
+  sex              Sex
+  enrollmentDate   DateTime    @default(now())
+  status           ChildStatus @default(ACTIVE)
+  generalNotes     String?
+
+  imageAuthorized Boolean @default(false)
+
+  contractedEntryTime String
+  contractedExitTime  String
+  contractedDays      String[]
+  toleranceMinutes    Int      @default(0)
+  monthlyFee          Decimal  @db.Decimal(10, 2)
+  overtimeHourRate    Decimal  @db.Decimal(10, 2)
+  dueDay              Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  guardians               GuardianChild[]
+  authorizedPickupPeople  AuthorizedPickupPerson[]
+
+  @@map("children")
+}
+
+model Guardian {
+  id        String   @id @default(cuid())
+  userId    String?  @unique
+  name      String
+  cpf       String
+  birthDate DateTime?
+  phone     String
+  whatsapp  String?
+  email     String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User?           @relation(fields: [userId], references: [id])
+  children GuardianChild[]
+  authorizedPeople AuthorizedPickupPerson[]
+
+  @@map("guardians")
+}
+
+model GuardianChild {
+  id        String       @id @default(cuid())
+  guardianId String
+  childId    String
+
+  relationship            Relationship
+  isFinancialResponsible  Boolean      @default(false)
+  isPrimary               Boolean      @default(false)
+
+  receiveNotifications  Boolean @default(true)
+  viewRoutine           Boolean @default(true)
+  viewPhotos            Boolean @default(true)
+  authorizeMedication   Boolean @default(false)
+  authorizePickup       Boolean @default(false)
+  viewFinancial         Boolean @default(false)
+  receiveCommunications Boolean @default(true)
+
+  createdAt DateTime @default(now())
+
+  guardian Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+  child    Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@unique([guardianId, childId])
+  @@map("guardian_children")
+}
+
+enum AuthorizedPersonStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model AuthorizedPickupPerson {
+  id           String                  @id @default(cuid())
+  childId      String
+  name         String
+  cpf          String?
+  phone        String
+  relationship Relationship
+  photoUrl     String?
+  notes        String?
+  status       AuthorizedPersonStatus  @default(ACTIVE)
+
+  authorizedByGuardianId String
+
+  createdAt DateTime @default(now())
+
+  child           Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  authorizedBy    Guardian @relation(fields: [authorizedByGuardianId], references: [id])
+
+  @@map("authorized_pickup_people")
 }
