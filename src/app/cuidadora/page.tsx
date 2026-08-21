@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { todayDateOnly, formatTime } from "@/lib/date";
+import { RELATIONSHIP_LABELS } from "@/lib/labels";
 import { checkInAction, checkOutAction } from "./actions";
 
 const inputClass =
@@ -14,6 +15,14 @@ export default async function CaregiverHomePage() {
     orderBy: { fullName: "asc" },
     include: {
       attendances: { where: { date } },
+      guardians: {
+        orderBy: { isPrimary: "desc" },
+        include: { guardian: true },
+      },
+      authorizedPickupPeople: {
+        where: { status: "ACTIVE" },
+        orderBy: { name: "asc" },
+      },
     },
   });
 
@@ -57,12 +66,26 @@ export default async function CaregiverHomePage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {!arrived && (
                   <form action={checkInAction} className="flex flex-col gap-1.5">
                     <input type="hidden" name="childId" value={child.id} />
-                    <input name="personName" placeholder="Quem levou" required className={inputClass} />
-                    <input name="personRelation" placeholder="Parentesco" className={inputClass} />
+                    <label className="text-[11px] font-semibold text-[#6F6252]">Quem trouxe?</label>
+                    <select name="personId" required className={inputClass} defaultValue="">
+                      <option value="" disabled>Selecione uma pessoa autorizada</option>
+                      {child.guardians.map((link) => (
+                        <option key={`guardian-${link.guardianId}`} value={link.guardianId}>
+                          {link.guardian.name} — {RELATIONSHIP_LABELS[link.relationship] ?? link.relationship}
+                        </option>
+                      ))}
+                      {child.authorizedPickupPeople.map((person) => (
+                        <option key={`authorized-${person.id}`} value={person.id}>
+                          {person.name} — {RELATIONSHIP_LABELS[person.relationship] ?? person.relationship}
+                        </option>
+                      ))}
+                    </select>
+                    <input type="hidden" name="personType" value="GUARDIAN" />
+                    <p className="text-[10px] text-[#9A8A72]">Para pessoas autorizadas, use o cadastro específico da escola.</p>
                     <button
                       type="submit"
                       className="bg-[#1FA787] text-white text-xs font-semibold rounded-lg py-1.5 font-[family-name:var(--font-baloo)]"
@@ -74,8 +97,22 @@ export default async function CaregiverHomePage() {
                 {arrived && !left && (
                   <form action={checkOutAction} className="flex flex-col gap-1.5">
                     <input type="hidden" name="childId" value={child.id} />
-                    <input name="personName" placeholder="Quem retirou" required className={inputClass} />
-                    <input name="personRelation" placeholder="Parentesco" className={inputClass} />
+                    <label className="text-[11px] font-semibold text-[#6F6252]">Quem está buscando?</label>
+                    <select name="personId" required className={inputClass} defaultValue="">
+                      <option value="" disabled>Selecione uma pessoa autorizada</option>
+                      {child.guardians.map((link) => (
+                        <option key={`guardian-${link.guardianId}`} value={link.guardianId}>
+                          {link.guardian.name} — {RELATIONSHIP_LABELS[link.relationship] ?? link.relationship}
+                        </option>
+                      ))}
+                      {child.authorizedPickupPeople.map((person) => (
+                        <option key={`authorized-${person.id}`} value={person.id}>
+                          {person.name} — {RELATIONSHIP_LABELS[person.relationship] ?? person.relationship}
+                        </option>
+                      ))}
+                    </select>
+                    <input type="hidden" name="personType" value="GUARDIAN" />
+                    <p className="text-[10px] text-[#9A8A72]">A retirada só pode ser registrada para pessoa ativa e vinculada à criança.</p>
                     <button
                       type="submit"
                       className="bg-[#FF6F8E] text-white text-xs font-semibold rounded-lg py-1.5 font-[family-name:var(--font-baloo)]"
