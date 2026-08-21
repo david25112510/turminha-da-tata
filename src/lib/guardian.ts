@@ -15,13 +15,4 @@ export async function requireGuardian() {
   return guardian;
 }
 
-export function pickChildLink(
-  links: Awaited<ReturnType<typeof requireGuardian>>["children"],
-  childId?: string
-) {
-  if (childId) {
-    const found = links.find((l) => l.childId === childId);
-    if (found) return found;
-  }
-  return links[0];
-}
+export { pickChildLink } from "./pick-child-link";

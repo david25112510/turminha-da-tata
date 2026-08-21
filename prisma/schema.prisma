@@ -135,6 +135,7 @@ model Guardian {
   incidentsNotified        Incident[]
   announcementsTargeted    Announcement[]
   notifications            Notification[]
+  pushSubscriptions        PushSubscription[]
 
   @@map("guardians")
 }
@@ -162,6 +163,7 @@ model GuardianChild {
   child    Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
 
   @@unique([guardianId, childId])
+  @@index([childId])
   @@map("guardian_children")
 }
 
@@ -218,6 +220,7 @@ model Attendance {
   checkOutReceivedBy User? @relation("AttendanceCheckOutBy", fields: [checkOutReceivedById], references: [id])
 
   @@unique([childId, date])
+  @@index([date])
   @@map("attendances")
 }
 
@@ -261,6 +264,8 @@ model MealRecord {
   child      Child @relation(fields: [childId], references: [id], onDelete: Cascade)
   recordedBy User  @relation(fields: [recordedById], references: [id])
 
+  @@index([childId, time])
+  @@index([time])
   @@map("meal_records")
 }
 
@@ -277,6 +282,8 @@ model SleepRecord {
   startedBy User  @relation("SleepStartedBy", fields: [startedById], references: [id])
   endedBy   User? @relation("SleepEndedBy", fields: [endedById], references: [id])
 
+  @@index([childId, startTime])
+  @@index([startTime])
   @@map("sleep_records")
 }
 
@@ -300,6 +307,8 @@ model HygieneRecord {
   child      Child @relation(fields: [childId], references: [id], onDelete: Cascade)
   recordedBy User  @relation(fields: [recordedById], references: [id])
 
+  @@index([childId, time])
+  @@index([time])
   @@map("hygiene_records")
 }
 
@@ -330,6 +339,8 @@ model Activity {
   children   ActivityChild[]
   photos     Photo[]
 
+  @@index([date])
+  @@index([time])
   @@map("activities")
 }
 
@@ -341,6 +352,7 @@ model ActivityChild {
   child    Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
 
   @@id([activityId, childId])
+  @@index([childId])
   @@map("activity_children")
 }
 
@@ -367,6 +379,8 @@ model MoodRecord {
   child      Child @relation(fields: [childId], references: [id], onDelete: Cascade)
   recordedBy User  @relation(fields: [recordedById], references: [id])
 
+  @@index([childId, time])
+  @@index([time])
   @@map("mood_records")
 }
 
@@ -400,6 +414,8 @@ model HealthLog {
   child      Child @relation(fields: [childId], references: [id], onDelete: Cascade)
   recordedBy User  @relation(fields: [recordedById], references: [id])
 
+  @@index([childId, time])
+  @@index([time])
   @@map("health_logs")
 }
 
@@ -422,6 +438,7 @@ model MedicationAuthorization {
   authorizedBy    Guardian @relation(fields: [authorizedByGuardianId], references: [id])
   administrations MedicationAdministration[]
 
+  @@index([childId, active])
   @@map("medication_authorizations")
 }
 
@@ -437,6 +454,8 @@ model MedicationAdministration {
   child          Child                   @relation(fields: [childId], references: [id], onDelete: Cascade)
   administeredBy User                    @relation(fields: [administeredById], references: [id])
 
+  @@index([childId, time])
+  @@index([time])
   @@map("medication_administrations")
 }
 
@@ -468,6 +487,9 @@ model Incident {
   guardianNotified  Guardian? @relation(fields: [guardianNotifiedId], references: [id])
   photos            Photo[]
 
+  @@index([childId, time])
+  @@index([time])
+  @@index([guardianNotifiedId])
   @@map("incidents")
 }
 
@@ -486,6 +508,8 @@ model Photo {
   incident   Incident? @relation(fields: [incidentId], references: [id])
   uploadedBy User      @relation(fields: [uploadedById], references: [id])
 
+  @@index([childId, takenAt])
+  @@index([takenAt])
   @@map("photos")
 }
 
@@ -525,6 +549,8 @@ model Announcement {
   targetGuardian Guardian? @relation(fields: [targetGuardianId], references: [id])
   targetChild    Child?    @relation(fields: [targetChildId], references: [id])
 
+  @@index([target])
+  @@index([type, eventDate])
   @@map("announcements")
 }
 
@@ -552,6 +578,7 @@ model Notification {
   guardian Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
   child    Child?   @relation(fields: [childId], references: [id], onDelete: Cascade)
 
+  @@index([guardianId, read])
   @@map("notifications")
 }
 
@@ -589,6 +616,8 @@ model MonthlyInvoice {
   payments Payment[]
 
   @@unique([childId, referenceMonth, referenceYear])
+  @@index([status])
+  @@index([createdAt])
   @@map("monthly_invoices")
 }
 
@@ -605,5 +634,24 @@ model Payment {
   invoice    MonthlyInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   recordedBy User           @relation(fields: [recordedById], references: [id])
 
+  @@index([paidAt])
   @@map("payments")
+}
+
+// ---------------------------------------------------------------------------
+// Fase 8 — Notificações push
+// ---------------------------------------------------------------------------
+
+model PushSubscription {
+  id         String   @id @default(cuid())
+  guardianId String
+  endpoint   String   @unique
+  p256dh     String
+  auth       String
+  createdAt  DateTime @default(now())
+
+  guardian Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+
+  @@index([guardianId])
+  @@map("push_subscriptions")
 }

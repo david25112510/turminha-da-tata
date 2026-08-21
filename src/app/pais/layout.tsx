@@ -3,6 +3,7 @@ import Image from "next/image";
 import { auth, signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { requireGuardian } from "@/lib/guardian";
+import { PushNotificationToggle } from "./PushNotificationToggle";
 
 const NAV_ITEMS = [
   { href: "/pais", label: "Início" },
@@ -51,6 +52,7 @@ export default async function GuardianLayout({ children }: { children: React.Rea
             <Image src="/images/tata-mascote.png" alt="" fill className="object-contain" />
           </div>
           <div className="text-sm font-semibold text-[#3A2E22]">{session?.user.name}</div>
+          <PushNotificationToggle />
           <form
             action={async () => {
               "use server";

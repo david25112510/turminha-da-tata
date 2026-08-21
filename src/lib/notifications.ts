@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { NotificationType } from "@prisma/client";
+import { isPushConfigured, sendPushToGuardian } from "@/lib/push";
 
 export async function notifyGuardians(
   childId: string,
@@ -28,4 +29,10 @@ export async function notifyGuardians(
       body,
     })),
   });
+
+  if (isPushConfigured()) {
+    await Promise.all(
+      links.map((link) => sendPushToGuardian(link.guardianId, { title, body, url: "/pais" }))
+    );
+  }
 }

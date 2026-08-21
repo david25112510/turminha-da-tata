@@ -1,16 +1,11 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
-
-const ROLE_BY_PREFIX: Record<string, "ADMIN" | "CAREGIVER" | "GUARDIAN"> = {
-  "/admin": "ADMIN",
-  "/cuidadora": "CAREGIVER",
-  "/pais": "GUARDIAN",
-};
+import { requiredRoleForPath } from "@/lib/access-control";
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
-  const prefix = Object.keys(ROLE_BY_PREFIX).find((p) => pathname.startsWith(p));
-  if (!prefix) return NextResponse.next();
+  const requiredRole = requiredRoleForPath(pathname);
+  if (!requiredRole) return NextResponse.next();
 
   const session = req.auth;
   if (!session?.user) {
@@ -19,7 +14,7 @@ export default auth((req) => {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (session.user.role !== ROLE_BY_PREFIX[prefix]) {
+  if (session.user.role !== requiredRole) {
     return NextResponse.redirect(new URL("/login", req.nextUrl.origin));
   }
 

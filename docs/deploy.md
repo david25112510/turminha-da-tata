@@ -62,8 +62,10 @@ Isso **não** significa que o app funciona totalmente offline — como o sistema
 ## Segurança — o que já está coberto
 
 - Autenticação por sessão (Auth.js v5, JWT), senhas com hash bcrypt
-- Controle de acesso por papel (`ADMIN`, `CAREGIVER`, `GUARDIAN`) via proxy de rotas
+- Controle de acesso por papel (`ADMIN`, `CAREGIVER`, `GUARDIAN`) via proxy de rotas **e** dentro de cada Server Action (`src/lib/authz.ts`) — o proxy nunca é a única barreira
 - Permissões granulares por criança/responsável (`GuardianChild`)
+- Entrada/saída de crianças exige selecionar um responsável ou pessoa autorizada já cadastrada — não aceita nome digitado livremente
+- Rate limiting no login: 5 tentativas falhas por e-mail a cada 15 minutos (em memória — ver limitação abaixo)
 - Contas podem ser desativadas (bloqueia login imediatamente)
 - Fotos só ficam disponíveis para crianças com autorização de imagem explícita
 - Auditoria: toda ação operacional relevante é registrada com autor e horário
@@ -71,6 +73,6 @@ Isso **não** significa que o app funciona totalmente offline — como o sistema
 ## Segurança — pontos a revisar antes de produção
 
 - **HTTPS obrigatório**: cookies de sessão do Auth.js dependem de conexão segura em produção (`NODE_ENV=production` já ativa `secure` nos cookies automaticamente — garanta que a hospedagem sirva HTTPS)
-- **Rate limiting**: não há limite de tentativas de login. Considere adicionar (ex: via middleware/proxy ou no provedor de hospedagem) antes de expor publicamente
+- **Rate limiting em memória**: o limitador de tentativas de login (`src/lib/rate-limit.ts`) guarda o estado no processo Node — não sobrevive a um restart e não é compartilhado entre múltiplas instâncias. Para hospedagem com mais de uma instância, migre para um store compartilhado (Redis, por exemplo)
 - **Backups automatizados**: os scripts existem, mas precisam ser agendados na infraestrutura escolhida
 - **Rotação de segredos**: defina um processo para trocar `AUTH_SECRET` e credenciais do banco periodicamente

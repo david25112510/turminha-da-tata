@@ -5,7 +5,10 @@ import { toggleUserActiveAction } from "./actions";
 
 export default async function SettingsPage() {
   const session = await auth();
-  const users = await prisma.user.findMany({ orderBy: [{ role: "asc" }, { name: "asc" }] });
+  const users = await prisma.user.findMany({
+    orderBy: [{ role: "asc" }, { name: "asc" }],
+    select: { id: true, name: true, email: true, role: true, active: true },
+  });
 
   return (
     <div className="p-8 flex flex-col gap-6 max-w-3xl">
