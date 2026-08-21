@@ -1,20 +1,19 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/authz";
 
 export async function toggleUserActiveAction(formData: FormData) {
-  const session = await auth();
-  if (!session?.user) throw new Error("Não autenticado.");
-
+  const session = await requireAdmin();
   const userId = String(formData.get("userId") ?? "");
-  const currentActive = formData.get("currentActive") === "true";
 
-  if (userId === session.user.id) {
-    throw new Error("Você não pode desativar sua própria conta.");
-  }
+  if (!userId) throw new Error("Usuário não informado.");
+  if (userId === session.id) throw new Error("Você não pode desativar sua própria conta.");
 
-  await prisma.user.update({ where: { id: userId }, data: { active: !currentActive } });
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new Error("Usuário não encontrado.");
+
+  await prisma.user.update({ where: { id: user.id }, data: { active: !user.active } });
   revalidatePath("/admin/configuracoes");
 }
