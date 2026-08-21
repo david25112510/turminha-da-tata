@@ -71,21 +71,20 @@ export default async function CaregiverHomePage() {
                   <form action={checkInAction} className="flex flex-col gap-1.5">
                     <input type="hidden" name="childId" value={child.id} />
                     <label className="text-[11px] font-semibold text-[#6F6252]">Quem trouxe?</label>
-                    <select name="personId" required className={inputClass} defaultValue="">
+                    <select name="personRef" required className={inputClass} defaultValue="">
                       <option value="" disabled>Selecione uma pessoa autorizada</option>
                       {child.guardians.map((link) => (
-                        <option key={`guardian-${link.guardianId}`} value={link.guardianId}>
+                        <option key={`guardian-${link.guardianId}`} value={`GUARDIAN:${link.guardianId}`}>
                           {link.guardian.name} — {RELATIONSHIP_LABELS[link.relationship] ?? link.relationship}
                         </option>
                       ))}
                       {child.authorizedPickupPeople.map((person) => (
-                        <option key={`authorized-${person.id}`} value={person.id}>
+                        <option key={`authorized-${person.id}`} value={`AUTHORIZED:${person.id}`}>
                           {person.name} — {RELATIONSHIP_LABELS[person.relationship] ?? person.relationship}
                         </option>
                       ))}
                     </select>
-                    <input type="hidden" name="personType" value="GUARDIAN" />
-                    <p className="text-[10px] text-[#9A8A72]">Para pessoas autorizadas, use o cadastro específico da escola.</p>
+                    <p className="text-[10px] text-[#9A8A72]">Somente responsáveis vinculados ou pessoas autorizadas ativas podem ser selecionados.</p>
                     <button
                       type="submit"
                       className="bg-[#1FA787] text-white text-xs font-semibold rounded-lg py-1.5 font-[family-name:var(--font-baloo)]"
@@ -98,21 +97,20 @@ export default async function CaregiverHomePage() {
                   <form action={checkOutAction} className="flex flex-col gap-1.5">
                     <input type="hidden" name="childId" value={child.id} />
                     <label className="text-[11px] font-semibold text-[#6F6252]">Quem está buscando?</label>
-                    <select name="personId" required className={inputClass} defaultValue="">
+                    <select name="personRef" required className={inputClass} defaultValue="">
                       <option value="" disabled>Selecione uma pessoa autorizada</option>
                       {child.guardians.map((link) => (
-                        <option key={`guardian-${link.guardianId}`} value={link.guardianId}>
+                        <option key={`guardian-${link.guardianId}`} value={`GUARDIAN:${link.guardianId}`}>
                           {link.guardian.name} — {RELATIONSHIP_LABELS[link.relationship] ?? link.relationship}
                         </option>
                       ))}
                       {child.authorizedPickupPeople.map((person) => (
-                        <option key={`authorized-${person.id}`} value={person.id}>
+                        <option key={`authorized-${person.id}`} value={`AUTHORIZED:${person.id}`}>
                           {person.name} — {RELATIONSHIP_LABELS[person.relationship] ?? person.relationship}
                         </option>
                       ))}
                     </select>
-                    <input type="hidden" name="personType" value="GUARDIAN" />
-                    <p className="text-[10px] text-[#9A8A72]">A retirada só pode ser registrada para pessoa ativa e vinculada à criança.</p>
+                    <p className="text-[10px] text-[#9A8A72]">A retirada é validada novamente no servidor antes do registro.</p>
                     <button
                       type="submit"
                       className="bg-[#FF6F8E] text-white text-xs font-semibold rounded-lg py-1.5 font-[family-name:var(--font-baloo)]"
