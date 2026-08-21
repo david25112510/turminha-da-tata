@@ -4,12 +4,18 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { todayDateOnly, formatTime } from "@/lib/date";
 import { notifyGuardians } from "@/lib/notifications";
-import { requireAuthorizedPickupPerson, requireCaregiver, requireCaregiverChild } from "@/lib/authz";
+import { requireAuthorizedPickupPerson, requireCaregiver } from "@/lib/authz";
+
+function parsePersonRef(formData: FormData) {
+  const value = String(formData.get("personRef") ?? "");
+  const [personType, personId] = value.split(":", 2);
+  if (!personType || !personId) throw new Error("Selecione uma pessoa autorizada.");
+  return { personType, personId };
+}
 
 export async function checkInAction(formData: FormData) {
   const childId = String(formData.get("childId") ?? "");
-  const personType = String(formData.get("personType") ?? "");
-  const personId = String(formData.get("personId") ?? "");
+  const { personType, personId } = parsePersonRef(formData);
   const person = await requireAuthorizedPickupPerson(childId, personType, personId);
   const caregiver = await requireCaregiver();
 
@@ -47,14 +53,12 @@ export async function checkInAction(formData: FormData) {
 
 export async function checkOutAction(formData: FormData) {
   const childId = String(formData.get("childId") ?? "");
-  const personType = String(formData.get("personType") ?? "");
-  const personId = String(formData.get("personId") ?? "");
+  const { personType, personId } = parsePersonRef(formData);
   const person = await requireAuthorizedPickupPerson(childId, personType, personId);
   const caregiver = await requireCaregiver();
 
   const date = todayDateOnly();
   const now = new Date();
-  await requireCaregiverChild(childId);
   const existing = await prisma.attendance.findUnique({ where: { childId_date: { childId, date } } });
 
   if (!existing?.checkInTime) {
