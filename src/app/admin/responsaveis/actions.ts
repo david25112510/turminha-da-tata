@@ -3,8 +3,11 @@
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/authz";
 
 export async function createGuardianAction(formData: FormData) {
+  await requireAdmin();
+
   const name = String(formData.get("name") ?? "").trim();
   const cpf = String(formData.get("cpf") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
@@ -32,29 +35,25 @@ export async function createGuardianAction(formData: FormData) {
     throw new Error("Nome, CPF, telefone e criança vinculada são obrigatórios.");
   }
 
+  const child = await prisma.child.findUnique({ where: { id: childId } });
+  if (!child || child.status !== "ACTIVE") throw new Error("Criança não encontrada ou inativa.");
+
   let userId: string | undefined;
 
   if (createPortalAccess) {
     if (!email || !tempPassword) {
       throw new Error("E-mail e senha temporária são obrigatórios para criar acesso ao portal.");
     }
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) throw new Error("Já existe um usuário com este e-mail.");
+
     const passwordHash = await bcrypt.hash(tempPassword, 10);
-    const user = await prisma.user.create({
-      data: { email, passwordHash, name, role: "GUARDIAN" },
-    });
+    const user = await prisma.user.create({ data: { email, passwordHash, name, role: "GUARDIAN" } });
     userId = user.id;
   }
 
   const guardian = await prisma.guardian.create({
-    data: {
-      name,
-      cpf,
-      phone,
-      whatsapp: whatsapp || null,
-      email: email || null,
-      address: address || null,
-      userId,
-    },
+    data: { name, cpf, phone, whatsapp: whatsapp || null, email: email || null, address: address || null, userId },
   });
 
   await prisma.guardianChild.create({
