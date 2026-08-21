@@ -43,3 +43,6 @@ next-env.d.ts
 
 # uploaded user content (local disk storage in dev)
 /public/uploads/
+
+# database backups
+/backups/
