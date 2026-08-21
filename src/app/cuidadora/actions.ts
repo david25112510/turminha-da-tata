@@ -4,13 +4,14 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { todayDateOnly, formatTime } from "@/lib/date";
 import { notifyGuardians } from "@/lib/notifications";
-import { requireAuthorizedPickupPerson, requireCaregiverChild } from "@/lib/authz";
+import { requireAuthorizedPickupPerson, requireCaregiver, requireCaregiverChild } from "@/lib/authz";
 
 export async function checkInAction(formData: FormData) {
   const childId = String(formData.get("childId") ?? "");
   const personType = String(formData.get("personType") ?? "");
   const personId = String(formData.get("personId") ?? "");
   const person = await requireAuthorizedPickupPerson(childId, personType, personId);
+  const caregiver = await requireCaregiver();
 
   const date = todayDateOnly();
   const now = new Date();
@@ -23,13 +24,13 @@ export async function checkInAction(formData: FormData) {
       checkInTime: now,
       checkInPersonName: person.name,
       checkInPersonRelation: person.relationship,
-      checkInReceivedById: (await requireCaregiverChild(childId)).id,
+      checkInReceivedById: caregiver.id,
     },
     update: {
       checkInTime: now,
       checkInPersonName: person.name,
       checkInPersonRelation: person.relationship,
-      checkInReceivedById: (await requireCaregiverChild(childId)).id,
+      checkInReceivedById: caregiver.id,
     },
     include: { child: true },
   });
@@ -49,10 +50,11 @@ export async function checkOutAction(formData: FormData) {
   const personType = String(formData.get("personType") ?? "");
   const personId = String(formData.get("personId") ?? "");
   const person = await requireAuthorizedPickupPerson(childId, personType, personId);
+  const caregiver = await requireCaregiver();
 
   const date = todayDateOnly();
   const now = new Date();
-  const caregiver = await requireCaregiverChild(childId);
+  await requireCaregiverChild(childId);
   const existing = await prisma.attendance.findUnique({ where: { childId_date: { childId, date } } });
 
   if (!existing?.checkInTime) {
