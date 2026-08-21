@@ -5,10 +5,15 @@ export async function notifyGuardians(
   childId: string,
   type: NotificationType,
   title: string,
-  body: string
+  body: string,
+  requirePermission?: "viewFinancial" | "viewPhotos" | "viewRoutine"
 ) {
   const links = await prisma.guardianChild.findMany({
-    where: { childId, receiveNotifications: true },
+    where: {
+      childId,
+      receiveNotifications: true,
+      ...(requirePermission ? { [requirePermission]: true } : {}),
+    },
     select: { guardianId: true },
   });
 

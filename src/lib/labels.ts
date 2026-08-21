@@ -97,6 +97,19 @@ export const ANNOUNCEMENT_TARGET_LABELS: Record<string, string> = {
   CHILD: "Criança específica",
 };
 
+export const INVOICE_STATUS_LABELS: Record<string, string> = {
+  PENDING: "Pendente",
+  PAID: "Pago",
+  OVERDUE: "Vencido",
+  CANCELLED: "Cancelado",
+  PARTIALLY_PAID: "Parcialmente pago",
+};
+
+export const MONTH_LABELS = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
+];
+
 export const INCIDENT_TYPE_LABELS: Record<string, string> = {
   FALL: "Queda",
   ACCIDENT: "Acidente",

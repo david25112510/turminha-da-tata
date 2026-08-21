@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { href: "/pais/atividades", label: "Atividades" },
   { href: "/pais/comunicados", label: "Comunicados" },
   { href: "/pais/agenda", label: "Agenda" },
+  { href: "/pais/financeiro", label: "Financeiro" },
 ];
 
 export default async function GuardianLayout({ children }: { children: React.ReactNode }) {

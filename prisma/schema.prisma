@@ -37,6 +37,7 @@ model User {
   incidents               Incident[]
   photos                  Photo[]
   announcementsCreated    Announcement[]
+  paymentsRecorded        Payment[]
 
   @@map("users")
 }
@@ -107,6 +108,7 @@ model Child {
   photos                   Photo[]
   announcementsTargeted    Announcement[]
   notifications            Notification[]
+  invoices                 MonthlyInvoice[]
 
   @@map("children")
 }
@@ -534,6 +536,7 @@ enum NotificationType {
   PHOTO
   INCIDENT
   ANNOUNCEMENT
+  FINANCIAL
 }
 
 model Notification {
@@ -550,4 +553,57 @@ model Notification {
   child    Child?   @relation(fields: [childId], references: [id], onDelete: Cascade)
 
   @@map("notifications")
+}
+
+// ---------------------------------------------------------------------------
+// Fase 6 — Financeiro
+// ---------------------------------------------------------------------------
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+  PARTIALLY_PAID
+}
+
+model MonthlyInvoice {
+  id              String        @id @default(cuid())
+  childId         String
+  referenceMonth  Int
+  referenceYear   Int
+  monthlyFee      Decimal       @db.Decimal(10, 2)
+  overtimeTotal   Decimal       @default(0) @db.Decimal(10, 2)
+  discounts       Decimal       @default(0) @db.Decimal(10, 2)
+  otherCharges    Decimal       @default(0) @db.Decimal(10, 2)
+  totalAmount     Decimal       @db.Decimal(10, 2)
+  paidAmount      Decimal       @default(0) @db.Decimal(10, 2)
+  dueDate         DateTime      @db.Date
+  status          InvoiceStatus @default(PENDING)
+  notes           String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  child    Child     @relation(fields: [childId], references: [id], onDelete: Cascade)
+  payments Payment[]
+
+  @@unique([childId, referenceMonth, referenceYear])
+  @@map("monthly_invoices")
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  invoiceId String
+  amount    Decimal  @db.Decimal(10, 2)
+  paidAt    DateTime @default(now())
+  method    String?
+  notes     String?
+
+  recordedById String
+
+  invoice    MonthlyInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  recordedBy User           @relation(fields: [recordedById], references: [id])
+
+  @@map("payments")
 }

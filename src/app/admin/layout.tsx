@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { href: "/admin/criancas", label: "Crianças" },
   { href: "/admin/responsaveis", label: "Responsáveis" },
   { href: "/admin/comunicados", label: "Comunicados" },
+  { href: "/admin/financeiro", label: "Financeiro" },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
