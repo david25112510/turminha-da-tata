@@ -2,7 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { AuthError } from "next-auth";
-import { auth, signIn } from "@/auth";
+import { signIn } from "@/auth";
+import { prisma } from "@/lib/prisma";
 import { isRateLimited } from "@/lib/rate-limit";
 
 const HOME_BY_ROLE: Record<string, string> = {
@@ -34,6 +35,10 @@ export async function loginAction(
     throw error;
   }
 
-  const session = await auth();
-  redirect(HOME_BY_ROLE[session?.user.role ?? ""] ?? "/login");
+  // auth() lido logo em seguida, na mesma execução do Server Action, não enxerga a sessão que
+  // signIn() acabou de gravar (o cookie de sessão ainda não está visível para uma releitura dentro
+  // do mesmo request) — isso fazia todo login válido cair de volta em "/login". As credenciais já
+  // foram validadas por signIn() não ter lançado erro; só falta saber o papel para redirecionar.
+  const user = await prisma.user.findUnique({ where: { email }, select: { role: true } });
+  redirect(HOME_BY_ROLE[user?.role ?? ""] ?? "/login");
 }
