@@ -225,6 +225,66 @@ describe("applyInvoiceAdjustment", () => {
     expect(result.status).toBe("PARTIALLY_PAID"); // paidAmount (900) < novo total (920)
   });
 
+  it("PAID invoice + CREDIT: reduz o total sem alterar o valor pago (a família fica com saldo credor)", async () => {
+    findUniqueInvoice.mockResolvedValueOnce({
+      id: "invoice-1",
+      status: "PAID",
+      paidAmount: 900,
+      items: [{ amount: 900 }],
+    });
+
+    const { applyInvoiceAdjustment } = await import("./financial");
+    const result = (await applyInvoiceAdjustment("invoice-1", "CREDIT", "Desconto concedido após o fechamento", 30)) as unknown as {
+      totalAmount: number;
+      status: string;
+    };
+
+    expect(result.totalAmount).toBe(870); // 900 - 30
+    const saldo = Math.round((result.totalAmount - 900) * 100) / 100;
+    expect(saldo).toBe(-30); // pago (900) supera o novo total (870) em R$30
+    expect(result.status).toBe("PAID"); // paidAmount (900) >= novo total (870)
+  });
+
+  it("PARTIALLY_PAID + DEBIT: aumenta o total e o saldo devedor, sem tocar o valor já pago", async () => {
+    findUniqueInvoice.mockResolvedValueOnce({
+      id: "invoice-1",
+      status: "PARTIALLY_PAID",
+      paidAmount: 500,
+      items: [{ amount: 900 }],
+    });
+
+    const { applyInvoiceAdjustment } = await import("./financial");
+    const result = (await applyInvoiceAdjustment("invoice-1", "DEBIT", "Excedente identificado posteriormente", 50)) as unknown as {
+      totalAmount: number;
+      status: string;
+    };
+
+    expect(result.totalAmount).toBe(950); // 900 + 50
+    const saldo = Math.round((result.totalAmount - 500) * 100) / 100;
+    expect(saldo).toBe(450); // 950 - 500 pago
+    expect(result.status).toBe("PARTIALLY_PAID");
+  });
+
+  it("PARTIALLY_PAID + CREDIT: reduz o total e o saldo devedor, sem tocar o valor já pago", async () => {
+    findUniqueInvoice.mockResolvedValueOnce({
+      id: "invoice-1",
+      status: "PARTIALLY_PAID",
+      paidAmount: 500,
+      items: [{ amount: 900 }],
+    });
+
+    const { applyInvoiceAdjustment } = await import("./financial");
+    const result = (await applyInvoiceAdjustment("invoice-1", "CREDIT", "Desconto concedido após o fechamento", 100)) as unknown as {
+      totalAmount: number;
+      status: string;
+    };
+
+    expect(result.totalAmount).toBe(800); // 900 - 100
+    const saldo = Math.round((result.totalAmount - 500) * 100) / 100;
+    expect(saldo).toBe(300); // 800 - 500 pago
+    expect(result.status).toBe("PARTIALLY_PAID");
+  });
+
   it("CREDIT sempre entra negativo mesmo se o valor informado for positivo", async () => {
     findUniqueInvoice.mockResolvedValueOnce({ id: "invoice-1", status: "PENDING", paidAmount: 0, items: [{ amount: 900 }] });
 
