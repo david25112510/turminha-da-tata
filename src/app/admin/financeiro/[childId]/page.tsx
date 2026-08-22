@@ -113,17 +113,48 @@ export default async function ChildFinancialDetailPage({
 
         {currentInvoice && (
           <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <span className="font-semibold text-[#2E2418]">
-                Total: {currency(Number(currentInvoice.totalAmount))}
-              </span>
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-[#1FA787]/10 text-[#1F8A6E]">
-                {INVOICE_STATUS_LABELS[effectiveStatus(currentInvoice)]}
-              </span>
-            </div>
+            {(() => {
+              const adjustmentsTotal = currentInvoice.items
+                .filter((item) => item.type === "CREDIT" || item.type === "DEBIT" || item.type === "ADJUSTMENT")
+                .reduce((sum, item) => sum + Number(item.amount), 0);
+              const paidAmount = Number(currentInvoice.paidAmount);
+              const totalAmount = Number(currentInvoice.totalAmount);
+              const balance = Math.max(0, Math.round((totalAmount - paidAmount) * 100) / 100);
+              return (
+                <div className="grid grid-cols-3 gap-3 text-sm">
+                  <div>
+                    <span className="text-xs text-[#9A8A72] block">Mensalidade</span>
+                    <span className="text-[#2E2418]">{currency(Number(currentInvoice.monthlyFee))}</span>
+                  </div>
+                  {adjustmentsTotal !== 0 && (
+                    <div>
+                      <span className="text-xs text-[#9A8A72] block">Ajustes</span>
+                      <span className="text-[#2E2418]">{adjustmentsTotal > 0 ? "+" : ""}{currency(adjustmentsTotal)}</span>
+                    </div>
+                  )}
+                  <div>
+                    <span className="text-xs text-[#9A8A72] block">Total</span>
+                    <span className="font-semibold text-[#2E2418]">{currency(totalAmount)}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-[#9A8A72] block">Pago</span>
+                    <span className="text-[#2E2418]">{currency(paidAmount)}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-[#9A8A72] block">Saldo</span>
+                    <span className="text-[#2E2418]">{currency(balance)}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-[#9A8A72] block">Status</span>
+                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-[#1FA787]/10 text-[#1F8A6E] inline-block w-fit">
+                      {INVOICE_STATUS_LABELS[effectiveStatus(currentInvoice)]}
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
             <p className="text-xs text-[#9A8A72]">
-              Pago até agora: {currency(Number(currentInvoice.paidAmount))} — Vencimento:{" "}
-              {new Intl.DateTimeFormat("pt-BR").format(currentInvoice.dueDate)}
+              Vencimento: {new Intl.DateTimeFormat("pt-BR").format(currentInvoice.dueDate)}
             </p>
 
             {currentInvoice.items.length > 0 && (

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireGuardian, pickChildLink } from "@/lib/guardian";
 import { effectiveStatus } from "@/lib/financial";
-import { INVOICE_STATUS_LABELS, MONTH_LABELS } from "@/lib/labels";
+import { INVOICE_ITEM_TYPE_LABELS, INVOICE_STATUS_LABELS, MONTH_LABELS } from "@/lib/labels";
 import { ChildSwitcher } from "../ChildSwitcher";
 
 const currency = (n: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
@@ -74,6 +74,16 @@ export default async function GuardianFinancialPage({
                     <span className="text-xs text-[#9A8A72] block">Total</span>
                     <span className="font-semibold text-[#2E2418]">{currency(Number(invoice.totalAmount))}</span>
                   </div>
+                  <div>
+                    <span className="text-xs text-[#9A8A72] block">Pago</span>
+                    <span className="text-[#2E2418]">{currency(Number(invoice.paidAmount))}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-[#9A8A72] block">Saldo</span>
+                    <span className="text-[#2E2418]">
+                      {currency(Math.max(0, Math.round((Number(invoice.totalAmount) - Number(invoice.paidAmount)) * 100) / 100))}
+                    </span>
+                  </div>
                 </div>
 
                 {overtimeItems.length > 0 && (
@@ -96,7 +106,10 @@ export default async function GuardianFinancialPage({
                   <div className="flex flex-col gap-1 mt-2">
                     {otherItems.map((item) => (
                       <div key={item.id} className="flex justify-between text-xs text-[#6B5D4A]">
-                        <span>{item.description}</span>
+                        <span>
+                          <span className="font-semibold text-[#9A8A72]">{INVOICE_ITEM_TYPE_LABELS[item.type]}</span>{" "}
+                          {item.description}
+                        </span>
                         <span>{currency(Number(item.amount))}</span>
                       </div>
                     ))}
