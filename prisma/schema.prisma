@@ -627,13 +627,43 @@ model MonthlyInvoice {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  child    Child     @relation(fields: [childId], references: [id], onDelete: Cascade)
+  child    Child         @relation(fields: [childId], references: [id], onDelete: Cascade)
   payments Payment[]
+  items    InvoiceItem[]
 
   @@unique([childId, referenceMonth, referenceYear])
   @@index([status])
   @@index([createdAt])
   @@map("monthly_invoices")
+}
+
+enum InvoiceItemType {
+  MONTHLY_FEE
+  OVERTIME
+  DISCOUNT
+  CREDIT
+  DEBIT
+  ADJUSTMENT
+  OTHER
+}
+
+/// Item detalhado de uma cobrança — a fotografia do que compôs o total no momento do fechamento (ou de um
+/// ajuste posterior). Itens já criados nunca são editados; correções viram um novo item (CREDIT/DEBIT/ADJUSTMENT).
+model InvoiceItem {
+  id          String          @id @default(cuid())
+  invoiceId   String
+  type        InvoiceItemType
+  description String
+  quantity    Decimal?        @db.Decimal(10, 2)
+  unitPrice   Decimal?        @db.Decimal(10, 2)
+  amount      Decimal         @db.Decimal(10, 2)
+  metadata    Json?
+  createdAt   DateTime        @default(now())
+
+  invoice MonthlyInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@map("invoice_items")
 }
 
 model Payment {
