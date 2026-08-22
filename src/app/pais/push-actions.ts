@@ -28,6 +28,6 @@ export async function subscribeToPush(subscription: SubscriptionInput) {
 }
 
 export async function unsubscribeFromPush(endpoint: string) {
-  await requireGuardian();
-  await prisma.pushSubscription.deleteMany({ where: { endpoint } });
+  const guardian = await requireGuardian();
+  await prisma.pushSubscription.deleteMany({ where: { endpoint, guardianId: guardian.id } });
 }
