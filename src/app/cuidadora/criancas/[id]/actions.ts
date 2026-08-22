@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { notifyGuardians } from "@/lib/notifications";
-import { formatDuration } from "@/lib/date";
+import { formatDuration, todayRange } from "@/lib/date";
 import { MEAL_TYPE_LABELS, CONSUMPTION_LABELS, INCIDENT_TYPE_LABELS } from "@/lib/labels";
 import { requireCaregiverChild } from "@/lib/authz";
 
@@ -35,6 +35,13 @@ export async function addMealAction(formData: FormData) {
 export async function startSleepAction(formData: FormData) {
   const childId = String(formData.get("childId") ?? "");
   const { user } = await requireCaregiverChild(childId);
+
+  const { start, end } = todayRange();
+  const openSleep = await prisma.sleepRecord.findFirst({
+    where: { childId, startTime: { gte: start, lt: end }, endTime: null },
+  });
+  if (openSleep) throw new Error("Já existe uma soneca em andamento para esta criança hoje.");
+
   await prisma.sleepRecord.create({ data: { childId, startedById: user.id } });
   revalidate(childId);
 }

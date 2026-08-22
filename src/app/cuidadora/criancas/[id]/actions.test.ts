@@ -12,6 +12,7 @@ const notifyGuardians = vi.fn();
 const createMeal = vi.fn();
 const createSleep = vi.fn();
 const findUniqueSleep = vi.fn();
+const findFirstSleep = vi.fn();
 const updateSleep = vi.fn();
 const createHygiene = vi.fn();
 const createMood = vi.fn();
@@ -33,6 +34,7 @@ beforeEach(() => {
       sleepRecord: {
         create: (...args: unknown[]) => createSleep(...args),
         findUnique: (...args: unknown[]) => findUniqueSleep(...args),
+        findFirst: (...args: unknown[]) => findFirstSleep(...args),
         update: (...args: unknown[]) => updateSleep(...args),
       },
       hygieneRecord: { create: (...args: unknown[]) => createHygiene(...args) },
@@ -47,6 +49,7 @@ beforeEach(() => {
   createMeal.mockReset().mockResolvedValue({ child: { preferredName: "Maria", fullName: "Maria Silva" } });
   createSleep.mockReset().mockResolvedValue({ id: "sleep-1" });
   findUniqueSleep.mockReset();
+  findFirstSleep.mockReset().mockResolvedValue(null);
   updateSleep.mockReset().mockResolvedValue({
     id: "sleep-1",
     startTime: new Date(2026, 7, 21, 13, 0),
@@ -105,6 +108,24 @@ describe("cuidadora registra sono (startSleepAction / endSleepAction)", () => {
       "Registro de sono inválido."
     );
     expect(updateSleep).not.toHaveBeenCalled();
+  });
+
+  it("recusa finalizar um sono inexistente", async () => {
+    findUniqueSleep.mockResolvedValueOnce(null);
+    const { endSleepAction } = await import("./actions");
+    await expect(endSleepAction(formData({ childId: "child-1", sleepId: "sleep-inexistente" }))).rejects.toThrow(
+      "Registro de sono inválido."
+    );
+    expect(updateSleep).not.toHaveBeenCalled();
+  });
+
+  it("recusa iniciar uma segunda soneca enquanto já existe uma em andamento hoje (evita dados inconsistentes)", async () => {
+    findFirstSleep.mockResolvedValueOnce({ id: "sleep-ja-aberto", childId: "child-1", endTime: null });
+    const { startSleepAction } = await import("./actions");
+    await expect(startSleepAction(formData({ childId: "child-1" }))).rejects.toThrow(
+      "Já existe uma soneca em andamento para esta criança hoje."
+    );
+    expect(createSleep).not.toHaveBeenCalled();
   });
 });
 
