@@ -1,8 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
+import { useDialogClose } from "./DialogContext";
 
 type ActionState = { success?: string; error?: string } | null;
+
+const AUTO_CLOSE_DELAY_MS = 1100;
 
 const DEFAULT_BUTTON =
   "min-h-11 bg-[#1FA787] text-white text-sm font-semibold rounded-xl py-3 font-[family-name:var(--font-baloo)] disabled:opacity-60 transition-opacity";
@@ -28,6 +31,7 @@ export function QuickActionForm({
   submitClassName?: string;
   children: React.ReactNode;
 }) {
+  const closeDialog = useDialogClose();
   const [state, formAction, pending] = useActionState<ActionState, FormData>(async (_prev, formData) => {
     try {
       await action(formData);
@@ -36,6 +40,14 @@ export function QuickActionForm({
       return { error: error instanceof Error ? error.message : "Não foi possível registrar. Tente novamente." };
     }
   }, null);
+
+  // Depois de salvar com sucesso, fecha o painel sozinho — a cuidadora não precisa de um toque a mais
+  // só para dispensar a confirmação (ver seção "poucos toques").
+  useEffect(() => {
+    if (!state?.success || !closeDialog) return;
+    const timer = setTimeout(closeDialog, AUTO_CLOSE_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [state?.success, closeDialog]);
 
   return (
     <form action={formAction} className="flex flex-col gap-2.5">

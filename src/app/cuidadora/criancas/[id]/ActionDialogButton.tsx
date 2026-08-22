@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useRef } from "react";
+import { DialogCloseProvider } from "../../DialogContext";
 
 /**
  * Botão grande de ação rápida (grade 2 colunas, alvo de toque ≥44px) que abre um <dialog> nativo com o
@@ -19,6 +20,7 @@ export function ActionDialogButton({
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
+  const closeDialog = () => dialogRef.current?.close();
 
   return (
     <>
@@ -53,7 +55,7 @@ export function ActionDialogButton({
               ✕
             </button>
           </div>
-          {children}
+          <DialogCloseProvider value={closeDialog}>{children}</DialogCloseProvider>
         </div>
       </dialog>
     </>

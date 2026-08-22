@@ -1,8 +1,11 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
+import { useDialogClose } from "../../DialogContext";
 
 type ActionState = { success?: string; error?: string } | null;
+
+const AUTO_CLOSE_DELAY_MS = 1100;
 
 /** Upload de foto com preview antes de enviar — reaproveita uploadChildPhotoAction (src/lib/photo-actions.ts) sem alterá-la. */
 export function PhotoUploadForm({
@@ -15,6 +18,7 @@ export function PhotoUploadForm({
   action: (formData: FormData) => Promise<void>;
 }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const closeDialog = useDialogClose();
 
   const [state, formAction, pending] = useActionState<ActionState, FormData>(async (_prev, formData) => {
     try {
@@ -25,6 +29,12 @@ export function PhotoUploadForm({
       return { error: error instanceof Error ? error.message : "Não foi possível enviar a foto. Tente novamente." };
     }
   }, null);
+
+  useEffect(() => {
+    if (!state?.success || !closeDialog) return;
+    const timer = setTimeout(closeDialog, AUTO_CLOSE_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [state?.success, closeDialog]);
 
   return (
     <form action={formAction} className="flex flex-col gap-2.5">

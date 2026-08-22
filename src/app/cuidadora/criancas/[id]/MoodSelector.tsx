@@ -1,7 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { MOOD_LABELS } from "@/lib/labels";
+import { useDialogClose } from "../../DialogContext";
+
+const AUTO_CLOSE_DELAY_MS = 900;
 
 type ActionState = { success?: string; error?: string } | null;
 
@@ -19,6 +22,7 @@ const MOOD_EMOJI: Record<string, string> = {
 
 /** Um toque = salvo (seção 16): cada emoji já é o próprio botão de envio, sem tela extra de confirmação. */
 export function MoodSelector({ childId, action }: { childId: string; action: (formData: FormData) => Promise<void> }) {
+  const closeDialog = useDialogClose();
   const [state, formAction, pending] = useActionState<ActionState, FormData>(async (_prev, formData) => {
     try {
       await action(formData);
@@ -27,6 +31,12 @@ export function MoodSelector({ childId, action }: { childId: string; action: (fo
       return { error: error instanceof Error ? error.message : "Não foi possível registrar. Tente novamente." };
     }
   }, null);
+
+  useEffect(() => {
+    if (!state?.success || !closeDialog) return;
+    const timer = setTimeout(closeDialog, AUTO_CLOSE_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [state?.success, closeDialog]);
 
   return (
     <div className="flex flex-col gap-2.5">
