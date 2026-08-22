@@ -57,6 +57,50 @@ describe("responsável não acessa outra criança (requireGuardianChild)", () =>
   });
 });
 
+describe("responsável sem permissão específica não acessa a seção (requireGuardianChildPermission)", () => {
+  const auth = vi.fn();
+  const findUniqueGuardian = vi.fn();
+  const findUniqueGuardianChild = vi.fn();
+
+  beforeEach(() => {
+    vi.resetModules();
+    vi.doMock("@/auth", () => ({ auth: (...args: unknown[]) => auth(...args) }));
+    vi.doMock("@/lib/prisma", () => ({
+      prisma: {
+        guardian: { findUnique: (...args: unknown[]) => findUniqueGuardian(...args) },
+        guardianChild: { findUnique: (...args: unknown[]) => findUniqueGuardianChild(...args) },
+      },
+    }));
+    auth.mockReset().mockResolvedValue({ user: { id: "guardian-user-1", role: "GUARDIAN" } });
+    findUniqueGuardian.mockReset().mockResolvedValue({ id: "guardian-1", userId: "guardian-user-1" });
+    findUniqueGuardianChild.mockReset();
+  });
+
+  it("recusa acesso ao financeiro quando viewFinancial é false, mesmo com vínculo válido com a criança", async () => {
+    findUniqueGuardianChild.mockResolvedValueOnce({ guardianId: "guardian-1", childId: "child-1", viewFinancial: false });
+    const { requireGuardianChildPermission } = await import("./authz");
+    await expect(requireGuardianChildPermission("child-1", "viewFinancial")).rejects.toThrow(
+      "Você não tem permissão para acessar esta criança."
+    );
+  });
+
+  it("recusa acesso a fotos quando viewPhotos é false", async () => {
+    findUniqueGuardianChild.mockResolvedValueOnce({ guardianId: "guardian-1", childId: "child-1", viewPhotos: false });
+    const { requireGuardianChildPermission } = await import("./authz");
+    await expect(requireGuardianChildPermission("child-1", "viewPhotos")).rejects.toThrow(
+      "Você não tem permissão para acessar esta criança."
+    );
+  });
+
+  it("permite quando a permissão específica está ativa", async () => {
+    findUniqueGuardianChild.mockResolvedValueOnce({ guardianId: "guardian-1", childId: "child-1", viewFinancial: true });
+    const { requireGuardianChildPermission } = await import("./authz");
+    await expect(requireGuardianChildPermission("child-1", "viewFinancial")).resolves.toMatchObject({
+      guardian: { id: "guardian-1" },
+    });
+  });
+});
+
 describe("pessoa não autorizada não pode retirar (requireAuthorizedPickupPerson)", () => {
   const auth = vi.fn();
   const findUniqueChild = vi.fn();
@@ -313,21 +357,8 @@ describe("cancelamento de cobrança gera AuditLog (cancelInvoiceAction)", () => 
     vi.doMock("next/cache", () => ({ revalidatePath: () => {} }));
     vi.doMock("@/lib/authz", () => ({ requireAdmin: (...args: unknown[]) => requireAdmin(...args) }));
     vi.doMock("@/lib/audit-log", () => ({ recordAuditLog: (...args: unknown[]) => recordAuditLog(...args) }));
-    vi.doMock("@/lib/prisma", () => ({
-      prisma: { monthlyInvoice: { findUnique: (...args: unknown[]) => findUniqueInvoice(...args) } },
-    }));
-    requireAdmin.mockReset().mockResolvedValue({ id: "admin-1" });
-    findUniqueInvoice.mockReset();
-    updateInvoice.mockReset();
-    recordAuditLog.mockReset().mockResolvedValue(undefined);
-  });
-
-  it("cancelar uma cobrança registra um AuditLog com action CANCEL", async () => {
-    // cancelInvoiceAction e cancelInvoice() (em src/lib/financial.ts) fazem cada um seu próprio findUnique —
-    // mockResolvedValue (não Once) cobre as duas chamadas com o mesmo estado.
-    findUniqueInvoice.mockResolvedValue({ id: "invoice-1", childId: "child-1", status: "PENDING", paidAmount: 0 });
-    // cancelInvoice() (src/lib/financial.ts) faz seu próprio findUnique/update reais — mockamos o módulo
-    // inteiro de prisma de forma mínima o bastante para o cenário; o update precisa existir.
+    // cancelInvoiceAction e cancelInvoice() (em src/lib/financial.ts) fazem cada um seu próprio
+    // findUnique/update — o mock precisa cobrir os dois desde o início, sem re-registrar no meio do teste.
     vi.doMock("@/lib/prisma", () => ({
       prisma: {
         monthlyInvoice: {
@@ -336,7 +367,15 @@ describe("cancelamento de cobrança gera AuditLog (cancelInvoiceAction)", () => 
         },
       },
     }));
-    vi.resetModules();
+    requireAdmin.mockReset().mockResolvedValue({ id: "admin-1" });
+    findUniqueInvoice.mockReset();
+    updateInvoice.mockReset();
+    recordAuditLog.mockReset().mockResolvedValue(undefined);
+  });
+
+  it("cancelar uma cobrança registra um AuditLog com action CANCEL", async () => {
+    // mockResolvedValue (não Once) cobre as duas chamadas (cancelInvoiceAction + cancelInvoice) com o mesmo estado.
+    findUniqueInvoice.mockResolvedValue({ id: "invoice-1", childId: "child-1", status: "PENDING", paidAmount: 0 });
     updateInvoice.mockResolvedValueOnce({ id: "invoice-1", status: "CANCELLED" });
 
     const fd = new FormData();
@@ -347,6 +386,126 @@ describe("cancelamento de cobrança gera AuditLog (cancelInvoiceAction)", () => 
     await cancelInvoiceAction(fd);
 
     expect(recordAuditLog).toHaveBeenCalledWith(expect.objectContaining({ entity: "MonthlyInvoice", action: "CANCEL" }));
+  });
+});
+
+describe("check-in preserva ID relacional e snapshot de nome/parentesco (checkInAction)", () => {
+  const requireAuthorizedPickupPerson = vi.fn();
+  const findUniqueAttendance = vi.fn();
+  const createAttendance = vi.fn();
+  const notifyGuardians = vi.fn();
+
+  beforeEach(() => {
+    vi.resetModules();
+    vi.doMock("next/cache", () => ({ revalidatePath: () => {} }));
+    vi.doMock("@/lib/notifications", () => ({ notifyGuardians: (...args: unknown[]) => notifyGuardians(...args) }));
+    vi.doMock("@/lib/authz", () => ({
+      requireAuthorizedPickupPerson: (...args: unknown[]) => requireAuthorizedPickupPerson(...args),
+    }));
+    vi.doMock("@/lib/prisma", () => ({
+      prisma: {
+        attendance: {
+          findUnique: (...args: unknown[]) => findUniqueAttendance(...args),
+          create: (...args: unknown[]) => createAttendance(...args),
+        },
+      },
+    }));
+    requireAuthorizedPickupPerson.mockReset().mockResolvedValue({
+      user: { id: "caregiver-1" },
+      person: { id: "guardian-1", name: "Maria Silva", relationship: "MOTHER" },
+    });
+    findUniqueAttendance.mockReset().mockResolvedValue(null);
+    createAttendance.mockReset().mockResolvedValue({
+      id: "att-1",
+      child: { preferredName: null, fullName: "Criança" },
+    });
+    notifyGuardians.mockReset().mockResolvedValue(undefined);
+  });
+
+  it("grava checkInGuardianId (relacional) junto do snapshot checkInPersonName/checkInPersonRelation", async () => {
+    const fd = new FormData();
+    fd.set("childId", "child-1");
+    fd.set("personRef", "GUARDIAN:guardian-1");
+
+    const { checkInAction } = await import("@/app/cuidadora/actions");
+    await checkInAction(fd);
+
+    expect(createAttendance).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          checkInGuardianId: "guardian-1",
+          checkInAuthorizedPickupPersonId: null,
+          checkInPersonName: "Maria Silva",
+          checkInPersonRelation: "MOTHER",
+        }),
+      })
+    );
+  });
+});
+
+describe("criação de criança gera AuditLog (createChildAction)", () => {
+  const requireAdmin = vi.fn();
+  const createChild = vi.fn();
+  const recordAuditLog = vi.fn();
+
+  beforeEach(() => {
+    vi.resetModules();
+    vi.doMock("next/navigation", () => ({ redirect: () => {} }));
+    vi.doMock("@/lib/authz", () => ({ requireAdmin: (...args: unknown[]) => requireAdmin(...args) }));
+    vi.doMock("@/lib/audit-log", () => ({ recordAuditLog: (...args: unknown[]) => recordAuditLog(...args) }));
+    vi.doMock("@/lib/prisma", () => ({ prisma: { child: { create: (...args: unknown[]) => createChild(...args) } } }));
+    requireAdmin.mockReset().mockResolvedValue({ id: "admin-1" });
+    createChild.mockReset().mockResolvedValue({ id: "child-1", fullName: "Maria" });
+    recordAuditLog.mockReset().mockResolvedValue(undefined);
+  });
+
+  it("cadastrar uma criança registra um AuditLog com entity Child", async () => {
+    const fd = new FormData();
+    fd.set("fullName", "Maria");
+    fd.set("birthDate", "2022-01-01");
+    fd.set("monthlyFee", "900");
+
+    const { createChildAction } = await import("@/app/admin/criancas/actions");
+    await createChildAction(fd);
+
+    expect(recordAuditLog).toHaveBeenCalledWith(expect.objectContaining({ entity: "Child", action: "CREATE" }));
+  });
+});
+
+describe("criação de pessoa autorizada gera AuditLog (addAuthorizedPersonAction)", () => {
+  const requireAdminChild = vi.fn();
+  const findUniqueGuardianChild = vi.fn();
+  const createAuthorizedPerson = vi.fn();
+  const recordAuditLog = vi.fn();
+
+  beforeEach(() => {
+    vi.resetModules();
+    vi.doMock("next/cache", () => ({ revalidatePath: () => {} }));
+    vi.doMock("@/lib/authz", () => ({ requireAdminChild: (...args: unknown[]) => requireAdminChild(...args) }));
+    vi.doMock("@/lib/audit-log", () => ({ recordAuditLog: (...args: unknown[]) => recordAuditLog(...args) }));
+    vi.doMock("@/lib/prisma", () => ({
+      prisma: {
+        guardianChild: { findUnique: (...args: unknown[]) => findUniqueGuardianChild(...args) },
+        authorizedPickupPerson: { create: (...args: unknown[]) => createAuthorizedPerson(...args) },
+      },
+    }));
+    requireAdminChild.mockReset().mockResolvedValue({ user: { id: "admin-1" }, child: { id: "child-1" } });
+    findUniqueGuardianChild.mockReset().mockResolvedValue({ guardianId: "guardian-1", childId: "child-1" });
+    createAuthorizedPerson.mockReset().mockResolvedValue({ id: "person-1" });
+    recordAuditLog.mockReset().mockResolvedValue(undefined);
+  });
+
+  it("cadastrar uma pessoa autorizada registra um AuditLog com entity AuthorizedPickupPerson", async () => {
+    const fd = new FormData();
+    fd.set("childId", "child-1");
+    fd.set("name", "Ana");
+    fd.set("phone", "11999999999");
+    fd.set("authorizedByGuardianId", "guardian-1");
+
+    const { addAuthorizedPersonAction } = await import("@/app/admin/criancas/[id]/actions");
+    await addAuthorizedPersonAction(fd);
+
+    expect(recordAuditLog).toHaveBeenCalledWith(expect.objectContaining({ entity: "AuthorizedPickupPerson", action: "CREATE" }));
   });
 });
 
