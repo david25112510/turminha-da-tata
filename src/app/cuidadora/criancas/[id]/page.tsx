@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { todayDateOnly, todayRange, formatTime } from "@/lib/date";
 import { buildTimeline } from "@/lib/journey";
 import { uploadChildPhotoAction } from "@/lib/photo-actions";
+import { RELATIONSHIP_LABELS } from "@/lib/labels";
 import { ChildStatusBadge, IncidentIndicator, type PresenceStatus } from "../../ChildStatusBadge";
 import { ChildActionsGrid } from "./ChildActionsGrid";
 import { RoutineTimeline } from "./RoutineTimeline";
@@ -64,7 +65,9 @@ export default async function ChildProfilePage({ params }: { params: Promise<{ i
                 {" "}— trazida por{" "}
                 <span className="font-semibold text-[#2E2418]">
                   {attendance.checkInPersonName}
-                  {attendance.checkInPersonRelation ? ` (${attendance.checkInPersonRelation})` : ""}
+                  {attendance.checkInPersonRelation
+                    ? ` (${RELATIONSHIP_LABELS[attendance.checkInPersonRelation] ?? attendance.checkInPersonRelation})`
+                    : ""}
                 </span>
               </>
             )}
@@ -78,7 +81,9 @@ export default async function ChildProfilePage({ params }: { params: Promise<{ i
                 {" "}— retirada por{" "}
                 <span className="font-semibold text-[#2E2418]">
                   {attendance.checkOutPersonName}
-                  {attendance.checkOutPersonRelation ? ` (${attendance.checkOutPersonRelation})` : ""}
+                  {attendance.checkOutPersonRelation
+                    ? ` (${RELATIONSHIP_LABELS[attendance.checkOutPersonRelation] ?? attendance.checkOutPersonRelation})`
+                    : ""}
                 </span>
               </>
             )}

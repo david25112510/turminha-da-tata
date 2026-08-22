@@ -6,7 +6,11 @@ import {
   ACTIVITY_CATEGORY_LABELS,
   MOOD_LABELS,
   INCIDENT_TYPE_LABELS,
+  RELATIONSHIP_LABELS,
 } from "@/lib/labels";
+
+const relationshipLabel = (relationship: string | null) =>
+  relationship ? RELATIONSHIP_LABELS[relationship] ?? relationship : null;
 
 export type AuditEntry = {
   time: Date;
@@ -74,19 +78,21 @@ export async function getOperationalTimeline(start: Date, end: Date, limit = 200
 
   for (const a of attendances) {
     if (a.checkInTime && a.checkInTime >= start && a.checkInTime < end) {
+      const relation = relationshipLabel(a.checkInPersonRelation);
       entries.push({
         time: a.checkInTime,
         actorName: a.checkInReceivedBy?.name ?? "—",
         childName: childLabel(a.child),
-        action: `Registrou chegada. Levado por ${a.checkInPersonName}${a.checkInPersonRelation ? ` — ${a.checkInPersonRelation}` : ""}.`,
+        action: `Registrou chegada. Levado por ${a.checkInPersonName}${relation ? ` — ${relation}` : ""}.`,
       });
     }
     if (a.checkOutTime && a.checkOutTime >= start && a.checkOutTime < end) {
+      const relation = relationshipLabel(a.checkOutPersonRelation);
       entries.push({
         time: a.checkOutTime,
         actorName: a.checkOutReceivedBy?.name ?? "—",
         childName: childLabel(a.child),
-        action: `Registrou saída. Retirado por ${a.checkOutPersonName}${a.checkOutPersonRelation ? ` — ${a.checkOutPersonRelation}` : ""}.`,
+        action: `Registrou saída. Retirado por ${a.checkOutPersonName}${relation ? ` — ${relation}` : ""}.`,
       });
     }
   }

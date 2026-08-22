@@ -7,7 +7,11 @@ import {
   ACTIVITY_CATEGORY_LABELS,
   MOOD_LABELS,
   INCIDENT_TYPE_LABELS,
+  RELATIONSHIP_LABELS,
 } from "@/lib/labels";
+
+const relationshipLabel = (relationship: string | null) =>
+  relationship ? RELATIONSHIP_LABELS[relationship] ?? relationship : null;
 
 export type TimelineEntry = { time: Date; label: string; detail: string };
 
@@ -35,17 +39,19 @@ export async function buildTimeline(childId: string, start: Date, end: Date): Pr
   const timeline: TimelineEntry[] = [];
 
   if (attendance?.checkInTime) {
+    const relation = relationshipLabel(attendance.checkInPersonRelation);
     timeline.push({
       time: attendance.checkInTime,
       label: "Chegada",
-      detail: `Levado por ${attendance.checkInPersonName}${attendance.checkInPersonRelation ? ` — ${attendance.checkInPersonRelation}` : ""}`,
+      detail: `Levado por ${attendance.checkInPersonName}${relation ? ` — ${relation}` : ""}`,
     });
   }
   if (attendance?.checkOutTime) {
+    const relation = relationshipLabel(attendance.checkOutPersonRelation);
     timeline.push({
       time: attendance.checkOutTime,
       label: "Saída",
-      detail: `Retirado por ${attendance.checkOutPersonName}${attendance.checkOutPersonRelation ? ` — ${attendance.checkOutPersonRelation}` : ""}`,
+      detail: `Retirado por ${attendance.checkOutPersonName}${relation ? ` — ${relation}` : ""}`,
     });
   }
   for (const m of meals) {
