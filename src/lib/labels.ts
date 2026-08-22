@@ -111,6 +111,16 @@ export const INVOICE_STATUS_LABELS: Record<string, string> = {
   PARTIALLY_PAID: "Parcialmente pago",
 };
 
+export const INVOICE_ITEM_TYPE_LABELS: Record<string, string> = {
+  MONTHLY_FEE: "Mensalidade",
+  OVERTIME: "Excedente",
+  DISCOUNT: "Desconto",
+  CREDIT: "Crédito",
+  DEBIT: "Débito",
+  ADJUSTMENT: "Ajuste",
+  OTHER: "Outro",
+};
+
 export const MONTH_LABELS = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",

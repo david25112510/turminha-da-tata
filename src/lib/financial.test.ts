@@ -1,50 +1,67 @@
-import { describe, expect, it, vi } from "vitest";
-import { calculateOvertimeForAttendance } from "./financial";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { calculateOvertimeAmount, calculateOvertimeForAttendance, calculateOvertimeMinutes } from "./financial";
 
 function at(hour: number, minute: number) {
   const d = new Date(2026, 7, 21, hour, minute, 0, 0);
   return d;
 }
 
-describe("calculateOvertimeForAttendance", () => {
-  it("matches the exact example from the spec: 42min late at R$15/h tolerance-exceeded → R$10.50", () => {
-    const result = calculateOvertimeForAttendance(at(18, 12), "17:30", 15, 15);
-    expect(result.minutesLate).toBe(42);
-    expect(result.amount).toBeCloseTo(10.5, 2);
+describe("calculateOvertimeMinutes — tolerância como dedução, não como limiar", () => {
+  it("CASO 1: 17:30 contratado, tolerância 15, saída 17:44 → 0 minutos cobrados", () => {
+    expect(calculateOvertimeMinutes(at(17, 44), "17:30", 15)).toBe(0);
   });
 
-  it("does not charge when leaving within the tolerance window", () => {
+  it("CASO 2: saída exatamente no limite da tolerância (17:45) → 0 minutos", () => {
+    expect(calculateOvertimeMinutes(at(17, 45), "17:30", 15)).toBe(0);
+  });
+
+  it("CASO 3: saída 1 minuto além da tolerância (17:46) → 1 minuto cobrado", () => {
+    expect(calculateOvertimeMinutes(at(17, 46), "17:30", 15)).toBe(1);
+  });
+
+  it("CASO 4: saída 18:00, tolerância 15 → 15 minutos cobrados (30 de excedente bruto - 15)", () => {
+    expect(calculateOvertimeMinutes(at(18, 0), "17:30", 15)).toBe(15);
+  });
+
+  it("CASO 5: saída 18:00, tolerância 0 → 30 minutos cobrados", () => {
+    expect(calculateOvertimeMinutes(at(18, 0), "17:30", 0)).toBe(30);
+  });
+
+  it("CASO 6: saída antes do horário contratado → 0 minutos", () => {
+    expect(calculateOvertimeMinutes(at(17, 0), "17:30", 15)).toBe(0);
+  });
+});
+
+describe("calculateOvertimeAmount — valor por minuto (hora / 60), sem arredondar para hora cheia", () => {
+  it("CASO 7: R$15/h, 1 minuto cobrável → R$0,25", () => {
+    expect(calculateOvertimeAmount(1, 15)).toBeCloseTo(0.25, 2);
+  });
+
+  it("CASO 8: R$15/h, 30 minutos cobráveis → R$7,50", () => {
+    expect(calculateOvertimeAmount(30, 15)).toBeCloseTo(7.5, 2);
+  });
+
+  it("CASO 9: R$15/h, 60 minutos cobráveis → R$15,00", () => {
+    expect(calculateOvertimeAmount(60, 15)).toBeCloseTo(15, 2);
+  });
+
+  it("não cobra nada para 0 ou minutos negativos", () => {
+    expect(calculateOvertimeAmount(0, 15)).toBe(0);
+    expect(calculateOvertimeAmount(-5, 15)).toBe(0);
+  });
+});
+
+describe("calculateOvertimeForAttendance (composição de calculateOvertimeMinutes + calculateOvertimeAmount)", () => {
+  it("42min de atraso bruto, tolerância 15 → 27min cobráveis a R$15/h = R$6,75", () => {
+    const result = calculateOvertimeForAttendance(at(18, 12), "17:30", 15, 15);
+    expect(result.minutesLate).toBe(27);
+    expect(result.amount).toBeCloseTo(6.75, 2);
+  });
+
+  it("dentro da tolerância não cobra nada", () => {
     const result = calculateOvertimeForAttendance(at(17, 42), "17:30", 15, 15);
     expect(result.minutesLate).toBe(0);
     expect(result.amount).toBe(0);
-  });
-
-  it("charges the full elapsed minutes (not just the excess over tolerance) once tolerance is breached", () => {
-    // contracted 17:30, tolerance 15min, left at 17:50 → 20 minutes late, spec says all 20 are billable
-    const result = calculateOvertimeForAttendance(at(17, 50), "17:30", 15, 15);
-    expect(result.minutesLate).toBe(20);
-  });
-
-  it("treats leaving exactly at the tolerance boundary as not billable", () => {
-    const result = calculateOvertimeForAttendance(at(17, 45), "17:30", 15, 15);
-    expect(result.minutesLate).toBe(0);
-  });
-
-  it("treats leaving one minute past the tolerance boundary as fully billable", () => {
-    const result = calculateOvertimeForAttendance(at(17, 46), "17:30", 15, 15);
-    expect(result.minutesLate).toBe(16);
-  });
-
-  it("never charges for leaving earlier than the contracted time", () => {
-    const result = calculateOvertimeForAttendance(at(17, 0), "17:30", 15, 15);
-    expect(result.minutesLate).toBe(0);
-    expect(result.amount).toBe(0);
-  });
-
-  it("computes the per-minute rate as hourRate / 60", () => {
-    const result = calculateOvertimeForAttendance(at(18, 0), "17:30", 0, 60);
-    expect(result.minutesLate).toBe(30);
-    expect(result.amount).toBeCloseTo(30, 2);
   });
 });
 
@@ -53,17 +70,23 @@ describe("closeMonth", () => {
   const findUniqueOrThrowChild = vi.fn();
   const findManyAttendance = vi.fn();
   const upsertInvoice = vi.fn();
+  const deleteManyItems = vi.fn();
+  const createManyItems = vi.fn();
+  const findUniqueOrThrowInvoice = vi.fn();
 
-  vi.doMock("@/lib/prisma", () => ({
-    prisma: {
-      monthlyInvoice: {
-        findUnique: (...args: unknown[]) => findUniqueInvoice(...args),
-        upsert: (...args: unknown[]) => upsertInvoice(...args),
-      },
-      child: { findUniqueOrThrow: (...args: unknown[]) => findUniqueOrThrowChild(...args) },
-      attendance: { findMany: (...args: unknown[]) => findManyAttendance(...args) },
+  const tx = {
+    monthlyInvoice: {
+      findUnique: (...args: unknown[]) => findUniqueInvoice(...args),
+      upsert: (...args: unknown[]) => upsertInvoice(...args),
+      findUniqueOrThrow: (...args: unknown[]) => findUniqueOrThrowInvoice(...args),
     },
-  }));
+    child: { findUniqueOrThrow: (...args: unknown[]) => findUniqueOrThrowChild(...args) },
+    attendance: { findMany: (...args: unknown[]) => findManyAttendance(...args) },
+    invoiceItem: {
+      deleteMany: (...args: unknown[]) => deleteManyItems(...args),
+      createMany: (...args: unknown[]) => createManyItems(...args),
+    },
+  };
 
   const baseChild = {
     id: "child-1",
@@ -74,44 +97,195 @@ describe("closeMonth", () => {
     dueDay: 5,
   };
 
+  // vi.doMock is not hoisted and only affects imports made after it runs — re-registering it here (right
+  // before vi.resetModules + the dynamic import in each test) prevents other describe blocks in this file
+  // from clobbering the "@/lib/prisma" mock this suite needs.
+  beforeEach(() => {
+    vi.resetModules();
+    vi.doMock("@/lib/prisma", () => ({
+      prisma: { $transaction: (fn: (tx: unknown) => unknown) => fn(tx) },
+    }));
+    findUniqueInvoice.mockReset();
+    findUniqueOrThrowChild.mockReset().mockResolvedValue(baseChild);
+    findManyAttendance.mockReset().mockResolvedValue([]);
+    upsertInvoice.mockReset().mockResolvedValue({ id: "invoice-1" });
+    deleteManyItems.mockReset().mockResolvedValue({ count: 0 });
+    createManyItems.mockReset().mockResolvedValue({ count: 0 });
+    findUniqueOrThrowInvoice.mockReset().mockResolvedValue({ id: "invoice-1", items: [] });
+  });
+
   it.each(["PAID", "PARTIALLY_PAID", "CANCELLED"])(
     "refuses to recalculate a %s invoice",
     async (status) => {
-      vi.resetModules();
-      findUniqueInvoice.mockReset().mockResolvedValueOnce({ status });
-      findUniqueOrThrowChild.mockReset();
-      findManyAttendance.mockReset();
-      upsertInvoice.mockReset();
+      findUniqueInvoice.mockResolvedValueOnce({ status });
 
       const { closeMonth } = await import("./financial");
       await expect(closeMonth("child-1", 9, 2026)).rejects.toThrow(
         "Esta cobrança já foi paga ou cancelada e não pode ser recalculada."
       );
       expect(upsertInvoice).not.toHaveBeenCalled();
+      expect(createManyItems).not.toHaveBeenCalled();
     }
   );
 
-  it.each(["PENDING", "OVERDUE"])("recalculates a %s invoice normally", async (status) => {
-    vi.resetModules();
-    findUniqueInvoice.mockReset().mockResolvedValueOnce({ status });
-    findUniqueOrThrowChild.mockReset().mockResolvedValue(baseChild);
-    findManyAttendance.mockReset().mockResolvedValueOnce([]);
-    upsertInvoice.mockReset().mockResolvedValueOnce({ id: "invoice-1" });
+  it.each(["PENDING", "OVERDUE"])("recalculates a %s invoice normally and writes MONTHLY_FEE + OVERTIME items", async (status) => {
+    findUniqueInvoice.mockResolvedValueOnce({ status });
+    findManyAttendance.mockResolvedValueOnce([
+      { date: new Date(2026, 8, 5), checkOutTime: new Date(2026, 8, 5, 18, 0) }, // 30min gross - 15 tolerance = 15 billable
+    ]);
+
+    const { closeMonth } = await import("./financial");
+    await closeMonth("child-1", 9, 2026);
+
+    expect(upsertInvoice).toHaveBeenCalledOnce();
+    expect(deleteManyItems).toHaveBeenCalledWith({ where: { invoiceId: "invoice-1" } });
+    const items = createManyItems.mock.calls[0][0].data;
+    expect(items).toEqual([
+      expect.objectContaining({ type: "MONTHLY_FEE", amount: 900 }),
+      expect.objectContaining({ type: "OVERTIME", quantity: 15, amount: 3.75 }),
+    ]);
+  });
+
+  it("creates a fresh invoice when none exists yet for the period", async () => {
+    findUniqueInvoice.mockResolvedValueOnce(null);
 
     const { closeMonth } = await import("./financial");
     await closeMonth("child-1", 9, 2026);
     expect(upsertInvoice).toHaveBeenCalledOnce();
   });
 
-  it("creates a fresh invoice when none exists yet for the period", async () => {
-    vi.resetModules();
-    findUniqueInvoice.mockReset().mockResolvedValueOnce(null);
-    findUniqueOrThrowChild.mockReset().mockResolvedValue(baseChild);
-    findManyAttendance.mockReset().mockResolvedValueOnce([]);
-    upsertInvoice.mockReset().mockResolvedValueOnce({ id: "invoice-1" });
+  it("adds a DISCOUNT item (negative amount) and an OTHER item when provided", async () => {
+    findUniqueInvoice.mockResolvedValueOnce(null);
+
+    const { closeMonth } = await import("./financial");
+    await closeMonth("child-1", 9, 2026, 50, 20);
+
+    const items = createManyItems.mock.calls[0][0].data;
+    expect(items).toContainEqual(expect.objectContaining({ type: "DISCOUNT", amount: -50 }));
+    expect(items).toContainEqual(expect.objectContaining({ type: "OTHER", amount: 20 }));
+  });
+
+  it("CASO 10: executando closeMonth duas vezes seguidas não duplica InvoiceItems — cada chamada substitui o conjunto inteiro", async () => {
+    findUniqueInvoice.mockResolvedValueOnce(null).mockResolvedValueOnce({ status: "PENDING" });
 
     const { closeMonth } = await import("./financial");
     await closeMonth("child-1", 9, 2026);
-    expect(upsertInvoice).toHaveBeenCalledOnce();
+    await closeMonth("child-1", 9, 2026);
+
+    expect(deleteManyItems).toHaveBeenCalledTimes(2);
+    expect(createManyItems).toHaveBeenCalledTimes(2);
+    const firstCallItems = createManyItems.mock.calls[0][0].data;
+    const secondCallItems = createManyItems.mock.calls[1][0].data;
+    expect(secondCallItems).toHaveLength(firstCallItems.length);
+    expect(secondCallItems).toEqual(firstCallItems);
+  });
+});
+
+describe("applyInvoiceAdjustment", () => {
+  const findUniqueInvoice = vi.fn();
+  const createItem = vi.fn();
+  const updateInvoice = vi.fn();
+
+  const tx = {
+    monthlyInvoice: {
+      findUnique: (...args: unknown[]) => findUniqueInvoice(...args),
+      update: (...args: unknown[]) => updateInvoice(...args),
+    },
+    invoiceItem: { create: (...args: unknown[]) => createItem(...args) },
+  };
+
+  beforeEach(() => {
+    vi.resetModules();
+    vi.doMock("@/lib/prisma", () => ({
+      prisma: { $transaction: (fn: (tx: unknown) => unknown) => fn(tx) },
+    }));
+    findUniqueInvoice.mockReset();
+    createItem.mockReset().mockResolvedValue({});
+    updateInvoice.mockReset().mockImplementation(({ data }: { data: unknown }) => data);
+  });
+
+  it("PAID invoice + novo débito: cria um item de ajuste sem alterar o valor original, e recalcula o total", async () => {
+    findUniqueInvoice.mockResolvedValueOnce({
+      id: "invoice-1",
+      status: "PAID",
+      paidAmount: 900,
+      items: [{ amount: 900 }],
+    });
+
+    const { applyInvoiceAdjustment } = await import("./financial");
+    const result = (await applyInvoiceAdjustment("invoice-1", "DEBIT", "Excedente identificado posteriormente", 20)) as unknown as {
+      totalAmount: number;
+      status: string;
+    };
+
+    expect(createItem).toHaveBeenCalledWith({
+      data: { invoiceId: "invoice-1", type: "DEBIT", description: "Excedente identificado posteriormente", amount: 20 },
+    });
+    expect(result.totalAmount).toBe(920);
+    expect(result.status).toBe("PARTIALLY_PAID"); // paidAmount (900) < novo total (920)
+  });
+
+  it("CREDIT sempre entra negativo mesmo se o valor informado for positivo", async () => {
+    findUniqueInvoice.mockResolvedValueOnce({ id: "invoice-1", status: "PENDING", paidAmount: 0, items: [{ amount: 900 }] });
+
+    const { applyInvoiceAdjustment } = await import("./financial");
+    await applyInvoiceAdjustment("invoice-1", "CREDIT", "Desconto por atraso da escola", 30);
+
+    expect(createItem).toHaveBeenCalledWith({
+      data: { invoiceId: "invoice-1", type: "CREDIT", description: "Desconto por atraso da escola", amount: -30 },
+    });
+  });
+
+  it("recusa ajuste em cobrança CANCELLED", async () => {
+    findUniqueInvoice.mockResolvedValueOnce({ id: "invoice-1", status: "CANCELLED", paidAmount: 0, items: [] });
+
+    const { applyInvoiceAdjustment } = await import("./financial");
+    await expect(applyInvoiceAdjustment("invoice-1", "DEBIT", "x", 10)).rejects.toThrow(
+      "Não é possível lançar ajustes em uma cobrança cancelada."
+    );
+    expect(createItem).not.toHaveBeenCalled();
+  });
+});
+
+describe("cancelInvoice", () => {
+  const findUniqueInvoice = vi.fn();
+  const updateInvoice = vi.fn();
+
+  beforeEach(() => {
+    vi.resetModules();
+    vi.doMock("@/lib/prisma", () => ({
+      prisma: {
+        monthlyInvoice: {
+          findUnique: (...args: unknown[]) => findUniqueInvoice(...args),
+          update: (...args: unknown[]) => updateInvoice(...args),
+        },
+      },
+    }));
+    findUniqueInvoice.mockReset();
+    updateInvoice.mockReset().mockResolvedValue({ status: "CANCELLED" });
+  });
+
+  it("cancela uma cobrança sem pagamentos", async () => {
+    findUniqueInvoice.mockResolvedValueOnce({ id: "invoice-1", status: "PENDING", paidAmount: 0 });
+
+    const { cancelInvoice } = await import("./financial");
+    await cancelInvoice("invoice-1");
+    expect(updateInvoice).toHaveBeenCalledWith({ where: { id: "invoice-1" }, data: { status: "CANCELLED" } });
+  });
+
+  it("recusa cancelar uma cobrança com pagamentos registrados", async () => {
+    findUniqueInvoice.mockResolvedValueOnce({ id: "invoice-1", status: "PARTIALLY_PAID", paidAmount: 100 });
+
+    const { cancelInvoice } = await import("./financial");
+    await expect(cancelInvoice("invoice-1")).rejects.toThrow(/estorno/);
+    expect(updateInvoice).not.toHaveBeenCalled();
+  });
+
+  it("recusa cancelar uma cobrança já cancelada", async () => {
+    findUniqueInvoice.mockResolvedValueOnce({ id: "invoice-1", status: "CANCELLED", paidAmount: 0 });
+
+    const { cancelInvoice } = await import("./financial");
+    await expect(cancelInvoice("invoice-1")).rejects.toThrow("já está cancelada");
+    expect(updateInvoice).not.toHaveBeenCalled();
   });
 });
