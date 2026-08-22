@@ -17,7 +17,13 @@ export type AuditEntry = {
 
 const childLabel = (c: { fullName: string; preferredName: string | null }) => c.preferredName || c.fullName;
 
-export async function getRecentActivity(start: Date, end: Date, limit = 200): Promise<AuditEntry[]> {
+/**
+ * Timeline operacional: registros de rotina (chegada/saída, alimentação, sono, higiene, humor, ocorrência,
+ * medicamento, foto, atividade, pagamento, fechamento de mensalidade). É a "jornada" da criança, não uma
+ * trilha de segurança — nunca inclui as entradas do AuditLog. Para auditoria administrativa, ver
+ * `getAuditLogEntries`.
+ */
+export async function getOperationalTimeline(start: Date, end: Date, limit = 200): Promise<AuditEntry[]> {
   const [
     attendances,
     meals,
@@ -165,9 +171,6 @@ export async function getRecentActivity(start: Date, end: Date, limit = 200): Pr
     });
   }
 
-  const auditLogEntries = await getAuditLogEntries(start, end);
-  entries.push(...auditLogEntries);
-
   entries.sort((a, b) => b.time.getTime() - a.time.getTime());
   return entries.slice(0, limit);
 }
@@ -187,6 +190,10 @@ function describeAuditLog(entry: { entity: string; action: string; oldData: unkn
       if (entry.action === "CREATE") return `Cadastrou ${newData.name ?? ""} como pessoa autorizada a retirar.`;
       return `Alterou o status de uma pessoa autorizada de ${oldData.status ?? "?"} para ${newData.status ?? "?"}.`;
     case "MonthlyInvoice":
+      if (entry.action === "ADJUSTMENT") {
+        return `Lançou ${newData.type ?? "ajuste"} de ${currency(Number(newData.amount ?? 0))} — ${newData.description ?? ""}. Novo total: ${currency(Number(newData.totalAmount ?? 0))}.`;
+      }
+      if (entry.action === "CANCEL") return "Cancelou a cobrança.";
       return `Fechou a mensalidade de ${newData.referenceMonth}/${newData.referenceYear}: ${currency(Number(newData.totalAmount ?? 0))}.`;
     case "Payment":
       return `Registrou pagamento de ${currency(Number(newData.amount ?? 0))} (saldo: ${oldData.status ?? "?"} → ${newData.status ?? "?"}).`;
@@ -197,6 +204,11 @@ function describeAuditLog(entry: { entity: string; action: string; oldData: unkn
   }
 }
 
+/**
+ * Auditoria de segurança: lê exclusivamente a tabela `AuditLog` (ver `src/lib/audit-log.ts`) — alterações
+ * administrativas e financeiras sensíveis (cadastro/permissão, fechamento, pagamento, ajuste, cancelamento,
+ * ativação de conta). Nunca inclui eventos de rotina — isso é a timeline operacional (`getOperationalTimeline`).
+ */
 export async function getAuditLogEntries(start: Date, end: Date): Promise<AuditEntry[]> {
   const logs = await prisma.auditLog.findMany({
     where: { createdAt: { gte: start, lt: end } },
