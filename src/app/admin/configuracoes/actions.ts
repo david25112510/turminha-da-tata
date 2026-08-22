@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/authz";
+import { recordAuditLog } from "@/lib/audit-log";
 
 export async function toggleUserActiveAction(formData: FormData) {
   const session = await requireAdmin();
@@ -14,6 +15,17 @@ export async function toggleUserActiveAction(formData: FormData) {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new Error("Usuário não encontrado.");
 
-  await prisma.user.update({ where: { id: user.id }, data: { active: !user.active } });
+  const active = !user.active;
+  await prisma.user.update({ where: { id: user.id }, data: { active } });
+
+  await recordAuditLog({
+    actorUserId: session.id,
+    action: "UPDATE",
+    entity: "User",
+    entityId: user.id,
+    oldData: { active: user.active, email: user.email },
+    newData: { active },
+  });
+
   revalidatePath("/admin/configuracoes");
 }

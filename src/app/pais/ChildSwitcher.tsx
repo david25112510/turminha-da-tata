@@ -3,15 +3,15 @@ import Link from "next/link";
 type Props = {
   basePath: string;
   activeChildId: string;
-  children: { childId: string; child: { fullName: string; preferredName: string | null } }[];
+  guardianChildren: { childId: string; child: { fullName: string; preferredName: string | null } }[];
 };
 
-export function ChildSwitcher({ basePath, activeChildId, children }: Props) {
-  if (children.length <= 1) return null;
+export function ChildSwitcher({ basePath, activeChildId, guardianChildren }: Props) {
+  if (guardianChildren.length <= 1) return null;
 
   return (
     <div className="flex gap-2 flex-wrap">
-      {children.map((link) => (
+      {guardianChildren.map((link) => (
         <Link
           key={link.childId}
           href={`${basePath}?childId=${link.childId}`}

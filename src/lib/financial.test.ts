@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { calculateOvertimeForAttendance } from "./financial";
 
 function at(hour: number, minute: number) {
@@ -45,5 +45,73 @@ describe("calculateOvertimeForAttendance", () => {
     const result = calculateOvertimeForAttendance(at(18, 0), "17:30", 0, 60);
     expect(result.minutesLate).toBe(30);
     expect(result.amount).toBeCloseTo(30, 2);
+  });
+});
+
+describe("closeMonth", () => {
+  const findUniqueInvoice = vi.fn();
+  const findUniqueOrThrowChild = vi.fn();
+  const findManyAttendance = vi.fn();
+  const upsertInvoice = vi.fn();
+
+  vi.doMock("@/lib/prisma", () => ({
+    prisma: {
+      monthlyInvoice: {
+        findUnique: (...args: unknown[]) => findUniqueInvoice(...args),
+        upsert: (...args: unknown[]) => upsertInvoice(...args),
+      },
+      child: { findUniqueOrThrow: (...args: unknown[]) => findUniqueOrThrowChild(...args) },
+      attendance: { findMany: (...args: unknown[]) => findManyAttendance(...args) },
+    },
+  }));
+
+  const baseChild = {
+    id: "child-1",
+    monthlyFee: 900,
+    overtimeHourRate: 15,
+    contractedExitTime: "17:30",
+    toleranceMinutes: 15,
+    dueDay: 5,
+  };
+
+  it.each(["PAID", "PARTIALLY_PAID", "CANCELLED"])(
+    "refuses to recalculate a %s invoice",
+    async (status) => {
+      vi.resetModules();
+      findUniqueInvoice.mockReset().mockResolvedValueOnce({ status });
+      findUniqueOrThrowChild.mockReset();
+      findManyAttendance.mockReset();
+      upsertInvoice.mockReset();
+
+      const { closeMonth } = await import("./financial");
+      await expect(closeMonth("child-1", 9, 2026)).rejects.toThrow(
+        "Esta cobrança já foi paga ou cancelada e não pode ser recalculada."
+      );
+      expect(upsertInvoice).not.toHaveBeenCalled();
+    }
+  );
+
+  it.each(["PENDING", "OVERDUE"])("recalculates a %s invoice normally", async (status) => {
+    vi.resetModules();
+    findUniqueInvoice.mockReset().mockResolvedValueOnce({ status });
+    findUniqueOrThrowChild.mockReset().mockResolvedValue(baseChild);
+    findManyAttendance.mockReset().mockResolvedValueOnce([]);
+    upsertInvoice.mockReset().mockResolvedValueOnce({ id: "invoice-1" });
+
+    const { closeMonth } = await import("./financial");
+    await closeMonth("child-1", 9, 2026);
+    expect(upsertInvoice).toHaveBeenCalledOnce();
+  });
+
+  it("creates a fresh invoice when none exists yet for the period", async () => {
+    vi.resetModules();
+    findUniqueInvoice.mockReset().mockResolvedValueOnce(null);
+    findUniqueOrThrowChild.mockReset().mockResolvedValue(baseChild);
+    findManyAttendance.mockReset().mockResolvedValueOnce([]);
+    upsertInvoice.mockReset().mockResolvedValueOnce({ id: "invoice-1" });
+
+    const { closeMonth } = await import("./financial");
+    await closeMonth("child-1", 9, 2026);
+    expect(upsertInvoice).toHaveBeenCalledOnce();
   });
 });

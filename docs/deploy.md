@@ -48,7 +48,26 @@ npm run db:restore -- ./backups/arquivo.dump
 
 ## Uploads de imagem
 
-As fotos enviadas pelo app (crianças, atividades) são hoje salvas em disco local, em `public/uploads/`. Isso funciona para um único servidor, mas **não é adequado** para hospedagem com múltiplas instâncias ou containers efêmeros (Vercel, por exemplo, tem sistema de arquivos somente leitura em produção). Antes de ir para produção nesses ambientes, migre `src/lib/photo-actions.ts` para um serviço de armazenamento de objetos (S3, R2, Google Cloud Storage etc.).
+As fotos enviadas pelo app são gravadas via `src/lib/storage.ts`, que suporta dois modos:
+
+- **Sem configuração** (`STORAGE_S3_BUCKET` vazio): grava em disco local, em `public/uploads/`. Funciona para
+  desenvolvimento e para hospedagem de instância única com disco persistente, mas **não é adequado** para
+  múltiplas instâncias ou containers efêmeros (Vercel, por exemplo, tem sistema de arquivos somente leitura em
+  produção).
+- **Com `STORAGE_S3_BUCKET` configurado**: envia para um bucket S3-compatível (AWS S3, Cloudflare R2 ou
+  qualquer provedor compatível). Variáveis:
+
+  | Variável | Descrição |
+  | --- | --- |
+  | `STORAGE_S3_BUCKET` | Nome do bucket. Definir ativa o modo objeto — sem isso o app usa disco local. |
+  | `STORAGE_S3_REGION` | Região (ex.: `us-east-1` na AWS; `auto` funciona na maioria dos provedores compatíveis, incluindo R2). |
+  | `STORAGE_S3_ENDPOINT` | Endpoint customizado (ex.: `https://<account>.r2.cloudflarestorage.com` no R2). Deixe vazio para AWS S3. |
+  | `STORAGE_S3_ACCESS_KEY_ID` / `STORAGE_S3_SECRET_ACCESS_KEY` | Credenciais de acesso ao bucket. |
+  | `STORAGE_S3_PUBLIC_URL` | URL pública base do bucket (domínio customizado, CDN, ou o link `r2.dev`/website estático). Usada para montar a URL de cada foto e liberada automaticamente em `next.config.ts` para o `next/image`. |
+
+  O bucket precisa permitir leitura pública dos objetos enviados (ou estar atrás de um CDN/domínio que sirva
+  publicamente) — hoje as fotos não usam URL assinada, só controle de acesso pela própria aplicação (autorização
+  de imagem da criança, ver seção de Segurança).
 
 ## PWA
 

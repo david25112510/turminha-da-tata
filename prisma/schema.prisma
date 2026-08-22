@@ -38,6 +38,7 @@ model User {
   photos                  Photo[]
   announcementsCreated    Announcement[]
   paymentsRecorded        Payment[]
+  auditLogs               AuditLog[]
 
   @@map("users")
 }
@@ -136,6 +137,8 @@ model Guardian {
   announcementsTargeted    Announcement[]
   notifications            Notification[]
   pushSubscriptions        PushSubscription[]
+  attendanceCheckIns       Attendance[] @relation("AttendanceCheckInGuardian")
+  attendanceCheckOuts      Attendance[] @relation("AttendanceCheckOutGuardian")
 
   @@map("guardians")
 }
@@ -190,6 +193,9 @@ model AuthorizedPickupPerson {
   child           Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
   authorizedBy    Guardian @relation(fields: [authorizedByGuardianId], references: [id])
 
+  attendanceCheckIns  Attendance[] @relation("AttendanceCheckInAuthorizedPerson")
+  attendanceCheckOuts Attendance[] @relation("AttendanceCheckOutAuthorizedPerson")
+
   @@map("authorized_pickup_people")
 }
 
@@ -206,11 +212,15 @@ model Attendance {
   checkInPersonName       String?
   checkInPersonRelation   String?
   checkInReceivedById     String?
+  checkInGuardianId               String?
+  checkInAuthorizedPickupPersonId String?
 
   checkOutTime            DateTime?
   checkOutPersonName      String?
   checkOutPersonRelation  String?
   checkOutReceivedById    String?
+  checkOutGuardianId               String?
+  checkOutAuthorizedPickupPersonId String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -218,6 +228,11 @@ model Attendance {
   child            Child @relation(fields: [childId], references: [id], onDelete: Cascade)
   checkInReceivedBy  User? @relation("AttendanceCheckInBy", fields: [checkInReceivedById], references: [id])
   checkOutReceivedBy User? @relation("AttendanceCheckOutBy", fields: [checkOutReceivedById], references: [id])
+
+  checkInGuardian               Guardian?               @relation("AttendanceCheckInGuardian", fields: [checkInGuardianId], references: [id])
+  checkInAuthorizedPickupPerson AuthorizedPickupPerson? @relation("AttendanceCheckInAuthorizedPerson", fields: [checkInAuthorizedPickupPersonId], references: [id])
+  checkOutGuardian               Guardian?               @relation("AttendanceCheckOutGuardian", fields: [checkOutGuardianId], references: [id])
+  checkOutAuthorizedPickupPerson AuthorizedPickupPerson? @relation("AttendanceCheckOutAuthorizedPerson", fields: [checkOutAuthorizedPickupPersonId], references: [id])
 
   @@unique([childId, date])
   @@index([date])
@@ -654,4 +669,27 @@ model PushSubscription {
 
   @@index([guardianId])
   @@map("push_subscriptions")
+}
+
+// ---------------------------------------------------------------------------
+// Auditoria administrativa
+// ---------------------------------------------------------------------------
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorUserId String
+  action      String
+  entity      String
+  entityId    String
+  oldData     Json?
+  newData     Json?
+  ip          String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  actor User @relation(fields: [actorUserId], references: [id])
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
 }

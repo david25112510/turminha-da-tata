@@ -3,10 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdminChild } from "@/lib/authz";
+import { recordAuditLog } from "@/lib/audit-log";
 
 export async function addAuthorizedPersonAction(formData: FormData) {
   const childId = String(formData.get("childId") ?? "");
-  await requireAdminChild(childId);
+  const { user: admin } = await requireAdminChild(childId);
 
   const name = String(formData.get("name") ?? "").trim();
   const cpf = String(formData.get("cpf") ?? "").trim();
@@ -24,7 +25,7 @@ export async function addAuthorizedPersonAction(formData: FormData) {
   });
   if (!guardianLink) throw new Error("O responsável autorizador não está vinculado a esta criança.");
 
-  await prisma.authorizedPickupPerson.create({
+  const person = await prisma.authorizedPickupPerson.create({
     data: {
       childId,
       name,
@@ -36,20 +37,38 @@ export async function addAuthorizedPersonAction(formData: FormData) {
     },
   });
 
+  await recordAuditLog({
+    actorUserId: admin.id,
+    action: "CREATE",
+    entity: "AuthorizedPickupPerson",
+    entityId: person.id,
+    newData: { childId, name, relationship, authorizedByGuardianId },
+  });
+
   revalidatePath(`/admin/criancas/${childId}`);
 }
 
 export async function toggleAuthorizedPersonStatusAction(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   const childId = String(formData.get("childId") ?? "");
-  await requireAdminChild(childId);
+  const { user: admin } = await requireAdminChild(childId);
 
   const person = await prisma.authorizedPickupPerson.findUnique({ where: { id } });
   if (!person || person.childId !== childId) throw new Error("Pessoa autorizada não encontrada para esta criança.");
 
+  const newStatus = person.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
   await prisma.authorizedPickupPerson.update({
     where: { id: person.id },
-    data: { status: person.status === "ACTIVE" ? "INACTIVE" : "ACTIVE" },
+    data: { status: newStatus },
+  });
+
+  await recordAuditLog({
+    actorUserId: admin.id,
+    action: "UPDATE",
+    entity: "AuthorizedPickupPerson",
+    entityId: person.id,
+    oldData: { status: person.status },
+    newData: { status: newStatus },
   });
 
   revalidatePath(`/admin/criancas/${childId}`);

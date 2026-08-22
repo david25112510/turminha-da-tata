@@ -37,7 +37,7 @@ scripts/                 ferramentas de linha de comando (backup, ícones)
 docs/                    spec.md, deploy.md, architecture.md (este arquivo)
 public/
   icons/                 ícones do PWA
-  uploads/                fotos enviadas (não versionado, disco local)
+  uploads/                fotos enviadas quando não há storage S3/R2 configurado (não versionado, disco local)
   sw.js                   service worker
 ```
 
@@ -59,17 +59,20 @@ O schema completo está em `prisma/schema.prisma` (38 models/enums). Agrupado po
 ### Operação (registros diários — a "jornada")
 `Attendance`, `HomeDeparture`, `MealRecord`, `SleepRecord`, `HygieneRecord`, `Activity`/`ActivityChild` (N:N, uma atividade pode ter várias crianças), `MoodRecord`, `HealthProfile` (ficha fixa por criança), `HealthLog` (registros de temperatura/observação ao longo do tempo), `MedicationAuthorization`/`MedicationAdministration`, `Incident`, `Photo`.
 
-Todos esses models guardam **quem registrou** (`recordedById`/`administeredById`/etc., FK para `User`) e **quando**, o que sustenta tanto a jornada quanto a auditoria (ver abaixo) sem precisar de uma tabela de log separada.
+Todos esses models guardam **quem registrou** (`recordedById`/`administeredById`/etc., FK para `User`) e **quando**, o que sustenta tanto a jornada quanto a parte operacional da auditoria (ver "Auditoria" abaixo) sem precisar de uma tabela de log dedicada para esses eventos. `Attendance` também guarda `checkInGuardianId`/`checkInAuthorizedPickupPersonId` (e os equivalentes de saída) — FK opcional para o `Guardian`/`AuthorizedPickupPerson` resolvido pelo servidor no check-in/check-out, além do snapshot de nome/parentesco já existente (mantido para preservar o histórico mesmo se o cadastro da pessoa mudar depois).
 
 ### Comunicação
 - **Announcement** — comunicado publicado pela administração; `target: ALL | GUARDIAN | CHILD` decide se `targetGuardianId`/`targetChildId` são usados. `type: EVENT` com `eventDate` alimenta a Agenda.
 - **Notification** — item da central de notificações de um responsável, gerado automaticamente (ver "Pipeline de notificações").
 
 ### Financeiro
-- **MonthlyInvoice** — fechamento mensal de uma criança (`@@unique([childId, referenceMonth, referenceYear])`), com `monthlyFee`, `overtimeTotal`, `discounts`, `otherCharges`, `totalAmount`, `status`.
+- **MonthlyInvoice** — fechamento mensal de uma criança (`@@unique([childId, referenceMonth, referenceYear])`), com `monthlyFee`, `overtimeTotal`, `discounts`, `otherCharges`, `totalAmount`, `status`. Imutável depois de `PAID`/`PARTIALLY_PAID`/`CANCELLED` (ver "Cálculo de hora excedente" abaixo).
 - **Payment** — pagamento (parcial ou total) associado a uma invoice.
 
-O detalhamento diário das horas excedentes **não é armazenado** — é sempre recalculado a partir de `Attendance` + configuração da criança (ver `src/lib/financial.ts`). Isso evita duplicar dado e garante que o detalhamento mostrado aos pais e ao admin nunca fique dessincronizado do total.
+O detalhamento diário das horas excedentes **não é armazenado** — é sempre recalculado a partir de `Attendance` + configuração da criança (ver `src/lib/financial.ts`). Isso evita duplicar dado e garante que o detalhamento mostrado aos pais e ao admin nunca fique dessincronizado do total (ver ressalva em "Dívida técnica").
+
+### Auditoria
+- **AuditLog** — trilha estruturada de mutações administrativas: `actorUserId`, `action`, `entity`/`entityId`, `oldData`/`newData` (JSON), `ip`, `userAgent`, `createdAt`. Escrita só por `recordAuditLog()` (`src/lib/audit-log.ts`), nunca diretamente pelas rotas — ver "Pipeline de notificações"-equivalente em "Lógica de negócio central".
 
 ## Autenticação e controle de acesso
 
@@ -92,10 +95,10 @@ O detalhamento diário das horas excedentes **não é armazenado** — é sempre
 ### Cálculo de hora excedente (`src/lib/financial.ts`)
 Método de **tolerância como limiar**, não como desconto: se o atraso na saída for menor ou igual à tolerância configurada da criança, não há cobrança; se ultrapassar, cobra-se o atraso **total** em minutos (não só o excedente à tolerância) pelo valor por minuto (`overtimeHourRate / 60`). Essa regra foi validada contra o exemplo exato da especificação (42 min de atraso × R$0,30/min = R$12,60).
 
-`getMonthlyOvertimeBreakdown` aplica esse cálculo a todas as `Attendance` do mês com `checkOutTime`, e `closeMonth` soma ao `monthlyFee` da criança para gerar/atualizar a `MonthlyInvoice` (idempotente via upsert). `effectiveStatus` computa "Vencido" em tempo de leitura quando `dueDate` já passou e o status ainda é `PENDING`/`PARTIALLY_PAID`, sem precisar de um job agendado.
+`getMonthlyOvertimeBreakdown` aplica esse cálculo a todas as `Attendance` do mês com `checkOutTime`, e `closeMonth` soma ao `monthlyFee` da criança para gerar/atualizar a `MonthlyInvoice` (upsert). Uma fatura já `PAID`, `PARTIALLY_PAID` ou `CANCELLED` é imutável: `closeMonth` recusa recalcular (lança erro) em vez de sobrescrever silenciosamente — só faturas `PENDING`/`OVERDUE` (ou inexistentes) podem ser (re)fechadas. `effectiveStatus` computa "Vencido" em tempo de leitura quando `dueDate` já passou e o status ainda é `PENDING`/`PARTIALLY_PAID`, sem precisar de um job agendado.
 
-### Auditoria (`src/lib/audit.ts`)
-`getRecentActivity(start, end)` não usa uma tabela de log dedicada — agrega os mesmos models operacionais (mais `Payment`/`MonthlyInvoice`) filtrando pelo intervalo, e monta uma entrada por evento com ator, criança e descrição. É o mesmo padrão de dado usado pela jornada, só que sem filtrar por criança e cruzando todos os tipos de registro.
+### Auditoria (`src/lib/audit.ts`, `src/lib/audit-log.ts`)
+`getRecentActivity(start, end)` combina duas fontes: os models operacionais (mais `Payment`/`MonthlyInvoice`), agregados por intervalo como antes, **e** a tabela dedicada `AuditLog` (via `getAuditLogEntries`), que registra `actorUserId`, `entity`/`entityId`, `oldData`/`newData` (JSON) e IP/user-agent para as mutações administrativas sensíveis — cadastro de criança, cadastro/permissões de responsável, pessoa autorizada, fechamento de mês, pagamento, ativar/desativar usuário. `recordAuditLog()` em `src/lib/audit-log.ts` é chamado a partir de cada Server Action correspondente (nunca dentro de código de leitura); falha ao gravar o log não derruba a operação principal (try/catch com log em `console.error`). As duas fontes são mescladas e ordenadas antes de chegar em `/admin/auditoria`.
 
 ### Dashboard e relatórios (`src/lib/dashboard.ts`, `src/lib/reports.ts`)
 O dashboard (`getDashboardData`) calcula indicadores e alertas em tempo real a cada carregamento da página — não há cache/materialização. Os relatórios (`getChildrenReport`, `getRoutineReport`, `getSecurityReport`, `getFinancialReport`) recebem um intervalo de datas e usam principalmente `groupBy` do Prisma para agregações.
@@ -139,10 +142,11 @@ Rotas com `[id]`/`[childId]` são dinâmicas; todas as demais listadas como "Adm
 
 ## Dívida técnica e limitações conhecidas
 
-- **Uploads em disco local** (`public/uploads/`): não funciona em hospedagem com múltiplas instâncias ou filesystem somente-leitura (ex. Vercel). Precisa migrar para armazenamento de objetos antes de produção nesses ambientes — detalhado em `deploy.md`.
-- **Sem testes automatizados**: toda validação até aqui foi manual (typecheck + build + smoke test via curl/scripts). Cobertura automatizada ainda não existe.
-- **Sem rate limiting** no login nem em nenhuma Server Action.
+- **Uploads**: `src/lib/storage.ts` envia para um bucket S3-compatível quando `STORAGE_S3_BUCKET` está configurado; sem isso, cai para disco local (`public/uploads/`), que não funciona em hospedagem com múltiplas instâncias ou filesystem somente-leitura (ex. Vercel) — detalhado em `deploy.md`.
+- **Rate limiting do login em memória** (`src/lib/rate-limit.ts`): não sobrevive a restart nem é compartilhado entre múltiplas instâncias. Migrar para um store compartilhado (Redis) antes de hospedar com mais de uma instância — detalhado em `deploy.md`.
+- **Detalhamento de horas excedentes não é congelado no fechamento** — `getMonthlyOvertimeBreakdown` recalcula ao vivo a partir de `Attendance` mesmo depois de uma `MonthlyInvoice` fechada. Hoje não existe nenhum caminho de código que edite uma `Attendance` já lançada (histórico é append-only pelas Server Actions da cuidadora), então não há risco real de divergência — mas se um dia existir edição retroativa de presença, isso passa a exigir um model `InvoiceItem` com fotografia dos itens no momento do fechamento.
+- **Sem tela de edição de criança**: `createChildAction` é create-only; alterar mensalidade, horário contratado ou tolerância depois do cadastro exige acesso direto ao banco (Prisma Studio). Adicionar essa tela deve vir acompanhada de log em `AuditLog` (ver "Auditoria"), do mesmo jeito que as demais mutações administrativas.
 - **Cores da marca hardcoded** em vez de centralizadas no tema do Tailwind — refatoração de baixo risco, mas não feita ainda.
-- **Notificações são apenas in-app** (tabela `Notification`, lidas ao abrir `/pais`); não há push/e-mail/SMS.
-- **`getDashboardData`/relatórios recalculam tudo a cada request** — não há cache. Para o volume de uma creche isso é não é um problema hoje, mas não escala indefinidamente sem revisão.
+- **Notificações são in-app + push** (tabela `Notification` e Web Push via `PushSubscription`/`src/lib/push.ts`); não há e-mail/SMS.
+- **`getDashboardData`/relatórios recalculam tudo a cada request** — não há cache. Para o volume de uma creche isso não é um problema hoje, mas não escala indefinidamente sem revisão.
 - **Alertas de "horas excedentes acumuladas"** no dashboard não têm um limiar configurável — qualquer valor acima de zero aparece como alerta.

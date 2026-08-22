@@ -1,13 +1,12 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { notifyGuardians } from "@/lib/notifications";
 import { requireActiveChild, requireAdmin, requireCaregiver } from "@/lib/authz";
 import { auth } from "@/auth";
+import { uploadFile } from "@/lib/storage";
 
 const MAX_SIZE_BYTES = 8 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -35,15 +34,13 @@ export async function uploadChildPhotoAction(formData: FormData) {
 
   const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
   const fileName = `${Date.now()}-${randomUUID()}.${ext}`;
-  const dir = path.join(process.cwd(), "public", "uploads", "children", childId);
-  await mkdir(dir, { recursive: true });
   const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(dir, fileName), buffer);
+  const url = await uploadFile(`children/${childId}/${fileName}`, buffer, file.type);
 
   await prisma.photo.create({
     data: {
       childId,
-      url: `/uploads/children/${childId}/${fileName}`,
+      url,
       caption: caption || null,
       uploadedById: session.user.id,
     },

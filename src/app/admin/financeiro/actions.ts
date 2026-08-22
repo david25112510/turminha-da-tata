@@ -6,9 +6,10 @@ import { closeMonth } from "@/lib/financial";
 import { notifyGuardians } from "@/lib/notifications";
 import { MONTH_LABELS } from "@/lib/labels";
 import { requireAdmin } from "@/lib/authz";
+import { recordAuditLog } from "@/lib/audit-log";
 
 export async function closeMonthAction(formData: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const childId = String(formData.get("childId") ?? "");
   const month = Number(formData.get("month"));
   const year = Number(formData.get("year"));
@@ -24,6 +25,23 @@ export async function closeMonthAction(formData: FormData) {
   if (!child || child.status !== "ACTIVE") throw new Error("Criança não encontrada ou inativa.");
 
   const invoice = await closeMonth(childId, month, year, discounts, otherCharges);
+
+  await recordAuditLog({
+    actorUserId: admin.id,
+    action: "CLOSE_MONTH",
+    entity: "MonthlyInvoice",
+    entityId: invoice.id,
+    newData: {
+      childId,
+      referenceMonth: month,
+      referenceYear: year,
+      totalAmount: Number(invoice.totalAmount),
+      overtimeTotal: Number(invoice.overtimeTotal),
+      discounts,
+      otherCharges,
+    },
+  });
+
   const currency = (n: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
   await notifyGuardians(
     childId,
@@ -55,7 +73,7 @@ export async function registerPaymentAction(formData: FormData) {
   const remaining = Number(invoice.totalAmount) - Number(invoice.paidAmount);
   if (amount > remaining + 0.009) throw new Error("O pagamento não pode exceder o saldo da cobrança.");
 
-  await prisma.payment.create({
+  const payment = await prisma.payment.create({
     data: { invoiceId, amount, method: method || null, notes: notes || null, recordedById: admin.id },
   });
 
@@ -65,6 +83,15 @@ export async function registerPaymentAction(formData: FormData) {
   await prisma.monthlyInvoice.update({
     where: { id: invoiceId },
     data: { paidAmount: newPaidAmount, status },
+  });
+
+  await recordAuditLog({
+    actorUserId: admin.id,
+    action: "CREATE",
+    entity: "Payment",
+    entityId: payment.id,
+    oldData: { paidAmount: Number(invoice.paidAmount), status: invoice.status },
+    newData: { childId, paidAmount: newPaidAmount, status, amount, method: method || null },
   });
 
   revalidatePath(`/admin/financeiro/${childId}`);

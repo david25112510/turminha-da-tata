@@ -31,7 +31,7 @@ export default async function GuardianHomePage({
 
   return (
     <div className="p-6 flex flex-col gap-5 max-w-2xl mx-auto">
-      <ChildSwitcher basePath="/pais" activeChildId={link.childId} children={guardian.children} />
+      <ChildSwitcher basePath="/pais" activeChildId={link.childId} guardianChildren={guardian.children} />
 
       <div className="bg-[#FFFDF8] rounded-2xl shadow-sm p-6 flex flex-col gap-2">
         <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-[#2E2418]">

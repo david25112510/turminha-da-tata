@@ -25,6 +25,9 @@ export async function checkInAction(formData: FormData) {
   if (existing?.checkInTime) throw new Error("A chegada desta criança já foi registrada hoje.");
   if (existing?.checkOutTime) throw new Error("Não é possível registrar chegada após uma saída.");
 
+  const checkInGuardianId = personType === "GUARDIAN" ? person.id : null;
+  const checkInAuthorizedPickupPersonId = personType === "AUTHORIZED" ? person.id : null;
+
   const attendance = existing
     ? await prisma.attendance.update({
         where: { id: existing.id },
@@ -33,6 +36,8 @@ export async function checkInAction(formData: FormData) {
           checkInPersonName: person.name,
           checkInPersonRelation: person.relationship,
           checkInReceivedById: caregiver.id,
+          checkInGuardianId,
+          checkInAuthorizedPickupPersonId,
         },
         include: { child: true },
       })
@@ -44,6 +49,8 @@ export async function checkInAction(formData: FormData) {
           checkInPersonName: person.name,
           checkInPersonRelation: person.relationship,
           checkInReceivedById: caregiver.id,
+          checkInGuardianId,
+          checkInAuthorizedPickupPersonId,
         },
         include: { child: true },
       });
@@ -77,6 +84,8 @@ export async function checkOutAction(formData: FormData) {
       checkOutPersonName: person.name,
       checkOutPersonRelation: person.relationship,
       checkOutReceivedById: caregiver.id,
+      checkOutGuardianId: personType === "GUARDIAN" ? person.id : null,
+      checkOutAuthorizedPickupPersonId: personType === "AUTHORIZED" ? person.id : null,
     },
     include: { child: true },
   });

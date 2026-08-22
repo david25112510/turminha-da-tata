@@ -165,6 +165,66 @@ export async function getRecentActivity(start: Date, end: Date, limit = 200): Pr
     });
   }
 
+  const auditLogEntries = await getAuditLogEntries(start, end);
+  entries.push(...auditLogEntries);
+
   entries.sort((a, b) => b.time.getTime() - a.time.getTime());
   return entries.slice(0, limit);
+}
+
+const currency = (n: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
+
+function describeAuditLog(entry: { entity: string; action: string; oldData: unknown; newData: unknown }) {
+  const oldData = (entry.oldData ?? {}) as Record<string, unknown>;
+  const newData = (entry.newData ?? {}) as Record<string, unknown>;
+
+  switch (entry.entity) {
+    case "Child":
+      return `Cadastrou a criança ${newData.fullName ?? ""} — mensalidade ${currency(Number(newData.monthlyFee ?? 0))}.`;
+    case "Guardian":
+      return `Cadastrou o responsável ${newData.name ?? ""}${newData.portalAccessCreated ? " (com acesso ao portal)" : ""}.`;
+    case "AuthorizedPickupPerson":
+      if (entry.action === "CREATE") return `Cadastrou ${newData.name ?? ""} como pessoa autorizada a retirar.`;
+      return `Alterou o status de uma pessoa autorizada de ${oldData.status ?? "?"} para ${newData.status ?? "?"}.`;
+    case "MonthlyInvoice":
+      return `Fechou a mensalidade de ${newData.referenceMonth}/${newData.referenceYear}: ${currency(Number(newData.totalAmount ?? 0))}.`;
+    case "Payment":
+      return `Registrou pagamento de ${currency(Number(newData.amount ?? 0))} (saldo: ${oldData.status ?? "?"} → ${newData.status ?? "?"}).`;
+    case "User":
+      return `Alterou o status da conta ${oldData.email ?? ""} de ${oldData.active ? "ativa" : "inativa"} para ${newData.active ? "ativa" : "inativa"}.`;
+    default:
+      return `${entry.action} em ${entry.entity}.`;
+  }
+}
+
+export async function getAuditLogEntries(start: Date, end: Date): Promise<AuditEntry[]> {
+  const logs = await prisma.auditLog.findMany({
+    where: { createdAt: { gte: start, lt: end } },
+    include: { actor: true },
+    orderBy: { createdAt: "desc" },
+  });
+  if (logs.length === 0) return [];
+
+  const childIds = new Set<string>();
+  for (const log of logs) {
+    if (log.entity === "Child") childIds.add(log.entityId);
+    const data = { ...((log.oldData ?? {}) as Record<string, unknown>), ...((log.newData ?? {}) as Record<string, unknown>) };
+    if (typeof data.childId === "string") childIds.add(data.childId);
+  }
+  const children = await prisma.child.findMany({
+    where: { id: { in: [...childIds] } },
+    select: { id: true, fullName: true, preferredName: true },
+  });
+  const childNameById = new Map(children.map((c) => [c.id, childLabel(c)]));
+
+  return logs.map((log) => {
+    const data = { ...((log.oldData ?? {}) as Record<string, unknown>), ...((log.newData ?? {}) as Record<string, unknown>) };
+    const childId = log.entity === "Child" ? log.entityId : typeof data.childId === "string" ? data.childId : null;
+    return {
+      time: log.createdAt,
+      actorName: log.actor.name,
+      childName: childId ? childNameById.get(childId) ?? null : null,
+      action: describeAuditLog(log),
+    };
+  });
 }

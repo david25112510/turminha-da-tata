@@ -4,9 +4,10 @@ import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/authz";
+import { recordAuditLog } from "@/lib/audit-log";
 
 export async function createGuardianAction(formData: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const name = String(formData.get("name") ?? "").trim();
   const cpf = String(formData.get("cpf") ?? "").trim();
@@ -70,6 +71,24 @@ export async function createGuardianAction(formData: FormData) {
       authorizePickup,
       viewFinancial,
       receiveCommunications,
+    },
+  });
+
+  await recordAuditLog({
+    actorUserId: admin.id,
+    action: "CREATE",
+    entity: "Guardian",
+    entityId: guardian.id,
+    newData: {
+      name,
+      childId,
+      relationship,
+      isFinancialResponsible,
+      isPrimary,
+      viewFinancial,
+      authorizePickup,
+      authorizeMedication,
+      portalAccessCreated: createPortalAccess,
     },
   });
 

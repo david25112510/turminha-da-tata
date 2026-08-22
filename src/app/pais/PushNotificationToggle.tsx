@@ -12,15 +12,16 @@ function urlBase64ToUint8Array(base64String: string) {
 
 type Status = "unsupported" | "loading" | "subscribed" | "unsubscribed";
 
+function isPushSupported() {
+  if (typeof window === "undefined") return false;
+  return "serviceWorker" in navigator && "PushManager" in window && Boolean(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY);
+}
+
 export function PushNotificationToggle() {
-  const [status, setStatus] = useState<Status>("loading");
+  const [status, setStatus] = useState<Status>(() => (isPushSupported() ? "loading" : "unsupported"));
 
   useEffect(() => {
-    const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-    if (!("serviceWorker" in navigator) || !("PushManager" in window) || !publicKey) {
-      setStatus("unsupported");
-      return;
-    }
+    if (!isPushSupported()) return;
 
     navigator.serviceWorker.ready
       .then((registration) => registration.pushManager.getSubscription())

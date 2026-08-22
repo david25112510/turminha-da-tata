@@ -29,7 +29,7 @@ export default async function GuardianJourneyPage({
 
   return (
     <div className="p-6 flex flex-col gap-5 max-w-2xl mx-auto">
-      <ChildSwitcher basePath="/pais/jornada" activeChildId={link.childId} children={guardian.children} />
+      <ChildSwitcher basePath="/pais/jornada" activeChildId={link.childId} guardianChildren={guardian.children} />
 
       <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-[#2E2418]">
         Jornada de hoje — {link.child.preferredName || link.child.fullName}

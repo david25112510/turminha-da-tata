@@ -4,9 +4,10 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { WEEKDAYS } from "@/lib/labels";
 import { requireAdmin } from "@/lib/authz";
+import { recordAuditLog } from "@/lib/audit-log";
 
 export async function createChildAction(formData: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const fullName = String(formData.get("fullName") ?? "").trim();
   const preferredName = String(formData.get("preferredName") ?? "").trim();
@@ -31,7 +32,7 @@ export async function createChildAction(formData: FormData) {
   if (!Number.isFinite(Number(overtimeHourRate)) || Number(overtimeHourRate) < 0) throw new Error("Valor da hora excedente inválido.");
   if (!Number.isInteger(dueDay) || dueDay < 1 || dueDay > 31) throw new Error("Dia de vencimento inválido.");
 
-  await prisma.child.create({
+  const child = await prisma.child.create({
     data: {
       fullName,
       preferredName: preferredName || null,
@@ -48,6 +49,22 @@ export async function createChildAction(formData: FormData) {
       overtimeHourRate,
       dueDay,
       imageAuthorized,
+    },
+  });
+
+  await recordAuditLog({
+    actorUserId: admin.id,
+    action: "CREATE",
+    entity: "Child",
+    entityId: child.id,
+    newData: {
+      fullName: child.fullName,
+      monthlyFee,
+      overtimeHourRate,
+      contractedEntryTime,
+      contractedExitTime,
+      toleranceMinutes,
+      dueDay,
     },
   });
 

@@ -50,6 +50,8 @@ export async function getMonthlyOvertimeBreakdown(childId: string, month: number
   return { entries, total };
 }
 
+const IMMUTABLE_INVOICE_STATUSES = new Set(["PAID", "PARTIALLY_PAID", "CANCELLED"]);
+
 export async function closeMonth(
   childId: string,
   month: number,
@@ -57,6 +59,13 @@ export async function closeMonth(
   discounts = 0,
   otherCharges = 0
 ) {
+  const existing = await prisma.monthlyInvoice.findUnique({
+    where: { childId_referenceMonth_referenceYear: { childId, referenceMonth: month, referenceYear: year } },
+  });
+  if (existing && IMMUTABLE_INVOICE_STATUSES.has(existing.status)) {
+    throw new Error("Esta cobrança já foi paga ou cancelada e não pode ser recalculada.");
+  }
+
   const child = await prisma.child.findUniqueOrThrow({ where: { id: childId } });
   const { total: overtimeTotal } = await getMonthlyOvertimeBreakdown(childId, month, year);
   const monthlyFee = Number(child.monthlyFee);
