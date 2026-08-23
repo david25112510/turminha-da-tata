@@ -578,6 +578,7 @@ enum NotificationType {
   INCIDENT
   ANNOUNCEMENT
   FINANCIAL
+  MEDICATION
 }
 
 model Notification {
