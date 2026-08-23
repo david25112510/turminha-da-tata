@@ -33,6 +33,12 @@ test.describe("isolamento de dados entre famílias", () => {
     expect(body).not.toContain(E2E_CHILD_B.preferredName);
   });
 
+  test("responsável não vê atividades de uma criança de outra família via URL", async ({ page }) => {
+    await page.goto(`/pais/atividades?childId=${E2E_CHILD_B.id}`);
+    const body = await page.locator("body").innerText();
+    expect(body).not.toContain(E2E_CHILD_B.preferredName);
+  });
+
   test("responsável continua vendo a própria criança normalmente", async ({ page }) => {
     await page.goto("/pais/jornada");
     await expect(page.getByRole("heading", { name: new RegExp(E2E_CHILD_A.preferredName) })).toBeVisible();
