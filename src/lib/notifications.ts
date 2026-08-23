@@ -31,8 +31,7 @@ export async function notifyGuardians(
   });
 
   if (isPushConfigured()) {
-    await Promise.all(
-      links.map((link) => sendPushToGuardian(link.guardianId, { title, body, url: "/pais" }))
-    );
+    const url = `/pais/jornada?childId=${childId}`;
+    await Promise.all(links.map((link) => sendPushToGuardian(link.guardianId, { title, body, url })));
   }
 }

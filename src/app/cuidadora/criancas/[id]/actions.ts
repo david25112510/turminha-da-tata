@@ -42,7 +42,8 @@ export async function startSleepAction(formData: FormData) {
   });
   if (openSleep) throw new Error("Já existe uma soneca em andamento para esta criança hoje.");
 
-  await prisma.sleepRecord.create({ data: { childId, startedById: user.id } });
+  const sleep = await prisma.sleepRecord.create({ data: { childId, startedById: user.id }, include: { child: true } });
+  await notifyGuardians(childId, "SLEEP", "Soneca", `${sleep.child.preferredName || sleep.child.fullName} começou a dormir.`);
   revalidate(childId);
 }
 
@@ -132,9 +133,17 @@ export async function addMedicationAdministrationAction(formData: FormData) {
     throw new Error("A autorização deste medicamento não está vigente.");
   }
 
-  await prisma.medicationAdministration.create({
+  const administration = await prisma.medicationAdministration.create({
     data: { childId, authorizationId, administeredById: user.id, notes: notes || null },
+    include: { child: true },
   });
+
+  await notifyGuardians(
+    childId,
+    "MEDICATION",
+    "Medicamento administrado",
+    `${administration.child.preferredName || administration.child.fullName} recebeu ${authorization.medication}.`
+  );
   revalidate(childId);
 }
 

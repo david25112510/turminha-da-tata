@@ -47,7 +47,7 @@ beforeEach(() => {
   requireCaregiverChild.mockReset().mockResolvedValue({ user: { id: "caregiver-1" }, child: { id: "child-1" } });
   notifyGuardians.mockReset().mockResolvedValue(undefined);
   createMeal.mockReset().mockResolvedValue({ child: { preferredName: "Maria", fullName: "Maria Silva" } });
-  createSleep.mockReset().mockResolvedValue({ id: "sleep-1" });
+  createSleep.mockReset().mockResolvedValue({ id: "sleep-1", child: { preferredName: "Maria", fullName: "Maria Silva" } });
   findUniqueSleep.mockReset();
   findFirstSleep.mockReset().mockResolvedValue(null);
   updateSleep.mockReset().mockResolvedValue({
@@ -88,7 +88,11 @@ describe("cuidadora registra sono (startSleepAction / endSleepAction)", () => {
     await startSleepAction(formData({ childId: "child-1" }));
 
     expect(requireCaregiverChild).toHaveBeenCalledWith("child-1");
-    expect(createSleep).toHaveBeenCalledWith({ data: { childId: "child-1", startedById: "caregiver-1" } });
+    expect(createSleep).toHaveBeenCalledWith({
+      data: { childId: "child-1", startedById: "caregiver-1" },
+      include: { child: true },
+    });
+    expect(notifyGuardians).toHaveBeenCalledWith("child-1", "SLEEP", "Soneca", "Maria começou a dormir.");
   });
 
   it("finaliza a soneca e calcula a duração", async () => {

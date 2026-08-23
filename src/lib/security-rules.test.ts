@@ -141,6 +141,7 @@ describe("medicamento inválido é bloqueado (addMedicationAdministrationAction)
   const requireCaregiverChild = vi.fn();
   const findUniqueAuthorization = vi.fn();
   const createAdministration = vi.fn();
+  const notifyGuardians = vi.fn();
 
   beforeEach(() => {
     vi.resetModules();
@@ -148,6 +149,7 @@ describe("medicamento inválido é bloqueado (addMedicationAdministrationAction)
     vi.doMock("@/lib/authz", () => ({
       requireCaregiverChild: (...args: unknown[]) => requireCaregiverChild(...args),
     }));
+    vi.doMock("@/lib/notifications", () => ({ notifyGuardians: (...args: unknown[]) => notifyGuardians(...args) }));
     vi.doMock("@/lib/prisma", () => ({
       prisma: {
         medicationAuthorization: { findUnique: (...args: unknown[]) => findUniqueAuthorization(...args) },
@@ -157,6 +159,7 @@ describe("medicamento inválido é bloqueado (addMedicationAdministrationAction)
     requireCaregiverChild.mockReset().mockResolvedValue({ user: { id: "caregiver-1" }, child: { id: "child-1" } });
     findUniqueAuthorization.mockReset();
     createAdministration.mockReset();
+    notifyGuardians.mockReset().mockResolvedValue(undefined);
   });
 
   function formData(authorizationId: string) {
@@ -203,14 +206,16 @@ describe("medicamento inválido é bloqueado (addMedicationAdministrationAction)
     findUniqueAuthorization.mockResolvedValueOnce({
       id: "auth-1",
       childId: "child-1",
+      medication: "Paracetamol",
       active: true,
       validFrom: new Date(2020, 0, 1),
       validUntil: null,
     });
-    createAdministration.mockResolvedValueOnce({ id: "adm-1" });
+    createAdministration.mockResolvedValueOnce({ id: "adm-1", child: { preferredName: "Maria", fullName: "Maria Silva" } });
     const { addMedicationAdministrationAction } = await import("@/app/cuidadora/criancas/[id]/actions");
     await addMedicationAdministrationAction(formData("auth-1"));
     expect(createAdministration).toHaveBeenCalledOnce();
+    expect(notifyGuardians).toHaveBeenCalledWith("child-1", "MEDICATION", "Medicamento administrado", "Maria recebeu Paracetamol.");
   });
 });
 
@@ -514,6 +519,7 @@ describe("eventos de rotina não geram AuditLog administrativo (addMedicationAdm
   const findUniqueAuthorization = vi.fn();
   const createAdministration = vi.fn();
   const recordAuditLog = vi.fn();
+  const notifyGuardians = vi.fn();
 
   beforeEach(() => {
     vi.resetModules();
@@ -521,6 +527,7 @@ describe("eventos de rotina não geram AuditLog administrativo (addMedicationAdm
     vi.doMock("@/lib/authz", () => ({
       requireCaregiverChild: (...args: unknown[]) => requireCaregiverChild(...args),
     }));
+    vi.doMock("@/lib/notifications", () => ({ notifyGuardians: (...args: unknown[]) => notifyGuardians(...args) }));
     // Espiona recordAuditLog só para provar que uma Server Action puramente operacional nunca a chama —
     // cuidadora/criancas/[id]/actions.ts nem importa "@/lib/audit-log" hoje; este teste é uma trava de regressão.
     vi.doMock("@/lib/audit-log", () => ({ recordAuditLog: (...args: unknown[]) => recordAuditLog(...args) }));
@@ -534,12 +541,14 @@ describe("eventos de rotina não geram AuditLog administrativo (addMedicationAdm
     findUniqueAuthorization.mockReset().mockResolvedValue({
       id: "auth-1",
       childId: "child-1",
+      medication: "Paracetamol",
       active: true,
       validFrom: new Date(2020, 0, 1),
       validUntil: null,
     });
-    createAdministration.mockReset().mockResolvedValue({ id: "adm-1" });
+    createAdministration.mockReset().mockResolvedValue({ id: "adm-1", child: { preferredName: "Maria", fullName: "Maria Silva" } });
     recordAuditLog.mockReset().mockResolvedValue(undefined);
+    notifyGuardians.mockReset().mockResolvedValue(undefined);
   });
 
   it("registrar administração de medicamento não gera entrada de AuditLog", async () => {
