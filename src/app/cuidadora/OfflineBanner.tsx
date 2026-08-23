@@ -1,21 +1,31 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
-/** Detecta perda de conexão e avisa a cuidadora — não implementa fila offline, só evita silêncio/confusão. */
+function subscribe(callback: () => void) {
+  window.addEventListener("online", callback);
+  window.addEventListener("offline", callback);
+  return () => {
+    window.removeEventListener("online", callback);
+    window.removeEventListener("offline", callback);
+  };
+}
+
+function getClientSnapshot() {
+  return navigator.onLine;
+}
+
+// O servidor não sabe a conectividade do dispositivo — assume online para casar com o request que já chegou
+// até ele. useSyncExternalStore troca para o valor real do cliente logo após a hidratação, sem warning de
+// mismatch (diferente de ler navigator.onLine direto num useState inicial, que pode divergir do SSR e quebrar
+// a hidratação quando o dispositivo já abre offline — ex.: PWA aberto sem conexão).
+function getServerSnapshot() {
+  return true;
+}
+
+/** Detecta perda de conexão e avisa (cuidadora e pais) — não implementa fila offline, só evita silêncio/confusão. */
 export function OfflineBanner() {
-  const [online, setOnline] = useState(() => (typeof navigator === "undefined" ? true : navigator.onLine));
-
-  useEffect(() => {
-    const goOnline = () => setOnline(true);
-    const goOffline = () => setOnline(false);
-    window.addEventListener("online", goOnline);
-    window.addEventListener("offline", goOffline);
-    return () => {
-      window.removeEventListener("online", goOnline);
-      window.removeEventListener("offline", goOffline);
-    };
-  }, []);
+  const online = useSyncExternalStore(subscribe, getClientSnapshot, getServerSnapshot);
 
   if (online) return null;
 
