@@ -1,8 +1,74 @@
 @import "tailwindcss";
 
+/*
+ * Design tokens — Turminha da Tata
+ * Paleta emocional: verde (cuidado), amarelo (alegria), coral/rosa (afeto), azul (segurança),
+ * lilás (desenvolvimento), off-white (fundo). Centralizada aqui para nunca espalhar hex pelos
+ * componentes — todo novo componente deve usar as classes geradas por essas variáveis
+ * (bg-tata-green, text-tata-ink, border-tata-border, etc.), nunca bg-[#hex].
+ */
 :root {
   --background: #fffbf2;
   --foreground: #2e2418;
+
+  /* Verde — cuidado */
+  --color-tata-green: #1fa787;
+  --color-tata-green-dark: #1f8a6e;
+  --color-tata-green-soft: #e4f4f0;
+
+  /* Amarelo — alegria */
+  --color-tata-yellow: #f0a93a;
+  --color-tata-yellow-dark: #9a6a10;
+  --color-tata-yellow-soft: #fff7e1;
+
+  /* Coral/rosa — afeto */
+  --color-tata-coral: #ff6f8e;
+  --color-tata-coral-dark: #e85570;
+  --color-tata-coral-deep: #c83f58;
+  --color-tata-coral-soft: #ffeef1;
+
+  /* Azul claro — segurança */
+  --color-tata-blue: #4a90c2;
+  --color-tata-blue-dark: #2f6e99;
+  --color-tata-blue-soft: #e8f3fa;
+
+  /* Lilás — desenvolvimento */
+  --color-tata-lilac: #8b7cc8;
+  --color-tata-lilac-dark: #6b5aa8;
+  --color-tata-lilac-soft: #eee9f9;
+
+  /* Vermelho — alerta pontual (raro, fora da paleta emocional principal) */
+  --color-tata-red: #b33a3a;
+
+  /* Tinta — texto sobre o off-white */
+  --color-tata-ink: #2e2418;
+  --color-tata-ink-strong: #4a3f33;
+  --color-tata-ink-deep: #3a2e22;
+  --color-tata-ink-soft: #6b5d4a;
+  --color-tata-ink-faint: #6f6252;
+  --color-tata-ink-muted: #9a8a72;
+  --color-tata-ink-muted-alt: #8a7a62;
+
+  /* Superfícies — off-white e variações, nunca branco puro */
+  --color-tata-bg: #fffbf2;
+  --color-tata-surface: #fffdf8;
+  --color-tata-surface-alt: #fdf8ee;
+  --color-tata-surface-warm: #fbf6ea;
+  --color-tata-surface-hover: #f3eee1;
+  --color-tata-border: #ece1cb;
+
+  /* Radius */
+  --radius-tata-sm: 12px;
+  --radius-tata-md: 16px;
+  --radius-tata-lg: 20px;
+  --radius-tata-xl: 28px;
+
+  /* Sombras suaves — nunca pesadas */
+  --shadow-tata-card: 0 2px 10px -2px rgb(46 36 24 / 0.08);
+  --shadow-tata-card-hover: 0 6px 20px -4px rgb(46 36 24 / 0.14);
+
+  /* Transição padrão de microinterações */
+  --ease-tata: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @theme inline {
@@ -10,9 +76,96 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-poppins);
   --font-display: var(--font-baloo);
+
+  --color-tata-green: var(--color-tata-green);
+  --color-tata-green-dark: var(--color-tata-green-dark);
+  --color-tata-green-soft: var(--color-tata-green-soft);
+  --color-tata-yellow: var(--color-tata-yellow);
+  --color-tata-yellow-dark: var(--color-tata-yellow-dark);
+  --color-tata-yellow-soft: var(--color-tata-yellow-soft);
+  --color-tata-coral: var(--color-tata-coral);
+  --color-tata-coral-dark: var(--color-tata-coral-dark);
+  --color-tata-coral-deep: var(--color-tata-coral-deep);
+  --color-tata-coral-soft: var(--color-tata-coral-soft);
+  --color-tata-blue: var(--color-tata-blue);
+  --color-tata-blue-dark: var(--color-tata-blue-dark);
+  --color-tata-blue-soft: var(--color-tata-blue-soft);
+  --color-tata-lilac: var(--color-tata-lilac);
+  --color-tata-lilac-dark: var(--color-tata-lilac-dark);
+  --color-tata-lilac-soft: var(--color-tata-lilac-soft);
+  --color-tata-red: var(--color-tata-red);
+  --color-tata-ink: var(--color-tata-ink);
+  --color-tata-ink-strong: var(--color-tata-ink-strong);
+  --color-tata-ink-deep: var(--color-tata-ink-deep);
+  --color-tata-ink-soft: var(--color-tata-ink-soft);
+  --color-tata-ink-faint: var(--color-tata-ink-faint);
+  --color-tata-ink-muted: var(--color-tata-ink-muted);
+  --color-tata-ink-muted-alt: var(--color-tata-ink-muted-alt);
+  --color-tata-bg: var(--color-tata-bg);
+  --color-tata-surface: var(--color-tata-surface);
+  --color-tata-surface-alt: var(--color-tata-surface-alt);
+  --color-tata-surface-warm: var(--color-tata-surface-warm);
+  --color-tata-surface-hover: var(--color-tata-surface-hover);
+  --color-tata-border: var(--color-tata-border);
+
+  --radius-tata-sm: var(--radius-tata-sm);
+  --radius-tata-md: var(--radius-tata-md);
+  --radius-tata-lg: var(--radius-tata-lg);
+  --radius-tata-xl: var(--radius-tata-xl);
+
+  --shadow-tata-card: var(--shadow-tata-card);
+  --shadow-tata-card-hover: var(--shadow-tata-card-hover);
+
+  --ease-tata: var(--ease-tata);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+/* Blob orgânico e sutil de fundo — usado com moderação em telas de destaque (login, home dos pais) */
+.tata-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+@keyframes tata-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes tata-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.tata-animate-in {
+  animation: tata-fade-in-up 0.35s var(--ease-tata) both;
+}
+
+.tata-animate-pop {
+  animation: tata-pop 0.25s var(--ease-tata) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tata-animate-in,
+  .tata-animate-pop {
+    animation: none;
+  }
 }
