@@ -138,11 +138,14 @@ export async function addMedicationAdministrationAction(formData: FormData) {
     include: { child: true },
   });
 
+  // Corpo genérico de propósito — igual ao padrão já usado em INCIDENT (linha ~119): o nome do
+  // medicamento é dado de saúde sensível e apareceria na notificação do sistema mesmo com a tela
+  // bloqueada. O detalhe completo (qual medicamento, dose) só fica visível na timeline após login.
   await notifyGuardians(
     childId,
     "MEDICATION",
     "Medicamento administrado",
-    `${administration.child.preferredName || administration.child.fullName} recebeu ${authorization.medication}.`
+    `Há uma atualização sobre a medicação de ${administration.child.preferredName || administration.child.fullName}.`
   );
   revalidate(childId);
 }

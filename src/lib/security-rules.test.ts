@@ -215,7 +215,12 @@ describe("medicamento inválido é bloqueado (addMedicationAdministrationAction)
     const { addMedicationAdministrationAction } = await import("@/app/cuidadora/criancas/[id]/actions");
     await addMedicationAdministrationAction(formData("auth-1"));
     expect(createAdministration).toHaveBeenCalledOnce();
-    expect(notifyGuardians).toHaveBeenCalledWith("child-1", "MEDICATION", "Medicamento administrado", "Maria recebeu Paracetamol.");
+    expect(notifyGuardians).toHaveBeenCalledWith(
+      "child-1",
+      "MEDICATION",
+      "Medicamento administrado",
+      "Há uma atualização sobre a medicação de Maria."
+    );
   });
 });
 
