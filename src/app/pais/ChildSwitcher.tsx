@@ -17,8 +17,8 @@ export function ChildSwitcher({ basePath, activeChildId, guardianChildren }: Pro
           href={`${basePath}?childId=${link.childId}`}
           className={`text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${
             link.childId === activeChildId
-              ? "bg-[#1FA787] text-white"
-              : "bg-white text-[#6B5D4A] border border-[#ECE1CB]"
+              ? "bg-tata-green text-white"
+              : "bg-tata-surface text-tata-ink-soft border border-tata-border"
           }`}
         >
           {link.child.preferredName || link.child.fullName}

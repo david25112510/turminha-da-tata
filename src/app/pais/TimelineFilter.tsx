@@ -46,7 +46,7 @@ export function TimelineFilter({ entries }: { entries: TimelineEntry[] }) {
             type="button"
             onClick={() => setActive(f.value)}
             className={`min-h-9 px-3.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
-              active === f.value ? "bg-[#1FA787] text-white" : "bg-white text-[#6B5D4A] border border-[#ECE1CB]"
+              active === f.value ? "bg-tata-green text-white" : "bg-tata-surface text-tata-ink-soft border border-tata-border"
             }`}
           >
             {f.label}

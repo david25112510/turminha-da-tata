@@ -1,9 +1,10 @@
 import { formatTime } from "@/lib/date";
+import { EmptyState } from "@/components/tata/EmptyState";
 
 export type TimelineEntry = { time: Date; label: string; detail: string };
 
 const ICONS: Record<string, string> = {
-  Chegada: "🟢",
+  Chegada: "💛",
   Saída: "🔵",
   Soneca: "😴",
   Higiene: "🧼",
@@ -19,23 +20,33 @@ function iconFor(label: string) {
   return ICONS[label] ?? "🍎"; // refeições têm rótulo dinâmico (Café da manhã, Almoço...) — cai aqui
 }
 
-/** Mesmo shape de TimelineEntry usado pela cuidadora (src/lib/journey.ts) — não duplica a lógica, só a exibição. */
+/**
+ * Timeline como narrativa do dia — linha vertical conectando os momentos, ícone em destaque e horário
+ * junto ao ícone (em vez de alinhado à direita) para reforçar a leitura "às 07:34, chegou". Mesmo
+ * TimelineEntry de src/lib/journey.ts, usado também pela cuidadora — só a exibição muda aqui.
+ */
 export function GuardianRoutineTimeline({ entries }: { entries: TimelineEntry[] }) {
   if (entries.length === 0) {
-    return <p className="text-sm text-[#8A7A62]">Nenhum registro por enquanto.</p>;
+    return <EmptyState message="Hoje ainda não temos registros por aqui 💛" withMascot />;
   }
 
   return (
-    <ol className="flex flex-col gap-3.5">
+    <ol className="relative flex flex-col gap-5 pl-1">
+      <div aria-hidden="true" className="absolute left-[19px] top-2 bottom-2 w-px bg-tata-border" />
       {entries.map((entry, i) => (
-        <li key={i} className="flex gap-3 items-start text-sm">
-          <span className="text-lg shrink-0" aria-hidden="true">{iconFor(entry.label)}</span>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-baseline justify-between gap-2">
-              <span className="font-semibold text-[#2E2418]">{entry.label}</span>
-              <span className="font-mono text-xs text-[#9A8A72] shrink-0">{formatTime(entry.time)}</span>
+        <li key={i} className="relative flex gap-3.5 items-start text-sm tata-animate-in" style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
+          <span
+            aria-hidden="true"
+            className="relative z-10 shrink-0 w-10 h-10 rounded-full bg-tata-surface shadow-tata-card flex items-center justify-center text-lg"
+          >
+            {iconFor(entry.label)}
+          </span>
+          <div className="flex-1 min-w-0 pt-1.5">
+            <div className="flex items-baseline gap-2">
+              <span className="font-mono text-xs font-semibold text-tata-green-dark">{formatTime(entry.time)}</span>
+              <span className="font-semibold text-tata-ink">{entry.label}</span>
             </div>
-            <p className="text-[#6B5D4A]">{entry.detail}</p>
+            <p className="text-tata-ink-soft">{entry.detail}</p>
           </div>
         </li>
       ))}

@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { requireGuardian, pickChildLink } from "@/lib/guardian";
-import { ACTIVITY_CATEGORY_LABELS } from "@/lib/labels";
+import { EmptyState } from "@/components/tata/EmptyState";
 import { ChildSwitcher } from "../ChildSwitcher";
+import { ActivityCard } from "./ActivityCard";
 
 export default async function GuardianActivitiesPage({
   searchParams,
@@ -13,12 +14,12 @@ export default async function GuardianActivitiesPage({
   const link = pickChildLink(guardian.children, childId);
 
   if (!link) {
-    return <div className="p-8 text-sm text-[#8A7A62]">Nenhuma criança vinculada à sua conta.</div>;
+    return <div className="p-8 text-sm text-tata-ink-muted-alt">Nenhuma criança vinculada à sua conta.</div>;
   }
 
   if (!link.viewRoutine) {
     return (
-      <div className="p-8 text-sm text-[#8A7A62]">
+      <div className="p-8 text-sm text-tata-ink-muted-alt">
         Você não tem permissão para visualizar as atividades desta criança.
       </div>
     );
@@ -35,28 +36,22 @@ export default async function GuardianActivitiesPage({
     <div className="p-4 sm:p-6 flex flex-col gap-5 max-w-2xl mx-auto">
       <ChildSwitcher basePath="/pais/atividades" activeChildId={link.childId} guardianChildren={guardian.children} />
 
-      <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-[#2E2418]">
+      <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-tata-ink">
         🎨 Atividades — {link.child.preferredName || link.child.fullName}
       </h1>
 
       {activityLinks.length === 0 ? (
-        <p className="text-sm text-[#8A7A62]">Nenhuma atividade registrada ainda.</p>
+        <EmptyState message="Nenhuma atividade registrada por aqui ainda 💛" withMascot />
       ) : (
         <div className="flex flex-col gap-3">
-          {activityLinks.map((al) => (
-            <div key={al.activityId} className="bg-[#FFFDF8] rounded-2xl shadow-sm p-4">
-              <div className="flex items-center justify-between">
-                <span className="font-[family-name:var(--font-baloo)] font-semibold text-sm text-[#2E2418]">
-                  {ACTIVITY_CATEGORY_LABELS[al.activity.category]}
-                </span>
-                <span className="text-xs text-[#9A8A72]">
-                  {new Intl.DateTimeFormat("pt-BR").format(al.activity.date)}
-                </span>
-              </div>
-              {al.activity.description && (
-                <p className="text-sm text-[#6B5D4A] mt-1">{al.activity.description}</p>
-              )}
-            </div>
+          {activityLinks.map((al, i) => (
+            <ActivityCard
+              key={al.activityId}
+              category={al.activity.category}
+              date={al.activity.date}
+              description={al.activity.description}
+              delayMs={Math.min(i, 8) * 40}
+            />
           ))}
         </div>
       )}

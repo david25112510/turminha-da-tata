@@ -17,12 +17,12 @@ export default async function GuardianJourneyPage({
   const link = pickChildLink(guardian.children, childId);
 
   if (!link) {
-    return <div className="p-8 text-sm text-[#8A7A62]">Nenhuma criança vinculada à sua conta.</div>;
+    return <div className="p-8 text-sm text-tata-ink-muted-alt">Nenhuma criança vinculada à sua conta.</div>;
   }
 
   if (!link.viewRoutine) {
     return (
-      <div className="p-8 text-sm text-[#8A7A62]">
+      <div className="p-8 text-sm text-tata-ink-muted-alt">
         Você não tem permissão para visualizar a rotina desta criança.
       </div>
     );
@@ -49,20 +49,20 @@ export default async function GuardianJourneyPage({
     <div className="p-4 sm:p-6 flex flex-col gap-5 max-w-2xl mx-auto">
       <ChildSwitcher basePath="/pais/jornada" activeChildId={link.childId} guardianChildren={guardian.children} />
 
-      <div className="bg-[#FFFDF8] rounded-2xl shadow-sm p-5 flex flex-col gap-2">
+      <div className="bg-tata-surface rounded-2xl shadow-sm p-5 flex flex-col gap-2">
         <div className="flex items-start justify-between gap-2">
-          <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-[#2E2418]">
+          <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-tata-ink">
             {link.child.preferredName || link.child.fullName}
           </h1>
           <GuardianStatusBadge status={status} />
         </div>
         {arrived && (
-          <p className="text-sm text-[#6B5D4A]">
-            Entrada: <span className="font-semibold text-[#2E2418]">{formatTime(attendance!.checkInTime!)}</span>
+          <p className="text-sm text-tata-ink-soft">
+            Entrada: <span className="font-semibold text-tata-ink">{formatTime(attendance!.checkInTime!)}</span>
             {attendance?.checkInPersonName && (
               <>
                 {" "}— quem trouxe:{" "}
-                <span className="font-semibold text-[#2E2418]">
+                <span className="font-semibold text-tata-ink">
                   {attendance.checkInPersonName}
                   {checkInRelation ? ` (${checkInRelation})` : ""}
                 </span>
@@ -73,7 +73,7 @@ export default async function GuardianJourneyPage({
       </div>
 
       <div>
-        <h2 className="font-[family-name:var(--font-baloo)] font-semibold text-sm text-[#2E2418] mb-3">
+        <h2 className="font-[family-name:var(--font-baloo)] font-semibold text-sm text-tata-ink mb-3">
           Rotina de hoje
         </h2>
         <TimelineFilter entries={visibleTimeline} />

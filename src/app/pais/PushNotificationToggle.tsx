@@ -63,7 +63,7 @@ export function PushNotificationToggle() {
   return (
     <button
       onClick={status === "subscribed" ? handleUnsubscribe : handleSubscribe}
-      className="text-xs font-semibold text-[#1FA787] hover:underline"
+      className="text-xs font-semibold text-tata-green hover:underline"
     >
       {status === "subscribed" ? "Desativar notificações no dispositivo" : "Ativar notificações no dispositivo"}
     </button>

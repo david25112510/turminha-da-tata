@@ -27,16 +27,16 @@ export default async function GuardianLayout({ children }: { children: React.Rea
   });
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FDF8EE]">
+    <div className="min-h-screen flex flex-col bg-tata-surface-alt">
       <OfflineBanner />
 
-      <header className="flex items-center justify-between px-4 sm:px-6 py-3 bg-[#FFFDF8] border-b border-[#ECE1CB]">
+      <header className="flex items-center justify-between px-4 sm:px-6 py-3 bg-tata-surface border-b border-tata-border">
         <Link href="/pais" className="flex flex-col leading-tight">
           <span className="flex items-baseline gap-1.5 font-[family-name:var(--font-baloo)] font-bold text-lg">
-            <span className="text-[#1FA787]">Turminha</span>
-            <span className="text-[#FF6F8E]">Tata</span>
+            <span className="text-tata-green">Turminha</span>
+            <span className="text-tata-coral">Tata</span>
           </span>
-          <span className="text-[10px] font-semibold text-[#9A8A72] tracking-wide uppercase">Portal dos pais</span>
+          <span className="text-[10px] font-semibold text-tata-ink-muted tracking-wide uppercase">Portal dos pais</span>
         </Link>
 
         <nav className="hidden lg:flex items-center gap-1">
@@ -44,11 +44,11 @@ export default async function GuardianLayout({ children }: { children: React.Rea
             <Link
               key={item.href}
               href={item.href}
-              className="px-3 py-1.5 rounded-full text-sm font-semibold text-[#6B5D4A] hover:bg-[#F3EEE1] transition-colors"
+              className="px-3 py-1.5 rounded-full text-sm font-semibold text-tata-ink-soft hover:bg-tata-surface-hover transition-colors"
             >
               {item.label}
               {item.href === "/pais" && unreadCount > 0 && (
-                <span className="ml-1.5 bg-[#E85570] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                <span className="ml-1.5 bg-tata-coral-dark text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                   {unreadCount}
                 </span>
               )}
@@ -60,7 +60,7 @@ export default async function GuardianLayout({ children }: { children: React.Rea
           <div className="relative w-7 h-9 shrink-0 hidden sm:block">
             <Image src="/images/tata-mascote.png" alt="" fill className="object-contain" />
           </div>
-          <div className="text-sm font-semibold text-[#3A2E22] hidden sm:block">{session?.user.name}</div>
+          <div className="text-sm font-semibold text-tata-ink-deep hidden sm:block">{session?.user.name}</div>
           <div className="hidden lg:block">
             <PushNotificationToggle />
           </div>
@@ -70,7 +70,7 @@ export default async function GuardianLayout({ children }: { children: React.Rea
               await signOut({ redirectTo: "/login" });
             }}
           >
-            <button type="submit" className="min-h-11 px-2 text-xs font-semibold text-[#E85570]">
+            <button type="submit" className="min-h-11 px-2 text-xs font-semibold text-tata-coral-dark">
               Sair
             </button>
           </form>
