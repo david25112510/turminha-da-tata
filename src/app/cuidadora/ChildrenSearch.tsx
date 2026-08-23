@@ -54,7 +54,11 @@ export function ChildrenSearch({
       ) : (
         <div className="flex flex-col gap-2.5">
           {filtered.map((child) => (
-            <div key={child.id} className="bg-[#FFFDF8] rounded-2xl shadow-sm p-4 flex flex-col gap-2.5">
+            <div
+              key={child.id}
+              data-testid={`child-card-${child.id}`}
+              className="bg-[#FFFDF8] rounded-2xl shadow-sm p-4 flex flex-col gap-2.5"
+            >
               <div className="flex items-center justify-between gap-2">
                 <Link
                   href={`/cuidadora/criancas/${child.id}`}
