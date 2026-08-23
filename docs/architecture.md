@@ -139,6 +139,7 @@ Rotas com `[id]`/`[childId]` são dinâmicas; todas as demais listadas como "Adm
 | `npm run db:studio` | Prisma Studio |
 | `npm run db:backup` / `db:restore` | `scripts/backup-db.mjs` / `restore-db.mjs`, wrappers de `pg_dump`/`pg_restore` |
 | `npm run icons:generate` | `scripts/generate-icons.mjs` — gera os ícones do PWA a partir de `design/assets/tata-bust-nobg-full.png` usando `sharp` |
+| `npm run test:e2e` | Testes E2E com Playwright (`e2e/*.spec.ts`) — login por papel, fluxo completo da cuidadora, isolamento de dados. Requer Postgres; `e2e/global-setup.ts`/`global-teardown.ts` criam e removem dados próprios prefixados `e2e-` |
 
 ## Dívida técnica e limitações conhecidas
 

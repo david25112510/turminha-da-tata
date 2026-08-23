@@ -24,9 +24,20 @@ Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 · PostgreSQL · Prisma 
 | ---------------------- | --------------------------------------------------- |
 | `npm run dev`           | Sobe o servidor de desenvolvimento                  |
 | `npm run build`         | Build de produção                                   |
+| `npm run test`          | Testes unitários (Vitest)                           |
+| `npm run test:e2e`      | Testes E2E (Playwright) — veja abaixo                |
 | `npm run db:migrate`    | Cria/aplica migrations em desenvolvimento           |
 | `npm run db:seed`       | Roda o seed (usuário administrador inicial)         |
 | `npm run db:studio`     | Abre o Prisma Studio para inspecionar o banco        |
 | `npm run db:backup`     | Gera um dump do banco em `./backups`                 |
 | `npm run db:restore`    | Restaura um dump (`-- caminho/do/arquivo.dump`)      |
 | `npm run icons:generate`| Regenera os ícones do PWA a partir do mascote        |
+
+## Testes E2E
+
+`npm run test:e2e` roda os fluxos críticos (`e2e/*.spec.ts`) num Chromium real contra o servidor de dev:
+login por papel, o fluxo completo da cuidadora pelo celular (chegada → alimentação → humor → sono →
+timeline) e isolamento de dados entre famílias. Requer Postgres rodando — `e2e/global-setup.ts` cria dados
+próprios prefixados `e2e-` antes da suíte e `e2e/global-teardown.ts` os remove depois; nunca toca em dados
+reais. Se o servidor de dev já estiver no ar em `http://localhost:3000`, a suíte o reaproveita; senão, sobe
+um sozinho. `npm run test:e2e:ui` abre o modo interativo do Playwright para depurar um teste específico.
