@@ -4,6 +4,8 @@ import { auth, signOut } from "@/auth";
 import { BottomNav } from "./BottomNav";
 import { OfflineBanner } from "./OfflineBanner";
 
+export const dynamic = "force-dynamic";
+
 export default async function CaregiverLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
 

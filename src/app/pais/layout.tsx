@@ -7,6 +7,8 @@ import { PushNotificationToggle } from "./PushNotificationToggle";
 import { BottomNav } from "./BottomNav";
 import { OfflineBanner } from "../cuidadora/OfflineBanner";
 
+export const dynamic = "force-dynamic";
+
 // Mesmos 5 destinos primários da BottomNav (mobile) — Atividades/Comunicados/Agenda continuam acessíveis via
 // atalhos no Início e no Perfil. Nove itens não cabiam na faixa de desktop junto com nome, push toggle e Sair
 // (estourava horizontalmente até 1024px); manter os dois níveis de navegação com a mesma informação evita

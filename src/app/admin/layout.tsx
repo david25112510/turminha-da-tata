@@ -2,6 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { auth, signOut } from "@/auth";
 
+export const dynamic = "force-dynamic";
+
 const NAV_ITEMS = [
   { href: "/admin", label: "Início" },
   { href: "/admin/criancas", label: "Crianças" },
