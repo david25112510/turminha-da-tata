@@ -6,6 +6,14 @@ import { ChildSwitcher } from "../ChildSwitcher";
 
 const currency = (n: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
 
+const STATUS_STYLE: Record<string, { icon: string; className: string }> = {
+  PAID: { icon: "🟢", className: "bg-[#1FA787]/10 text-[#1F8A6E]" },
+  PENDING: { icon: "🟡", className: "bg-[#9A8A72]/10 text-[#8A7A62]" },
+  PARTIALLY_PAID: { icon: "🟡", className: "bg-[#9A8A72]/10 text-[#8A7A62]" },
+  OVERDUE: { icon: "🔴", className: "bg-[#E85570]/10 text-[#C83F58]" },
+  CANCELLED: { icon: "⚪", className: "bg-[#9A8A72]/10 text-[#8A7A62]" },
+};
+
 export default async function GuardianFinancialPage({
   searchParams,
 }: {
@@ -36,11 +44,11 @@ export default async function GuardianFinancialPage({
   });
 
   return (
-    <div className="p-6 flex flex-col gap-5 max-w-2xl mx-auto">
+    <div className="p-4 sm:p-6 flex flex-col gap-5 max-w-2xl mx-auto">
       <ChildSwitcher basePath="/pais/financeiro" activeChildId={link.childId} guardianChildren={guardian.children} />
 
       <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-[#2E2418]">
-        Financeiro — {link.child.preferredName || link.child.fullName}
+        💰 Financeiro — {link.child.preferredName || link.child.fullName}
       </h1>
 
       {invoices.length === 0 ? (
@@ -50,16 +58,22 @@ export default async function GuardianFinancialPage({
           {invoices.map((invoice) => {
             const overtimeItems = invoice.items.filter((item) => item.type === "OVERTIME");
             const otherItems = invoice.items.filter((item) => item.type !== "OVERTIME" && item.type !== "MONTHLY_FEE");
+            const status = effectiveStatus(invoice);
+            const statusStyle = STATUS_STYLE[status] ?? STATUS_STYLE.PENDING;
             return (
               <div key={invoice.id} className="bg-[#FFFDF8] rounded-2xl shadow-sm p-5">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <span className="font-[family-name:var(--font-baloo)] font-semibold text-sm text-[#2E2418]">
                     Mensalidade de {MONTH_LABELS[invoice.referenceMonth - 1]}
                   </span>
-                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-[#1FA787]/10 text-[#1F8A6E]">
-                    {INVOICE_STATUS_LABELS[effectiveStatus(invoice)]}
+                  <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap ${statusStyle.className}`}>
+                    <span aria-hidden="true">{statusStyle.icon}</span>
+                    {INVOICE_STATUS_LABELS[status]}
                   </span>
                 </div>
+                {status === "OVERDUE" && (
+                  <p className="text-xs text-[#C83F58] font-medium mt-1">Esta mensalidade está vencida.</p>
+                )}
 
                 <div className="grid grid-cols-3 gap-2 mt-3 text-sm">
                   <div>

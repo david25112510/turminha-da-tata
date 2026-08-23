@@ -1,7 +1,7 @@
-import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { requireGuardian, pickChildLink } from "@/lib/guardian";
 import { ChildSwitcher } from "../ChildSwitcher";
+import { PhotoGallery } from "../PhotoGallery";
 
 export default async function GuardianPhotosPage({
   searchParams,
@@ -31,26 +31,17 @@ export default async function GuardianPhotosPage({
   });
 
   return (
-    <div className="p-6 flex flex-col gap-5 max-w-3xl mx-auto">
+    <div className="p-4 sm:p-6 flex flex-col gap-5 max-w-3xl mx-auto">
       <ChildSwitcher basePath="/pais/fotos" activeChildId={link.childId} guardianChildren={guardian.children} />
 
       <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-[#2E2418]">
-        Fotos — {link.child.preferredName || link.child.fullName}
+        📷 Momentos — {link.child.preferredName || link.child.fullName}
       </h1>
 
       {photos.length === 0 ? (
-        <p className="text-sm text-[#8A7A62]">Nenhuma foto publicada ainda.</p>
+        <p className="text-sm text-[#8A7A62]">Nenhuma foto disponível ainda.</p>
       ) : (
-        <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
-          {photos.map((photo) => (
-            <div key={photo.id} className="flex flex-col gap-1">
-              <div className="relative aspect-square rounded-2xl overflow-hidden bg-[#F3EEE1]">
-                <Image src={photo.url} alt={photo.caption ?? ""} fill sizes="200px" className="object-cover" />
-              </div>
-              {photo.caption && <span className="text-xs text-[#8A7A62]">{photo.caption}</span>}
-            </div>
-          ))}
-        </div>
+        <PhotoGallery photos={photos} />
       )}
     </div>
   );

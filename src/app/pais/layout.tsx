@@ -4,6 +4,8 @@ import { auth, signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { requireGuardian } from "@/lib/guardian";
 import { PushNotificationToggle } from "./PushNotificationToggle";
+import { BottomNav } from "./BottomNav";
+import { OfflineBanner } from "../cuidadora/OfflineBanner";
 
 const NAV_ITEMS = [
   { href: "/pais", label: "Início" },
@@ -13,6 +15,8 @@ const NAV_ITEMS = [
   { href: "/pais/comunicados", label: "Comunicados" },
   { href: "/pais/agenda", label: "Agenda" },
   { href: "/pais/financeiro", label: "Financeiro" },
+  { href: "/pais/notificacoes", label: "Notificações" },
+  { href: "/pais/perfil", label: "Perfil" },
 ];
 
 export default async function GuardianLayout({ children }: { children: React.ReactNode }) {
@@ -24,10 +28,15 @@ export default async function GuardianLayout({ children }: { children: React.Rea
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FDF8EE]">
-      <header className="flex items-center justify-between px-6 py-4 bg-[#FFFDF8] border-b border-[#ECE1CB]">
-        <Link href="/pais" className="flex items-baseline gap-1.5 font-[family-name:var(--font-baloo)] font-bold text-lg">
-          <span className="text-[#1FA787]">Turminha</span>
-          <span className="text-[#FF6F8E]">Tata</span>
+      <OfflineBanner />
+
+      <header className="flex items-center justify-between px-4 sm:px-6 py-3 bg-[#FFFDF8] border-b border-[#ECE1CB]">
+        <Link href="/pais" className="flex flex-col leading-tight">
+          <span className="flex items-baseline gap-1.5 font-[family-name:var(--font-baloo)] font-bold text-lg">
+            <span className="text-[#1FA787]">Turminha</span>
+            <span className="text-[#FF6F8E]">Tata</span>
+          </span>
+          <span className="text-[10px] font-semibold text-[#9A8A72] tracking-wide uppercase">Portal dos pais</span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-1">
@@ -48,37 +57,32 @@ export default async function GuardianLayout({ children }: { children: React.Rea
         </nav>
 
         <div className="flex items-center gap-3">
-          <div className="relative w-7 h-9 shrink-0">
+          <div className="relative w-7 h-9 shrink-0 hidden sm:block">
             <Image src="/images/tata-mascote.png" alt="" fill className="object-contain" />
           </div>
-          <div className="text-sm font-semibold text-[#3A2E22]">{session?.user.name}</div>
-          <PushNotificationToggle />
+          <div className="text-sm font-semibold text-[#3A2E22] hidden sm:block">{session?.user.name}</div>
+          <div className="hidden md:block">
+            <PushNotificationToggle />
+          </div>
           <form
             action={async () => {
               "use server";
               await signOut({ redirectTo: "/login" });
             }}
           >
-            <button type="submit" className="text-xs font-semibold text-[#E85570] hover:underline">
+            <button type="submit" className="min-h-11 px-2 text-xs font-semibold text-[#E85570]">
               Sair
             </button>
           </form>
         </div>
       </header>
 
-      <nav className="flex md:hidden items-center gap-1 px-4 py-2 bg-[#FFFDF8] border-b border-[#ECE1CB] overflow-x-auto">
-        {NAV_ITEMS.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="px-3 py-1.5 rounded-full text-xs font-semibold text-[#6B5D4A] hover:bg-[#F3EEE1] whitespace-nowrap"
-          >
-            {item.label}
-          </Link>
-        ))}
-      </nav>
+      {/* Mobile: navegação principal é a BottomNav (5 destinos). Atividades/Comunicados/Agenda/Notificações
+          continuam acessíveis via atalhos no Início e na lista do Perfil — duas navegações mobile ao mesmo
+          tempo (essa faixa + a bottom nav) ficaria poluído. */}
+      <main className="flex-1 pb-20 md:pb-0">{children}</main>
 
-      <main className="flex-1">{children}</main>
+      <BottomNav unreadCount={unreadCount} />
     </div>
   );
 }
