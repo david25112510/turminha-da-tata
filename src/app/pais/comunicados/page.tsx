@@ -19,9 +19,9 @@ export default async function GuardianAnnouncementsPage() {
   });
 
   return (
-    <div className="p-6 flex flex-col gap-5 max-w-2xl mx-auto">
+    <div className="p-4 sm:p-6 flex flex-col gap-5 max-w-2xl mx-auto">
       <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-[#2E2418]">
-        Comunicados
+        📣 Comunicados
       </h1>
 
       {announcements.length === 0 ? (
