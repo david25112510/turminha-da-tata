@@ -8,8 +8,26 @@ export default function LoginPage() {
   const [state, formAction, pending] = useActionState(loginAction, undefined);
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-[#FFFBF2] p-6">
-      <div className="w-full max-w-4xl flex rounded-[28px] overflow-hidden shadow-xl bg-white">
+    <main className="min-h-screen flex flex-col md:items-center md:justify-center bg-[#FFFBF2] md:p-6">
+      <div className="w-full md:max-w-4xl md:flex md:rounded-[28px] md:overflow-hidden md:shadow-xl bg-white">
+        {/* Mobile: faixa compacta com a mascote no topo, em vez do formulário flutuando isolado no meio da tela */}
+        <div className="flex md:hidden flex-col items-center gap-2 bg-[#1FA787] px-6 pt-10 pb-8 rounded-b-[32px]">
+          <div className="relative w-20 h-24">
+            <Image
+              src="/images/tata-mascote.png"
+              alt="Tata, mascote da Turminha da Tata"
+              fill
+              sizes="80px"
+              className="object-contain"
+              priority
+            />
+          </div>
+          <div className="flex items-baseline gap-1.5 font-[family-name:var(--font-baloo)] font-bold text-xl text-[#FFFDF8]">
+            <span>Turminha</span>
+            <span>Tata</span>
+          </div>
+        </div>
+
         <div className="hidden md:flex w-[380px] flex-col justify-between bg-[#1FA787] p-10 relative">
           <div className="flex items-baseline gap-2 font-[family-name:var(--font-baloo)] font-bold text-2xl text-[#FFFDF8]">
             <span>Turminha</span>
@@ -23,6 +41,7 @@ export default function LoginPage() {
                 src="/images/tata-mascote.png"
                 alt="Tata, mascote da Turminha da Tata"
                 fill
+                sizes="176px"
                 className="object-contain"
                 priority
               />
@@ -35,7 +54,7 @@ export default function LoginPage() {
           <p className="text-xs text-[#FFFDF8]/70">© 2026 Turminha da Tata</p>
         </div>
 
-        <div className="flex-1 flex flex-col justify-center p-10">
+        <div className="flex-1 flex flex-col justify-center p-6 md:p-10">
           <form action={formAction} className="w-full max-w-sm mx-auto flex flex-col gap-5">
             <div className="flex flex-col gap-1">
               <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-2xl text-[#2E2418]">
@@ -50,8 +69,9 @@ export default function LoginPage() {
                 type="email"
                 name="email"
                 required
+                autoComplete="email"
                 placeholder="nome@turminhadatata.com.br"
-                className="border border-[#ECE1CB] rounded-xl px-4 py-3 text-sm outline-none focus:border-[#1FA787] transition-colors"
+                className="min-h-11 border border-[#ECE1CB] rounded-xl px-4 py-3 text-sm outline-none focus:border-[#1FA787] transition-colors"
               />
             </label>
 
@@ -61,19 +81,22 @@ export default function LoginPage() {
                 type="password"
                 name="password"
                 required
+                autoComplete="current-password"
                 placeholder="••••••••••"
-                className="border border-[#ECE1CB] rounded-xl px-4 py-3 text-sm outline-none focus:border-[#1FA787] transition-colors"
+                className="min-h-11 border border-[#ECE1CB] rounded-xl px-4 py-3 text-sm outline-none focus:border-[#1FA787] transition-colors"
               />
             </label>
 
             {state?.error && (
-              <p className="text-sm text-[#E85570] font-medium">{state.error}</p>
+              <p role="alert" className="text-sm text-[#E85570] font-medium">
+                {state.error}
+              </p>
             )}
 
             <button
               type="submit"
               disabled={pending}
-              className="bg-[#FF6F8E] text-white rounded-xl py-3 font-[family-name:var(--font-baloo)] font-semibold text-sm disabled:opacity-60 transition-opacity"
+              className="min-h-11 bg-[#FF6F8E] text-white rounded-xl py-3 font-[family-name:var(--font-baloo)] font-semibold text-sm disabled:opacity-60 transition-opacity"
             >
               {pending ? "Entrando..." : "Entrar"}
             </button>
