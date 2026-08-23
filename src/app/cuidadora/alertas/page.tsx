@@ -34,26 +34,26 @@ export default async function CaregiverAlertsPage() {
 
   return (
     <div className="p-4 sm:p-6 flex flex-col gap-5 max-w-2xl mx-auto">
-      <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-[#2E2418]">Alertas</h1>
+      <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-tata-ink">Alertas</h1>
 
       <section className="flex flex-col gap-2.5">
-        <h2 className="font-[family-name:var(--font-baloo)] font-semibold text-sm text-[#2E2418]">
+        <h2 className="font-[family-name:var(--font-baloo)] font-semibold text-sm text-tata-ink">
           💊 Medicamentos pendentes hoje
         </h2>
         {medicationsPending.length === 0 ? (
-          <p className="text-sm text-[#8A7A62]">Nenhum medicamento previsto.</p>
+          <p className="text-sm text-tata-ink-muted-alt">Nenhum medicamento previsto.</p>
         ) : (
           <div className="flex flex-col gap-2">
             {medicationsPending.map((m) => (
               <Link
                 key={m.id}
                 href={`/cuidadora/criancas/${m.childId}`}
-                className="bg-[#FFFDF8] rounded-2xl shadow-sm p-4 flex flex-col gap-0.5 min-h-11"
+                className="bg-tata-surface rounded-2xl shadow-sm p-4 flex flex-col gap-0.5 min-h-11"
               >
-                <span className="font-semibold text-[#2E2418] text-sm">
+                <span className="font-semibold text-tata-ink text-sm">
                   {m.child.preferredName || m.child.fullName} — {m.medication}
                 </span>
-                <span className="text-xs text-[#9A8A72]">
+                <span className="text-xs text-tata-ink-muted">
                   {m.dosage}
                   {m.scheduleTime ? ` — previsto ${m.scheduleTime}` : ""}
                 </span>
@@ -64,23 +64,23 @@ export default async function CaregiverAlertsPage() {
       </section>
 
       <section className="flex flex-col gap-2.5">
-        <h2 className="font-[family-name:var(--font-baloo)] font-semibold text-sm text-[#2E2418]">
+        <h2 className="font-[family-name:var(--font-baloo)] font-semibold text-sm text-tata-ink">
           ⚠️ Ocorrências em aberto
         </h2>
         {openIncidents.length === 0 ? (
-          <p className="text-sm text-[#8A7A62]">Nenhuma ocorrência registrada hoje.</p>
+          <p className="text-sm text-tata-ink-muted-alt">Nenhuma ocorrência registrada hoje.</p>
         ) : (
           <div className="flex flex-col gap-2">
             {openIncidents.map((inc) => (
               <Link
                 key={inc.id}
                 href={`/cuidadora/criancas/${inc.childId}`}
-                className="bg-[#FFFDF8] rounded-2xl shadow-sm p-4 flex flex-col gap-0.5 min-h-11"
+                className="bg-tata-surface rounded-2xl shadow-sm p-4 flex flex-col gap-0.5 min-h-11"
               >
-                <span className="font-semibold text-[#2E2418] text-sm">
+                <span className="font-semibold text-tata-ink text-sm">
                   {inc.child.preferredName || inc.child.fullName} — {formatTime(inc.time)}
                 </span>
-                <span className="text-xs text-[#9A8A72]">{inc.description}</span>
+                <span className="text-xs text-tata-ink-muted">{inc.description}</span>
               </Link>
             ))}
           </div>
@@ -88,18 +88,18 @@ export default async function CaregiverAlertsPage() {
       </section>
 
       <section className="flex flex-col gap-2.5">
-        <h2 className="font-[family-name:var(--font-baloo)] font-semibold text-sm text-[#2E2418]">
+        <h2 className="font-[family-name:var(--font-baloo)] font-semibold text-sm text-tata-ink">
           🟡 Ainda não chegaram
         </h2>
         {notArrivedChildren.length === 0 ? (
-          <p className="text-sm text-[#8A7A62]">Todas as crianças ativas já chegaram.</p>
+          <p className="text-sm text-tata-ink-muted-alt">Todas as crianças ativas já chegaram.</p>
         ) : (
           <div className="flex flex-wrap gap-2">
             {notArrivedChildren.map((c) => (
               <Link
                 key={c.id}
                 href={`/cuidadora/criancas/${c.id}`}
-                className="min-h-11 flex items-center bg-[#FFFDF8] rounded-full shadow-sm px-4 text-sm font-semibold text-[#2E2418]"
+                className="min-h-11 flex items-center bg-tata-surface rounded-full shadow-sm px-4 text-sm font-semibold text-tata-ink"
               >
                 {c.preferredName || c.fullName}
               </Link>

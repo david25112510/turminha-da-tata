@@ -55,12 +55,12 @@ export function PersonPickerDialog({
         }}
       >
         <div className="p-5 flex flex-col gap-3">
-          <h2 id={titleId} className="font-[family-name:var(--font-baloo)] font-semibold text-base text-[#2E2418]">
+          <h2 id={titleId} className="font-[family-name:var(--font-baloo)] font-semibold text-base text-tata-ink">
             {dialogTitle}
           </h2>
 
           {people.length === 0 ? (
-            <p className="text-sm text-[#8A7A62]">Nenhum responsável ou pessoa autorizada cadastrada.</p>
+            <p className="text-sm text-tata-ink-muted-alt">Nenhum responsável ou pessoa autorizada cadastrada.</p>
           ) : (
             <div className="flex flex-col gap-2">
               {people.map((p) => (
@@ -70,10 +70,10 @@ export function PersonPickerDialog({
                   <button
                     type="submit"
                     disabled={pending}
-                    className="min-h-11 w-full text-left flex items-center gap-2 border border-[#ECE1CB] rounded-xl px-4 py-3 text-sm font-semibold text-[#2E2418] hover:border-[#1FA787] disabled:opacity-60 transition-colors"
+                    className="min-h-11 w-full text-left flex items-center gap-2 border border-tata-border rounded-xl px-4 py-3 text-sm font-semibold text-tata-ink hover:border-tata-green disabled:opacity-60 transition-colors"
                   >
                     <span>{p.name}</span>
-                    <span className="text-xs font-normal text-[#9A8A72]">
+                    <span className="text-xs font-normal text-tata-ink-muted">
                       — {RELATIONSHIP_LABELS[p.relationship] ?? p.relationship}
                     </span>
                   </button>
@@ -82,12 +82,12 @@ export function PersonPickerDialog({
             </div>
           )}
 
-          {state?.error && <p className="text-sm text-[#E85570] font-medium">{state.error}</p>}
+          {state?.error && <p className="text-sm text-tata-coral-dark font-medium">{state.error}</p>}
 
           <button
             type="button"
             onClick={() => dialogRef.current?.close()}
-            className="min-h-11 text-xs font-semibold text-[#9A8A72]"
+            className="min-h-11 text-xs font-semibold text-tata-ink-muted"
           >
             Cancelar
           </button>

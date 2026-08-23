@@ -8,7 +8,7 @@ type ActionState = { success?: string; error?: string } | null;
 const AUTO_CLOSE_DELAY_MS = 1100;
 
 const DEFAULT_BUTTON =
-  "min-h-11 bg-[#1FA787] text-white text-sm font-semibold rounded-xl py-3 font-[family-name:var(--font-baloo)] disabled:opacity-60 transition-opacity";
+  "min-h-11 bg-tata-green text-white text-sm font-semibold rounded-xl py-3 font-[family-name:var(--font-baloo)] disabled:opacity-60 transition-opacity";
 
 /**
  * Wrapper genérico para os formulários de registro rápido: chama a Server Action recebida por prop e mostra
@@ -59,12 +59,12 @@ export function QuickActionForm({
         {pending ? "Salvando..." : submitLabel}
       </button>
       {state?.success && (
-        <p role="status" className="text-sm text-[#1F8A6E] font-semibold">
+        <p role="status" className="text-sm text-tata-green-dark font-semibold">
           ✓ {state.success}
         </p>
       )}
       {state?.error && (
-        <p role="alert" className="text-sm text-[#E85570] font-medium">
+        <p role="alert" className="text-sm text-tata-coral-dark font-medium">
           {state.error}
         </p>
       )}

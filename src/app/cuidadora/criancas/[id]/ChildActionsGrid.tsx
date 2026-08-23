@@ -15,7 +15,7 @@ import { MoodSelector } from "./MoodSelector";
 import { PhotoUploadForm } from "./PhotoUploadForm";
 
 const selectClass =
-  "border border-[#ECE1CB] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#1FA787] transition-colors bg-white";
+  "border border-tata-border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-tata-green transition-colors bg-tata-surface";
 const inputClass = selectClass;
 
 type ActionFn = (formData: FormData) => Promise<void>;
@@ -51,16 +51,16 @@ function SleepButton({
       <button
         type="submit"
         disabled={pending}
-        className="min-h-24 flex flex-col items-center justify-center gap-1 bg-[#FFFDF8] rounded-2xl shadow-sm py-4 text-[#2E2418] hover:shadow-md transition-shadow disabled:opacity-60"
+        className="min-h-24 flex flex-col items-center justify-center gap-1.5 bg-tata-surface rounded-tata-lg shadow-tata-card py-4 text-tata-ink transition-all hover:shadow-tata-card-hover active:scale-[0.97] disabled:opacity-60"
       >
-        <span className="text-2xl" aria-hidden="true">😴</span>
+        <span className="w-11 h-11 rounded-full flex items-center justify-center text-2xl bg-tata-lilac-soft" aria-hidden="true">😴</span>
         <span className="text-xs font-semibold font-[family-name:var(--font-baloo)]">
           {openSleep ? "Finalizar soneca" : "Iniciar soneca"}
         </span>
-        {openSleep && <span className="text-[10px] text-[#9A8A72]">Desde {formatTime(openSleep.startTime)}</span>}
+        {openSleep && <span className="text-[10px] text-tata-ink-muted">Desde {formatTime(openSleep.startTime)}</span>}
       </button>
       {state?.error && (
-        <p role="alert" className="col-span-2 text-sm text-[#E85570] font-medium">
+        <p role="alert" className="col-span-2 text-sm text-tata-coral-dark font-medium">
           {state.error}
         </p>
       )}
@@ -101,7 +101,7 @@ export function ChildActionsGrid({
 }) {
   return (
     <div className="grid grid-cols-2 gap-3">
-      <ActionDialogButton icon="🍎" label="Alimentação" dialogTitle="Alimentação">
+      <ActionDialogButton icon="🍎" label="Alimentação" dialogTitle="Alimentação" accent="yellow">
         <QuickActionForm action={addMealAction} hiddenFields={{ childId }} successMessage="Alimentação registrada" submitLabel="Registrar">
           <select name="mealType" className={selectClass} defaultValue="SNACK">
             {Object.entries(MEAL_TYPE_LABELS).map(([v, l]) => (
@@ -119,7 +119,7 @@ export function ChildActionsGrid({
 
       <SleepButton childId={childId} openSleep={openSleep} startSleepAction={startSleepAction} endSleepAction={endSleepAction} />
 
-      <ActionDialogButton icon="🧼" label="Higiene" dialogTitle="Higiene">
+      <ActionDialogButton icon="🧼" label="Higiene" dialogTitle="Higiene" accent="blue">
         <QuickActionForm action={addHygieneAction} hiddenFields={{ childId }} successMessage="Higiene registrada" submitLabel="Registrar">
           <select name="type" className={selectClass} defaultValue="DIAPER_CHANGE">
             {Object.entries(HYGIENE_TYPE_LABELS).map(([v, l]) => (
@@ -130,7 +130,7 @@ export function ChildActionsGrid({
         </QuickActionForm>
       </ActionDialogButton>
 
-      <ActionDialogButton icon="🎨" label="Atividade" dialogTitle="Atividade">
+      <ActionDialogButton icon="🎨" label="Atividade" dialogTitle="Atividade" accent="lilac">
         <QuickActionForm action={addActivityAction} hiddenFields={{ childId }} successMessage="Atividade registrada" submitLabel="Registrar">
           <select name="category" className={selectClass} defaultValue="RECREATION">
             {Object.entries(ACTIVITY_CATEGORY_LABELS).map(([v, l]) => (
@@ -141,12 +141,12 @@ export function ChildActionsGrid({
         </QuickActionForm>
       </ActionDialogButton>
 
-      <ActionDialogButton icon="😊" label="Humor" dialogTitle="Como a criança está?">
+      <ActionDialogButton icon="😊" label="Humor" dialogTitle="Como a criança está?" accent="yellow">
         <MoodSelector childId={childId} action={addMoodAction} />
       </ActionDialogButton>
 
       {medicationAuthorizations.length > 0 && (
-        <ActionDialogButton icon="💊" label="Medicamento" dialogTitle="Administrar medicamento">
+        <ActionDialogButton icon="💊" label="Medicamento" dialogTitle="Administrar medicamento" accent="green">
           <QuickActionForm
             action={addMedicationAdministrationAction}
             hiddenFields={{ childId }}
@@ -165,13 +165,13 @@ export function ChildActionsGrid({
         </ActionDialogButton>
       )}
 
-      <ActionDialogButton icon="⚠️" label="Ocorrência" dialogTitle="Registrar ocorrência">
+      <ActionDialogButton icon="⚠️" label="Ocorrência" dialogTitle="Registrar ocorrência" accent="coral">
         <QuickActionForm
           action={addIncidentAction}
           hiddenFields={{ childId }}
           successMessage="Ocorrência registrada"
           submitLabel="Registrar ocorrência"
-          submitClassName="min-h-11 bg-[#E85570] text-white text-sm font-semibold rounded-xl py-3 font-[family-name:var(--font-baloo)] disabled:opacity-60"
+          submitClassName="min-h-11 bg-tata-coral-dark text-white text-sm font-semibold rounded-xl py-3 font-[family-name:var(--font-baloo)] disabled:opacity-60"
         >
           <select name="type" className={selectClass} defaultValue="OTHER">
             {Object.entries(INCIDENT_TYPE_LABELS).map(([v, l]) => (
@@ -183,9 +183,9 @@ export function ChildActionsGrid({
         </QuickActionForm>
       </ActionDialogButton>
 
-      <ActionDialogButton icon="📷" label="Foto" dialogTitle="Adicionar foto">
+      <ActionDialogButton icon="📷" label="Foto" dialogTitle="Adicionar foto" accent="blue">
         {!imageAuthorized ? (
-          <p className="text-sm text-[#E85570]">Sem autorização de imagem — envio bloqueado.</p>
+          <p className="text-sm text-tata-coral-dark">Sem autorização de imagem — envio bloqueado.</p>
         ) : (
           <PhotoUploadForm childId={childId} revalidateTo={revalidateTo} action={uploadChildPhotoAction} />
         )}

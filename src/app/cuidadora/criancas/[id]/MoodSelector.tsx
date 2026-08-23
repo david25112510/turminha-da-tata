@@ -50,21 +50,21 @@ export function MoodSelector({ childId, action }: { childId: string; action: (fo
               disabled={pending}
               aria-label={label}
               title={label}
-              className="min-h-11 w-full flex flex-col items-center gap-0.5 border border-[#ECE1CB] rounded-xl py-2 text-2xl hover:border-[#1FA787] disabled:opacity-60 transition-colors"
+              className="min-h-11 w-full flex flex-col items-center gap-0.5 border border-tata-border rounded-xl py-2 text-2xl hover:border-tata-green disabled:opacity-60 transition-colors"
             >
               <span aria-hidden="true">{MOOD_EMOJI[value] ?? "🙂"}</span>
-              <span className="text-[9px] font-semibold text-[#9A8A72] leading-none">{label}</span>
+              <span className="text-[9px] font-semibold text-tata-ink-muted leading-none">{label}</span>
             </button>
           </form>
         ))}
       </div>
       {state?.success && (
-        <p role="status" className="text-sm text-[#1F8A6E] font-semibold">
+        <p role="status" className="text-sm text-tata-green-dark font-semibold">
           ✓ {state.success}
         </p>
       )}
       {state?.error && (
-        <p role="alert" className="text-sm text-[#E85570] font-medium">
+        <p role="alert" className="text-sm text-tata-coral-dark font-medium">
           {state.error}
         </p>
       )}

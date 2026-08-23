@@ -30,7 +30,7 @@ export function OfflineBanner() {
   if (online) return null;
 
   return (
-    <div role="status" className="bg-[#E85570] text-white text-xs font-semibold text-center py-1.5 px-3">
+    <div role="status" className="bg-tata-coral-dark text-white text-xs font-semibold text-center py-1.5 px-3">
       Sem conexão — verifique sua internet. O que você preencher não será perdido, mas só será salvo ao reconectar.
     </div>
   );

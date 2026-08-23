@@ -37,7 +37,7 @@ export function ChildrenSearch({
     <div className="flex flex-col gap-3">
       <label className="relative">
         <span className="sr-only">Buscar criança pelo nome</span>
-        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9A8A72]" aria-hidden="true">
+        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-tata-ink-muted" aria-hidden="true">
           🔎
         </span>
         <input
@@ -45,24 +45,24 @@ export function ChildrenSearch({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Buscar criança"
-          className="w-full min-h-11 border border-[#ECE1CB] rounded-xl pl-10 pr-3 py-2.5 text-sm outline-none focus:border-[#1FA787] transition-colors bg-white"
+          className="w-full min-h-11 border border-tata-border rounded-xl pl-10 pr-3 py-2.5 text-sm outline-none focus:border-tata-green transition-colors bg-tata-surface"
         />
       </label>
 
       {filtered.length === 0 ? (
-        <p className="text-sm text-[#8A7A62] px-1">Nenhuma criança encontrada para &quot;{query}&quot;.</p>
+        <p className="text-sm text-tata-ink-muted-alt px-1">Nenhuma criança encontrada para &quot;{query}&quot;.</p>
       ) : (
         <div className="flex flex-col gap-2.5">
           {filtered.map((child) => (
             <div
               key={child.id}
               data-testid={`child-card-${child.id}`}
-              className="bg-[#FFFDF8] rounded-2xl shadow-sm p-4 flex flex-col gap-2.5"
+              className="bg-tata-surface rounded-2xl shadow-sm p-4 flex flex-col gap-2.5"
             >
               <div className="flex items-center justify-between gap-2">
                 <Link
                   href={`/cuidadora/criancas/${child.id}`}
-                  className="font-[family-name:var(--font-baloo)] font-semibold text-[#2E2418] hover:text-[#1FA787] min-h-11 flex items-center"
+                  className="font-[family-name:var(--font-baloo)] font-semibold text-tata-ink hover:text-tata-green min-h-11 flex items-center"
                 >
                   {child.name}
                 </Link>
@@ -73,7 +73,7 @@ export function ChildrenSearch({
               </div>
 
               {child.checkInTime && (
-                <p className="text-xs text-[#9A8A72]">Entrada {formatTime(child.checkInTime)}</p>
+                <p className="text-xs text-tata-ink-muted">Entrada {formatTime(child.checkInTime)}</p>
               )}
 
               {child.status === "waiting" && (
@@ -83,7 +83,7 @@ export function ChildrenSearch({
                   action={checkInAction}
                   dialogTitle={`Quem trouxe ${child.name}?`}
                   triggerLabel="Registrar chegada"
-                  triggerClassName="min-h-11 bg-[#1FA787] text-white text-sm font-semibold rounded-xl font-[family-name:var(--font-baloo)]"
+                  triggerClassName="min-h-11 bg-tata-green text-white text-sm font-semibold rounded-xl font-[family-name:var(--font-baloo)]"
                 />
               )}
               {child.status === "present" && (
@@ -93,7 +93,7 @@ export function ChildrenSearch({
                   action={checkOutAction}
                   dialogTitle={`Quem está buscando ${child.name}?`}
                   triggerLabel="Registrar saída"
-                  triggerClassName="min-h-11 bg-[#FF6F8E] text-white text-sm font-semibold rounded-xl font-[family-name:var(--font-baloo)]"
+                  triggerClassName="min-h-11 bg-tata-coral text-white text-sm font-semibold rounded-xl font-[family-name:var(--font-baloo)]"
                 />
               )}
             </div>

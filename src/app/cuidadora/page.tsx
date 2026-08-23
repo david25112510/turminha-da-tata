@@ -64,36 +64,36 @@ export default async function CaregiverHomePage() {
   return (
     <div className="p-4 sm:p-6 flex flex-col gap-5 max-w-2xl mx-auto">
       <div>
-        <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-[#2E2418]">
+        <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-tata-ink">
           {greeting(now.getHours())}! ☀️
         </h1>
-        <p className="text-sm text-[#9A8A72]">
+        <p className="text-sm text-tata-ink-muted">
           {new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long" }).format(now)}
         </p>
       </div>
 
       <div className="grid grid-cols-3 gap-2.5">
-        <div className="bg-[#FFFDF8] rounded-2xl shadow-sm p-3 flex flex-col items-center gap-0.5">
+        <div className="bg-tata-surface rounded-2xl shadow-sm p-3 flex flex-col items-center gap-0.5">
           <span className="text-lg" aria-hidden="true">🟢</span>
-          <span className="font-[family-name:var(--font-baloo)] font-semibold text-lg text-[#2E2418]">{present}</span>
-          <span className="text-[10px] text-[#9A8A72] text-center leading-tight">Presentes</span>
+          <span className="font-[family-name:var(--font-baloo)] font-semibold text-lg text-tata-ink">{present}</span>
+          <span className="text-[10px] text-tata-ink-muted text-center leading-tight">Presentes</span>
         </div>
-        <div className="bg-[#FFFDF8] rounded-2xl shadow-sm p-3 flex flex-col items-center gap-0.5">
+        <div className="bg-tata-surface rounded-2xl shadow-sm p-3 flex flex-col items-center gap-0.5">
           <span className="text-lg" aria-hidden="true">🟡</span>
-          <span className="font-[family-name:var(--font-baloo)] font-semibold text-lg text-[#2E2418]">{waiting}</span>
-          <span className="text-[10px] text-[#9A8A72] text-center leading-tight">Aguardando</span>
+          <span className="font-[family-name:var(--font-baloo)] font-semibold text-lg text-tata-ink">{waiting}</span>
+          <span className="text-[10px] text-tata-ink-muted text-center leading-tight">Aguardando</span>
         </div>
-        <div className="bg-[#FFFDF8] rounded-2xl shadow-sm p-3 flex flex-col items-center gap-0.5">
+        <div className="bg-tata-surface rounded-2xl shadow-sm p-3 flex flex-col items-center gap-0.5">
           <span className="text-lg" aria-hidden="true">🔵</span>
-          <span className="font-[family-name:var(--font-baloo)] font-semibold text-lg text-[#2E2418]">{left}</span>
-          <span className="text-[10px] text-[#9A8A72] text-center leading-tight">Saíram</span>
+          <span className="font-[family-name:var(--font-baloo)] font-semibold text-lg text-tata-ink">{left}</span>
+          <span className="text-[10px] text-tata-ink-muted text-center leading-tight">Saíram</span>
         </div>
       </div>
 
       <div id="buscar">
-        <h2 className="font-[family-name:var(--font-baloo)] font-semibold text-sm text-[#2E2418] mb-2.5">Crianças</h2>
+        <h2 className="font-[family-name:var(--font-baloo)] font-semibold text-sm text-tata-ink mb-2.5">Crianças</h2>
         {rows.length === 0 ? (
-          <p className="text-sm text-[#8A7A62]">Nenhuma criança cadastrada ainda.</p>
+          <p className="text-sm text-tata-ink-muted-alt">Nenhuma criança cadastrada ainda.</p>
         ) : (
           <ChildrenSearch rows={rows} checkInAction={checkInAction} checkOutAction={checkOutAction} />
         )}
