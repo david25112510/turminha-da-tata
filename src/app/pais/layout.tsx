@@ -7,15 +7,15 @@ import { PushNotificationToggle } from "./PushNotificationToggle";
 import { BottomNav } from "./BottomNav";
 import { OfflineBanner } from "../cuidadora/OfflineBanner";
 
+// Mesmos 5 destinos primários da BottomNav (mobile) — Atividades/Comunicados/Agenda continuam acessíveis via
+// atalhos no Início e no Perfil. Nove itens não cabiam na faixa de desktop junto com nome, push toggle e Sair
+// (estourava horizontalmente até 1024px); manter os dois níveis de navegação com a mesma informação evita
+// esse problema e mantém a mesma arquitetura de informação em qualquer largura de tela.
 const NAV_ITEMS = [
   { href: "/pais", label: "Início" },
   { href: "/pais/jornada", label: "Jornada" },
   { href: "/pais/fotos", label: "Fotos" },
-  { href: "/pais/atividades", label: "Atividades" },
-  { href: "/pais/comunicados", label: "Comunicados" },
-  { href: "/pais/agenda", label: "Agenda" },
   { href: "/pais/financeiro", label: "Financeiro" },
-  { href: "/pais/notificacoes", label: "Notificações" },
   { href: "/pais/perfil", label: "Perfil" },
 ];
 
@@ -39,7 +39,7 @@ export default async function GuardianLayout({ children }: { children: React.Rea
           <span className="text-[10px] font-semibold text-[#9A8A72] tracking-wide uppercase">Portal dos pais</span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="hidden lg:flex items-center gap-1">
           {NAV_ITEMS.map((item) => (
             <Link
               key={item.href}
@@ -61,7 +61,7 @@ export default async function GuardianLayout({ children }: { children: React.Rea
             <Image src="/images/tata-mascote.png" alt="" fill className="object-contain" />
           </div>
           <div className="text-sm font-semibold text-[#3A2E22] hidden sm:block">{session?.user.name}</div>
-          <div className="hidden md:block">
+          <div className="hidden lg:block">
             <PushNotificationToggle />
           </div>
           <form
@@ -77,10 +77,10 @@ export default async function GuardianLayout({ children }: { children: React.Rea
         </div>
       </header>
 
-      {/* Mobile: navegação principal é a BottomNav (5 destinos). Atividades/Comunicados/Agenda/Notificações
-          continuam acessíveis via atalhos no Início e na lista do Perfil — duas navegações mobile ao mesmo
-          tempo (essa faixa + a bottom nav) ficaria poluído. */}
-      <main className="flex-1 pb-20 md:pb-0">{children}</main>
+      {/* A nav de desktop (9 itens + logo + usuário + push toggle) só cabe a partir de ~1024px — abaixo
+          disso (inclusive tablet em pé, 768px) usa a BottomNav, senão fica sem nav nenhuma cabendo na tela.
+          Atividades/Comunicados/Agenda/Notificações continuam acessíveis via atalhos no Início e no Perfil. */}
+      <main className="flex-1 pb-20 lg:pb-0">{children}</main>
 
       <BottomNav unreadCount={unreadCount} />
     </div>

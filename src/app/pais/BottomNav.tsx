@@ -18,7 +18,7 @@ export function BottomNav({ unreadCount }: { unreadCount: number }) {
   return (
     <nav
       aria-label="Navegação principal"
-      className="md:hidden fixed bottom-0 inset-x-0 z-40 flex items-stretch bg-[#FFFDF8] border-t border-[#ECE1CB] pb-[env(safe-area-inset-bottom)]"
+      className="lg:hidden fixed bottom-0 inset-x-0 z-40 flex items-stretch bg-[#FFFDF8] border-t border-[#ECE1CB] pb-[env(safe-area-inset-bottom)]"
     >
       {ITEMS.map((item) => {
         const active = item.href === "/pais" ? pathname === "/pais" : pathname.startsWith(item.href);
