@@ -16,6 +16,14 @@ export default async function GuardianActivitiesPage({
     return <div className="p-8 text-sm text-[#8A7A62]">Nenhuma criança vinculada à sua conta.</div>;
   }
 
+  if (!link.viewRoutine) {
+    return (
+      <div className="p-8 text-sm text-[#8A7A62]">
+        Você não tem permissão para visualizar as atividades desta criança.
+      </div>
+    );
+  }
+
   const activityLinks = await prisma.activityChild.findMany({
     where: { childId: link.childId },
     include: { activity: true },
