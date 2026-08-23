@@ -17,11 +17,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const session = await auth();
 
   return (
-    <div className="min-h-screen flex bg-[#FDF8EE]">
-      <aside className="w-[232px] bg-[#FFFDF8] border-r border-[#ECE1CB] flex flex-col gap-6 p-5 shrink-0">
+    <div className="min-h-screen flex bg-tata-surface-alt">
+      <aside className="w-[232px] bg-tata-surface border-r border-tata-border flex flex-col gap-6 p-5 shrink-0">
         <div className="flex items-baseline gap-1.5 font-[family-name:var(--font-baloo)] font-bold text-lg px-2">
-          <span className="text-[#1FA787]">Turminha</span>
-          <span className="text-[#FF6F8E]">Tata</span>
+          <span className="text-tata-green">Turminha</span>
+          <span className="text-tata-coral">Tata</span>
         </div>
 
         <nav className="flex flex-col gap-1">
@@ -29,22 +29,22 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <Link
               key={item.href}
               href={item.href}
-              className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-sm font-semibold text-[#6B5D4A] hover:bg-[#F3EEE1] transition-colors"
+              className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-sm font-semibold text-tata-ink-soft hover:bg-tata-surface-hover transition-colors"
             >
               {item.label}
             </Link>
           ))}
         </nav>
 
-        <div className="mt-auto flex items-center gap-2.5 p-2.5 bg-[#FFF7E1] rounded-2xl">
+        <div className="mt-auto flex items-center gap-2.5 p-2.5 bg-tata-yellow-soft rounded-2xl">
           <div className="relative w-8 h-11 shrink-0">
             <Image src="/images/tata-mascote.png" alt="" fill className="object-contain" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-bold text-[#3A2E22] truncate">
+            <div className="text-xs font-bold text-tata-ink-deep truncate">
               {session?.user.name}
             </div>
-            <div className="text-[10px] text-[#8A7A62]">Administradora</div>
+            <div className="text-[10px] text-tata-ink-muted-alt">Administradora</div>
           </div>
           <form
             action={async () => {
@@ -54,7 +54,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           >
             <button
               type="submit"
-              className="text-[10px] font-semibold text-[#E85570] hover:underline"
+              className="text-[10px] font-semibold text-tata-coral-dark hover:underline"
             >
               Sair
             </button>

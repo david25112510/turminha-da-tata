@@ -33,39 +33,39 @@ export default async function AdminHome() {
   return (
     <div className="p-8 flex flex-col gap-8">
       <div>
-        <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-[#2E2418] mb-4">
+        <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-tata-ink mb-4">
           Visão geral
         </h1>
         <div className="grid grid-cols-4 gap-3">
           {indicatorCards.map((card) => (
-            <div key={card.label} className="bg-[#FFFDF8] rounded-2xl p-4 shadow-sm flex flex-col gap-1">
-              <div className="font-[family-name:var(--font-baloo)] font-bold text-lg text-[#2E2418]">
+            <div key={card.label} className="bg-tata-surface rounded-2xl p-4 shadow-sm flex flex-col gap-1">
+              <div className="font-[family-name:var(--font-baloo)] font-bold text-lg text-tata-ink">
                 {card.value}
               </div>
-              <div className="text-xs text-[#8A7A62]">{card.label}</div>
+              <div className="text-xs text-tata-ink-muted-alt">{card.label}</div>
             </div>
           ))}
         </div>
       </div>
 
       <div>
-        <h2 className="font-[family-name:var(--font-baloo)] font-semibold text-base text-[#2E2418] mb-3">
+        <h2 className="font-[family-name:var(--font-baloo)] font-semibold text-base text-tata-ink mb-3">
           Resumo da rotina de hoje
         </h2>
         <div className="grid grid-cols-6 gap-3">
           {routineCards.map((card) => (
-            <div key={card.label} className="bg-[#FFFDF8] rounded-2xl p-4 shadow-sm flex flex-col gap-1">
-              <div className="font-[family-name:var(--font-baloo)] font-bold text-lg text-[#1F8A6E]">
+            <div key={card.label} className="bg-tata-surface rounded-2xl p-4 shadow-sm flex flex-col gap-1">
+              <div className="font-[family-name:var(--font-baloo)] font-bold text-lg text-tata-green-dark">
                 {card.value}
               </div>
-              <div className="text-xs text-[#8A7A62]">{card.label}</div>
+              <div className="text-xs text-tata-ink-muted-alt">{card.label}</div>
             </div>
           ))}
         </div>
       </div>
 
       <div className="flex flex-col gap-3">
-        <h2 className="font-[family-name:var(--font-baloo)] font-semibold text-base text-[#2E2418]">
+        <h2 className="font-[family-name:var(--font-baloo)] font-semibold text-base text-tata-ink">
           Alertas
         </h2>
 
@@ -75,7 +75,7 @@ export default async function AdminHome() {
         alerts.openIncidents.length === 0 &&
         alerts.overdueInvoices.length === 0 &&
         alerts.childrenWithOvertime.length === 0 ? (
-          <p className="text-sm text-[#8A7A62]">Nenhum alerta no momento.</p>
+          <p className="text-sm text-tata-ink-muted-alt">Nenhum alerta no momento.</p>
         ) : (
           <div className="flex flex-col gap-2">
             {alerts.notArrivedChildren.map((c) => (
@@ -124,10 +124,10 @@ export default async function AdminHome() {
 function AlertRow({ children, tone }: { children: React.ReactNode; tone: "neutral" | "warning" | "danger" }) {
   const toneClass =
     tone === "danger"
-      ? "bg-[#E85570]/10 text-[#C73F58]"
+      ? "bg-tata-coral-dark/10 text-tata-coral-deep"
       : tone === "warning"
-        ? "bg-[#F0A93A]/10 text-[#9A6A10]"
-        : "bg-[#9A8A72]/10 text-[#6B5D4A]";
+        ? "bg-tata-yellow/10 text-tata-yellow-dark"
+        : "bg-tata-ink-muted/10 text-tata-ink-soft";
 
   return <div className={`text-sm px-4 py-2.5 rounded-xl ${toneClass}`}>{children}</div>;
 }

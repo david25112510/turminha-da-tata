@@ -6,9 +6,9 @@ import { applyInvoiceAdjustmentAction, cancelInvoiceAction, closeMonthAction, re
 
 const currency = (n: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
 const inputClass =
-  "border border-[#ECE1CB] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#1FA787] transition-colors bg-white";
-const cardClass = "bg-[#FFFDF8] rounded-2xl shadow-sm p-5 flex flex-col gap-4";
-const cardTitle = "font-[family-name:var(--font-baloo)] font-semibold text-base text-[#2E2418]";
+  "border border-tata-border rounded-xl px-3 py-2 text-sm outline-none focus:border-tata-green transition-colors bg-tata-surface";
+const cardClass = "bg-tata-surface rounded-2xl shadow-sm p-5 flex flex-col gap-4";
+const cardTitle = "font-[family-name:var(--font-baloo)] font-semibold text-base text-tata-ink";
 
 export default async function ChildFinancialDetailPage({
   params,
@@ -47,7 +47,7 @@ export default async function ChildFinancialDetailPage({
 
   return (
     <div className="p-8 flex flex-col gap-6 max-w-3xl">
-      <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-[#2E2418]">
+      <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-tata-ink">
         Financeiro — {child.preferredName || child.fullName}
       </h1>
 
@@ -60,28 +60,28 @@ export default async function ChildFinancialDetailPage({
           <>
             <div className="grid grid-cols-3 gap-3 text-sm">
               <div>
-                <span className="text-xs text-[#9A8A72] block">Mensalidade</span>
-                <span className="font-semibold text-[#2E2418]">{currency(Number(child.monthlyFee))}</span>
+                <span className="text-xs text-tata-ink-muted block">Mensalidade</span>
+                <span className="font-semibold text-tata-ink">{currency(Number(child.monthlyFee))}</span>
               </div>
               <div>
-                <span className="text-xs text-[#9A8A72] block">Horas excedentes (estimativa)</span>
-                <span className="font-semibold text-[#2E2418]">{currency(livePreview.total)}</span>
+                <span className="text-xs text-tata-ink-muted block">Horas excedentes (estimativa)</span>
+                <span className="font-semibold text-tata-ink">{currency(livePreview.total)}</span>
               </div>
               <div>
-                <span className="text-xs text-[#9A8A72] block">Total estimado</span>
-                <span className="font-semibold text-[#2E2418]">
+                <span className="text-xs text-tata-ink-muted block">Total estimado</span>
+                <span className="font-semibold text-tata-ink">
                   {currency(Number(child.monthlyFee) + livePreview.total)}
                 </span>
               </div>
             </div>
 
             {livePreview.entries.length > 0 && (
-              <div className="border-t border-[#ECE1CB] pt-3 flex flex-col gap-1.5">
-                <span className="text-xs font-semibold text-[#9A8A72]">
+              <div className="border-t border-tata-border pt-3 flex flex-col gap-1.5">
+                <span className="text-xs font-semibold text-tata-ink-muted">
                   Detalhamento das horas excedentes (estimativa — ainda não fechada)
                 </span>
                 {livePreview.entries.map((e, i) => (
-                  <div key={i} className="flex justify-between text-sm text-[#6B5D4A]">
+                  <div key={i} className="flex justify-between text-sm text-tata-ink-soft">
                     <span>{new Intl.DateTimeFormat("pt-BR").format(e.date)} — {e.minutesLate} min</span>
                     <span>{currency(e.amount)}</span>
                   </div>
@@ -89,21 +89,21 @@ export default async function ChildFinancialDetailPage({
               </div>
             )}
 
-            <form action={closeMonthAction} className="flex gap-3 items-end border-t border-[#ECE1CB] pt-3">
+            <form action={closeMonthAction} className="flex gap-3 items-end border-t border-tata-border pt-3">
               <input type="hidden" name="childId" value={childId} />
               <input type="hidden" name="month" value={month} />
               <input type="hidden" name="year" value={year} />
-              <label className="flex flex-col gap-1 text-xs text-[#6B5D4A]">
+              <label className="flex flex-col gap-1 text-xs text-tata-ink-soft">
                 Descontos
                 <input name="discounts" placeholder="0,00" className={inputClass} />
               </label>
-              <label className="flex flex-col gap-1 text-xs text-[#6B5D4A]">
+              <label className="flex flex-col gap-1 text-xs text-tata-ink-soft">
                 Outros
                 <input name="otherCharges" placeholder="0,00" className={inputClass} />
               </label>
               <button
                 type="submit"
-                className="bg-[#FF6F8E] text-white rounded-xl px-5 py-2 font-[family-name:var(--font-baloo)] font-semibold text-sm"
+                className="bg-tata-coral text-white rounded-xl px-5 py-2 font-[family-name:var(--font-baloo)] font-semibold text-sm"
               >
                 Fechar mês
               </button>
@@ -123,47 +123,47 @@ export default async function ChildFinancialDetailPage({
               return (
                 <div className="grid grid-cols-3 gap-3 text-sm">
                   <div>
-                    <span className="text-xs text-[#9A8A72] block">Mensalidade</span>
-                    <span className="text-[#2E2418]">{currency(Number(currentInvoice.monthlyFee))}</span>
+                    <span className="text-xs text-tata-ink-muted block">Mensalidade</span>
+                    <span className="text-tata-ink">{currency(Number(currentInvoice.monthlyFee))}</span>
                   </div>
                   {adjustmentsTotal !== 0 && (
                     <div>
-                      <span className="text-xs text-[#9A8A72] block">Ajustes</span>
-                      <span className="text-[#2E2418]">{adjustmentsTotal > 0 ? "+" : ""}{currency(adjustmentsTotal)}</span>
+                      <span className="text-xs text-tata-ink-muted block">Ajustes</span>
+                      <span className="text-tata-ink">{adjustmentsTotal > 0 ? "+" : ""}{currency(adjustmentsTotal)}</span>
                     </div>
                   )}
                   <div>
-                    <span className="text-xs text-[#9A8A72] block">Total</span>
-                    <span className="font-semibold text-[#2E2418]">{currency(totalAmount)}</span>
+                    <span className="text-xs text-tata-ink-muted block">Total</span>
+                    <span className="font-semibold text-tata-ink">{currency(totalAmount)}</span>
                   </div>
                   <div>
-                    <span className="text-xs text-[#9A8A72] block">Pago</span>
-                    <span className="text-[#2E2418]">{currency(paidAmount)}</span>
+                    <span className="text-xs text-tata-ink-muted block">Pago</span>
+                    <span className="text-tata-ink">{currency(paidAmount)}</span>
                   </div>
                   <div>
-                    <span className="text-xs text-[#9A8A72] block">Saldo</span>
-                    <span className="text-[#2E2418]">{currency(balance)}</span>
+                    <span className="text-xs text-tata-ink-muted block">Saldo</span>
+                    <span className="text-tata-ink">{currency(balance)}</span>
                   </div>
                   <div>
-                    <span className="text-xs text-[#9A8A72] block">Status</span>
-                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-[#1FA787]/10 text-[#1F8A6E] inline-block w-fit">
+                    <span className="text-xs text-tata-ink-muted block">Status</span>
+                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-tata-green/10 text-tata-green-dark inline-block w-fit">
                       {INVOICE_STATUS_LABELS[effectiveStatus(currentInvoice)]}
                     </span>
                   </div>
                 </div>
               );
             })()}
-            <p className="text-xs text-[#9A8A72]">
+            <p className="text-xs text-tata-ink-muted">
               Vencimento: {new Intl.DateTimeFormat("pt-BR").format(currentInvoice.dueDate)}
             </p>
 
             {currentInvoice.items.length > 0 && (
-              <div className="border-t border-[#ECE1CB] pt-3 flex flex-col gap-1.5">
-                <span className="text-xs font-semibold text-[#9A8A72]">Itens da cobrança</span>
+              <div className="border-t border-tata-border pt-3 flex flex-col gap-1.5">
+                <span className="text-xs font-semibold text-tata-ink-muted">Itens da cobrança</span>
                 {currentInvoice.items.map((item) => (
-                  <div key={item.id} className="flex justify-between text-sm text-[#6B5D4A]">
+                  <div key={item.id} className="flex justify-between text-sm text-tata-ink-soft">
                     <span>
-                      <span className="text-xs font-semibold text-[#9A8A72]">{INVOICE_ITEM_TYPE_LABELS[item.type]}</span>{" "}
+                      <span className="text-xs font-semibold text-tata-ink-muted">{INVOICE_ITEM_TYPE_LABELS[item.type]}</span>{" "}
                       {item.description}
                       {item.quantity != null ? ` — ${Number(item.quantity)} min` : ""}
                     </span>
@@ -174,10 +174,10 @@ export default async function ChildFinancialDetailPage({
             )}
 
             {currentInvoice.payments.length > 0 && (
-              <div className="border-t border-[#ECE1CB] pt-3 flex flex-col gap-1">
-                <span className="text-xs font-semibold text-[#9A8A72]">Pagamentos</span>
+              <div className="border-t border-tata-border pt-3 flex flex-col gap-1">
+                <span className="text-xs font-semibold text-tata-ink-muted">Pagamentos</span>
                 {currentInvoice.payments.map((p) => (
-                  <div key={p.id} className="text-xs text-[#6B5D4A] flex justify-between">
+                  <div key={p.id} className="text-xs text-tata-ink-soft flex justify-between">
                     <span>{new Intl.DateTimeFormat("pt-BR").format(p.paidAt)} {p.method ? `— ${p.method}` : ""}</span>
                     <span>{currency(Number(p.amount))}</span>
                   </div>
@@ -186,20 +186,20 @@ export default async function ChildFinancialDetailPage({
             )}
 
             {currentInvoice.status !== "PAID" && currentInvoice.status !== "CANCELLED" && (
-              <form action={registerPaymentAction} className="flex gap-3 items-end border-t border-[#ECE1CB] pt-3">
+              <form action={registerPaymentAction} className="flex gap-3 items-end border-t border-tata-border pt-3">
                 <input type="hidden" name="invoiceId" value={currentInvoice.id} />
                 <input type="hidden" name="childId" value={childId} />
-                <label className="flex flex-col gap-1 text-xs text-[#6B5D4A]">
+                <label className="flex flex-col gap-1 text-xs text-tata-ink-soft">
                   Valor
                   <input name="amount" placeholder="0,00" required className={inputClass} />
                 </label>
-                <label className="flex flex-col gap-1 text-xs text-[#6B5D4A]">
+                <label className="flex flex-col gap-1 text-xs text-tata-ink-soft">
                   Forma
                   <input name="method" placeholder="Pix, cartão..." className={inputClass} />
                 </label>
                 <button
                   type="submit"
-                  className="bg-[#1FA787] text-white rounded-xl px-5 py-2 font-[family-name:var(--font-baloo)] font-semibold text-sm"
+                  className="bg-tata-green text-white rounded-xl px-5 py-2 font-[family-name:var(--font-baloo)] font-semibold text-sm"
                 >
                   Registrar pagamento
                 </button>
@@ -207,10 +207,10 @@ export default async function ChildFinancialDetailPage({
             )}
 
             {canAdjust && (
-              <form action={applyInvoiceAdjustmentAction} className="flex gap-3 items-end border-t border-[#ECE1CB] pt-3 flex-wrap">
+              <form action={applyInvoiceAdjustmentAction} className="flex gap-3 items-end border-t border-tata-border pt-3 flex-wrap">
                 <input type="hidden" name="invoiceId" value={currentInvoice.id} />
                 <input type="hidden" name="childId" value={childId} />
-                <label className="flex flex-col gap-1 text-xs text-[#6B5D4A]">
+                <label className="flex flex-col gap-1 text-xs text-tata-ink-soft">
                   Tipo
                   <select name="type" className={inputClass} defaultValue="DEBIT">
                     <option value="DEBIT">Débito (aumenta o total)</option>
@@ -218,17 +218,17 @@ export default async function ChildFinancialDetailPage({
                     <option value="ADJUSTMENT">Ajuste</option>
                   </select>
                 </label>
-                <label className="flex flex-col gap-1 text-xs text-[#6B5D4A]">
+                <label className="flex flex-col gap-1 text-xs text-tata-ink-soft">
                   Descrição
                   <input name="description" placeholder="Motivo do lançamento" required className={inputClass} />
                 </label>
-                <label className="flex flex-col gap-1 text-xs text-[#6B5D4A]">
+                <label className="flex flex-col gap-1 text-xs text-tata-ink-soft">
                   Valor
                   <input name="amount" placeholder="0,00" required className={inputClass} />
                 </label>
                 <button
                   type="submit"
-                  className="bg-white border border-[#ECE1CB] text-[#6B5D4A] rounded-xl px-5 py-2 font-[family-name:var(--font-baloo)] font-semibold text-sm"
+                  className="bg-tata-surface border border-tata-border text-tata-ink-soft rounded-xl px-5 py-2 font-[family-name:var(--font-baloo)] font-semibold text-sm"
                 >
                   Lançar ajuste
                 </button>
@@ -236,10 +236,10 @@ export default async function ChildFinancialDetailPage({
             )}
 
             {canCancel && (
-              <form action={cancelInvoiceAction} className="border-t border-[#ECE1CB] pt-3">
+              <form action={cancelInvoiceAction} className="border-t border-tata-border pt-3">
                 <input type="hidden" name="invoiceId" value={currentInvoice.id} />
                 <input type="hidden" name="childId" value={childId} />
-                <button type="submit" className="text-xs font-semibold text-[#B33A3A] hover:underline">
+                <button type="submit" className="text-xs font-semibold text-tata-red hover:underline">
                   Cancelar esta cobrança
                 </button>
               </form>
@@ -251,16 +251,16 @@ export default async function ChildFinancialDetailPage({
       <div className={cardClass}>
         <span className={cardTitle}>Histórico</span>
         {invoices.length === 0 ? (
-          <p className="text-sm text-[#8A7A62]">Nenhum mês fechado ainda.</p>
+          <p className="text-sm text-tata-ink-muted-alt">Nenhum mês fechado ainda.</p>
         ) : (
           <ul className="flex flex-col gap-2">
             {invoices.map((inv) => (
-              <li key={inv.id} className="flex items-center justify-between text-sm border-b border-[#F3EEE1] pb-2 last:border-0">
-                <span className="text-[#2E2418]">
+              <li key={inv.id} className="flex items-center justify-between text-sm border-b border-tata-surface-hover pb-2 last:border-0">
+                <span className="text-tata-ink">
                   {MONTH_LABELS[inv.referenceMonth - 1]} de {inv.referenceYear}
                 </span>
-                <span className="text-[#6B5D4A]">{currency(Number(inv.totalAmount))}</span>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#1FA787]/10 text-[#1F8A6E]">
+                <span className="text-tata-ink-soft">{currency(Number(inv.totalAmount))}</span>
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-tata-green/10 text-tata-green-dark">
                   {INVOICE_STATUS_LABELS[effectiveStatus(inv)]}
                 </span>
               </li>

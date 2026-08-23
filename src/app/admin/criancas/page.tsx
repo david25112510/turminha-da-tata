@@ -10,26 +10,26 @@ export default async function ChildrenListPage() {
   return (
     <div className="p-8 flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-[#2E2418]">
+        <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-tata-ink">
           Crianças
         </h1>
         <Link
           href="/admin/criancas/nova"
-          className="bg-[#FF6F8E] text-white text-sm font-semibold rounded-xl px-4 py-2.5 font-[family-name:var(--font-baloo)]"
+          className="bg-tata-coral text-white text-sm font-semibold rounded-xl px-4 py-2.5 font-[family-name:var(--font-baloo)]"
         >
           + Nova criança
         </Link>
       </div>
 
-      <div className="bg-[#FFFDF8] rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-tata-surface rounded-2xl shadow-sm overflow-hidden">
         {children.length === 0 ? (
-          <div className="p-8 text-center text-sm text-[#8A7A62]">
+          <div className="p-8 text-center text-sm text-tata-ink-muted-alt">
             Nenhuma criança cadastrada ainda.
           </div>
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-[#9A8A72] border-b border-[#ECE1CB]">
+              <tr className="text-left text-xs text-tata-ink-muted border-b border-tata-border">
                 <th className="p-4 font-semibold">Nome</th>
                 <th className="p-4 font-semibold">Nascimento</th>
                 <th className="p-4 font-semibold">Mensalidade</th>
@@ -38,16 +38,16 @@ export default async function ChildrenListPage() {
             </thead>
             <tbody>
               {children.map((child) => (
-                <tr key={child.id} className="border-b border-[#F3EEE1] last:border-0 hover:bg-[#FBF6EA]">
-                  <td className="p-4 font-medium text-[#2E2418]">
-                    <Link href={`/admin/criancas/${child.id}`} className="hover:text-[#1FA787]">
+                <tr key={child.id} className="border-b border-tata-surface-hover last:border-0 hover:bg-tata-surface-warm">
+                  <td className="p-4 font-medium text-tata-ink">
+                    <Link href={`/admin/criancas/${child.id}`} className="hover:text-tata-green">
                       {child.preferredName || child.fullName}
                     </Link>
                   </td>
-                  <td className="p-4 text-[#6B5D4A]">
+                  <td className="p-4 text-tata-ink-soft">
                     {new Intl.DateTimeFormat("pt-BR").format(child.birthDate)}
                   </td>
-                  <td className="p-4 text-[#6B5D4A]">
+                  <td className="p-4 text-tata-ink-soft">
                     {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
                       Number(child.monthlyFee)
                     )}
@@ -56,8 +56,8 @@ export default async function ChildrenListPage() {
                     <span
                       className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
                         child.status === "ACTIVE"
-                          ? "bg-[#1FA787]/10 text-[#1F8A6E]"
-                          : "bg-[#E85570]/10 text-[#E85570]"
+                          ? "bg-tata-green/10 text-tata-green-dark"
+                          : "bg-tata-coral-dark/10 text-tata-coral-dark"
                       }`}
                     >
                       {CHILD_STATUS_LABELS[child.status]}

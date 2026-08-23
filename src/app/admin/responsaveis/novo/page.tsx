@@ -3,9 +3,9 @@ import { createGuardianAction } from "../actions";
 import { RELATIONSHIP_LABELS } from "@/lib/labels";
 
 const inputClass =
-  "border border-[#ECE1CB] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#1FA787] transition-colors bg-[#FFFDF8]";
-const labelClass = "text-sm font-semibold text-[#4A3F33]";
-const checkClass = "flex items-center gap-2 text-sm text-[#4A3F33]";
+  "border border-tata-border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-tata-green transition-colors bg-tata-surface";
+const labelClass = "text-sm font-semibold text-tata-ink-strong";
+const checkClass = "flex items-center gap-2 text-sm text-tata-ink-strong";
 
 export default async function NewGuardianPage() {
   const children = await prisma.child.findMany({
@@ -15,11 +15,11 @@ export default async function NewGuardianPage() {
 
   return (
     <div className="p-8 flex flex-col gap-6 max-w-2xl">
-      <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-[#2E2418]">
+      <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-tata-ink">
         Novo responsável
       </h1>
 
-      <form action={createGuardianAction} className="bg-[#FFFDF8] rounded-2xl shadow-sm p-6 flex flex-col gap-5">
+      <form action={createGuardianAction} className="bg-tata-surface rounded-2xl shadow-sm p-6 flex flex-col gap-5">
         <div className="grid grid-cols-2 gap-4">
           <label className="flex flex-col gap-1.5 col-span-2">
             <span className={labelClass}>Nome completo</span>
@@ -47,7 +47,7 @@ export default async function NewGuardianPage() {
           </label>
         </div>
 
-        <div className="h-px bg-[#ECE1CB]" />
+        <div className="h-px bg-tata-border" />
 
         <div className="grid grid-cols-2 gap-4">
           <label className="flex flex-col gap-1.5">
@@ -86,7 +86,7 @@ export default async function NewGuardianPage() {
           </label>
         </div>
 
-        <div className="h-px bg-[#ECE1CB]" />
+        <div className="h-px bg-tata-border" />
 
         <div className="flex flex-col gap-2.5">
           <span className={labelClass}>Permissões</span>
@@ -122,7 +122,7 @@ export default async function NewGuardianPage() {
           </div>
         </div>
 
-        <div className="h-px bg-[#ECE1CB]" />
+        <div className="h-px bg-tata-border" />
 
         <label className={checkClass}>
           <input type="checkbox" name="createPortalAccess" id="createPortalAccess" />
@@ -135,7 +135,7 @@ export default async function NewGuardianPage() {
 
         <button
           type="submit"
-          className="bg-[#FF6F8E] text-white rounded-xl py-3 font-[family-name:var(--font-baloo)] font-semibold text-sm self-start px-8"
+          className="bg-tata-coral text-white rounded-xl py-3 font-[family-name:var(--font-baloo)] font-semibold text-sm self-start px-8"
         >
           Salvar
         </button>
