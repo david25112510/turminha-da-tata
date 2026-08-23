@@ -196,6 +196,7 @@ model AuthorizedPickupPerson {
   attendanceCheckIns  Attendance[] @relation("AttendanceCheckInAuthorizedPerson")
   attendanceCheckOuts Attendance[] @relation("AttendanceCheckOutAuthorizedPerson")
 
+  @@index([childId])
   @@map("authorized_pickup_people")
 }
 
@@ -248,6 +249,8 @@ model HomeDeparture {
   child    Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
   guardian Guardian @relation(fields: [guardianId], references: [id])
 
+  @@index([childId])
+  @@index([guardianId])
   @@map("home_departures")
 }
 
@@ -681,6 +684,7 @@ model Payment {
   recordedBy User           @relation(fields: [recordedById], references: [id])
 
   @@index([paidAt])
+  @@index([invoiceId])
   @@map("payments")
 }
 
