@@ -46,7 +46,7 @@ export default async function ChildFinancialDetailPage({
   const canCancel = currentInvoice && currentInvoice.status !== "CANCELLED" && Number(currentInvoice.paidAmount) === 0;
 
   return (
-    <div className="p-8 flex flex-col gap-6 max-w-3xl">
+    <div className="p-4 sm:p-8 flex flex-col gap-6 max-w-3xl">
       <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-tata-ink">
         Financeiro — {child.preferredName || child.fullName}
       </h1>
@@ -58,7 +58,7 @@ export default async function ChildFinancialDetailPage({
 
         {livePreview && (
           <>
-            <div className="grid grid-cols-3 gap-3 text-sm">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
               <div>
                 <span className="text-xs text-tata-ink-muted block">Mensalidade</span>
                 <span className="font-semibold text-tata-ink">{currency(Number(child.monthlyFee))}</span>
@@ -89,7 +89,7 @@ export default async function ChildFinancialDetailPage({
               </div>
             )}
 
-            <form action={closeMonthAction} className="flex gap-3 items-end border-t border-tata-border pt-3">
+            <form action={closeMonthAction} className="flex flex-wrap gap-3 items-end border-t border-tata-border pt-3">
               <input type="hidden" name="childId" value={childId} />
               <input type="hidden" name="month" value={month} />
               <input type="hidden" name="year" value={year} />
@@ -121,7 +121,7 @@ export default async function ChildFinancialDetailPage({
               const totalAmount = Number(currentInvoice.totalAmount);
               const balance = Math.max(0, Math.round((totalAmount - paidAmount) * 100) / 100);
               return (
-                <div className="grid grid-cols-3 gap-3 text-sm">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
                   <div>
                     <span className="text-xs text-tata-ink-muted block">Mensalidade</span>
                     <span className="text-tata-ink">{currency(Number(currentInvoice.monthlyFee))}</span>
@@ -186,7 +186,7 @@ export default async function ChildFinancialDetailPage({
             )}
 
             {currentInvoice.status !== "PAID" && currentInvoice.status !== "CANCELLED" && (
-              <form action={registerPaymentAction} className="flex gap-3 items-end border-t border-tata-border pt-3">
+              <form action={registerPaymentAction} className="flex flex-wrap gap-3 items-end border-t border-tata-border pt-3">
                 <input type="hidden" name="invoiceId" value={currentInvoice.id} />
                 <input type="hidden" name="childId" value={childId} />
                 <label className="flex flex-col gap-1 text-xs text-tata-ink-soft">

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { notifyGuardians } from "@/lib/notifications";
+import { notifyGuardians, notifyAdmins } from "@/lib/notifications";
 import { formatDuration, todayRange } from "@/lib/date";
 import { MEAL_TYPE_LABELS, CONSUMPTION_LABELS, INCIDENT_TYPE_LABELS } from "@/lib/labels";
 import { requireCaregiverChild } from "@/lib/authz";
@@ -118,6 +118,12 @@ export async function addIncidentAction(formData: FormData) {
     "Nova informação importante",
     `Existe uma nova informação importante sobre ${incident.child.preferredName || incident.child.fullName}: ${INCIDENT_TYPE_LABELS[type] ?? type}.`
   );
+  await notifyAdmins(
+    "INCIDENT",
+    "Nova ocorrência registrada",
+    `${incident.child.preferredName || incident.child.fullName}: ${INCIDENT_TYPE_LABELS[type] ?? type}.`,
+    { entity: "Incident", entityId: incident.id }
+  );
   revalidate(childId);
 }
 
@@ -146,6 +152,12 @@ export async function addMedicationAdministrationAction(formData: FormData) {
     "MEDICATION",
     "Medicamento administrado",
     `Há uma atualização sobre a medicação de ${administration.child.preferredName || administration.child.fullName}.`
+  );
+  await notifyAdmins(
+    "MEDICATION",
+    "Medicamento administrado",
+    `${administration.child.preferredName || administration.child.fullName}: ${authorization.medication}.`,
+    { entity: "MedicationAdministration", entityId: administration.id }
   );
   revalidate(childId);
 }

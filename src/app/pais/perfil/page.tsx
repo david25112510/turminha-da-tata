@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { requireGuardian } from "@/lib/guardian";
 import { RELATIONSHIP_LABELS } from "@/lib/labels";
+import { ChangePasswordForm } from "@/components/tata/ChangePasswordForm";
 import { PushNotificationToggle } from "../PushNotificationToggle";
 
 const PERMISSION_LABELS: { key: "viewRoutine" | "viewPhotos" | "viewFinancial" | "authorizeMedication" | "authorizePickup" | "receiveNotifications"; label: string }[] = [
@@ -44,6 +45,13 @@ export default async function GuardianProfilePage() {
           🔔 Notificações push
         </span>
         <PushNotificationToggle />
+      </div>
+
+      <div className="bg-tata-surface rounded-2xl shadow-sm p-5 flex flex-col gap-3">
+        <span className="font-[family-name:var(--font-baloo)] font-semibold text-sm text-tata-ink">
+          🔒 Alterar senha
+        </span>
+        <ChangePasswordForm />
       </div>
 
       <div className="flex flex-col gap-3">

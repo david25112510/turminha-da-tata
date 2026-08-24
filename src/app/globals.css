@@ -163,9 +163,26 @@ body {
   animation: tata-pop 0.25s var(--ease-tata) both;
 }
 
+/* Leve sensação de presença viva na mascote (mesma pose única, sem novos assets) — um balanço
+   sutil em loop, nunca uma animação chamativa. */
+@keyframes tata-mascot-sway {
+  0%, 100% {
+    transform: rotate(-1.5deg) translateY(0);
+  }
+  50% {
+    transform: rotate(1.5deg) translateY(-2px);
+  }
+}
+
+.tata-mascot-idle {
+  animation: tata-mascot-sway 4.5s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tata-animate-in,
-  .tata-animate-pop {
+  .tata-animate-pop,
+  .tata-mascot-idle {
     animation: none;
   }
 }

@@ -17,19 +17,19 @@ export default async function AnnouncementsPage() {
   ]);
 
   return (
-    <div className="p-8 flex flex-col gap-6 max-w-3xl">
+    <div className="p-4 sm:p-8 flex flex-col gap-6 max-w-3xl">
       <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-tata-ink">
         Comunicados
       </h1>
 
       <form
         action={createAnnouncementAction}
-        className="bg-tata-surface rounded-2xl shadow-sm p-5 flex flex-col gap-3"
+        className="bg-tata-surface rounded-2xl shadow-sm p-5 flex flex-col gap-3 border-l-4 border-l-tata-coral"
       >
         <input name="title" placeholder="Título" required className={inputClass} />
         <textarea name="body" placeholder="Mensagem" required rows={3} className={inputClass} />
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <select name="type" className={inputClass} defaultValue="ANNOUNCEMENT">
             {Object.entries(ANNOUNCEMENT_TYPE_LABELS).map(([v, l]) => (
               <option key={v} value={v}>{l}</option>
@@ -43,7 +43,7 @@ export default async function AnnouncementsPage() {
           <input type="date" name="eventDate" className={inputClass} title="Data do evento (opcional)" />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <select name="targetGuardianId" className={inputClass} defaultValue="">
             <option value="">Responsável (se aplicável)</option>
             {guardians.map((g) => (

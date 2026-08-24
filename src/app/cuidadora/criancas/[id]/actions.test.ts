@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const requireCaregiverChild = vi.fn();
 const notifyGuardians = vi.fn();
+const notifyAdmins = vi.fn();
 const createMeal = vi.fn();
 const createSleep = vi.fn();
 const findUniqueSleep = vi.fn();
@@ -27,6 +28,7 @@ beforeEach(() => {
   }));
   vi.doMock("@/lib/notifications", () => ({
     notifyGuardians: (...args: unknown[]) => notifyGuardians(...args),
+    notifyAdmins: (...args: unknown[]) => notifyAdmins(...args),
   }));
   vi.doMock("@/lib/prisma", () => ({
     prisma: {
@@ -46,6 +48,7 @@ beforeEach(() => {
 
   requireCaregiverChild.mockReset().mockResolvedValue({ user: { id: "caregiver-1" }, child: { id: "child-1" } });
   notifyGuardians.mockReset().mockResolvedValue(undefined);
+  notifyAdmins.mockReset().mockResolvedValue(undefined);
   createMeal.mockReset().mockResolvedValue({ child: { preferredName: "Maria", fullName: "Maria Silva" } });
   createSleep.mockReset().mockResolvedValue({ id: "sleep-1", child: { preferredName: "Maria", fullName: "Maria Silva" } });
   findUniqueSleep.mockReset();

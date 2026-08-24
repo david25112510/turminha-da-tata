@@ -9,64 +9,93 @@ export default async function GuardiansListPage() {
   });
 
   return (
-    <div className="p-8 flex flex-col gap-6">
+    <div className="p-4 sm:p-8 flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-tata-ink">
           Responsáveis
         </h1>
         <Link
           href="/admin/responsaveis/novo"
-          className="bg-tata-coral text-white text-sm font-semibold rounded-xl px-4 py-2.5 font-[family-name:var(--font-baloo)]"
+          className="min-h-11 flex items-center bg-tata-coral text-white text-sm font-semibold rounded-xl px-4 font-[family-name:var(--font-baloo)]"
         >
           + Novo responsável
         </Link>
       </div>
 
-      <div className="bg-tata-surface rounded-2xl shadow-sm overflow-hidden">
-        {guardians.length === 0 ? (
-          <div className="p-8 text-center text-sm text-tata-ink-muted-alt">
-            Nenhum responsável cadastrado ainda.
+      {guardians.length === 0 ? (
+        <div className="bg-tata-surface rounded-2xl shadow-sm p-8 text-center text-sm text-tata-ink-muted-alt">
+          Nenhum responsável cadastrado ainda.
+        </div>
+      ) : (
+        <>
+          {/* Mobile: cards */}
+          <div className="flex flex-col gap-2.5 md:hidden">
+            {guardians.map((guardian) => (
+              <div key={guardian.id} className="bg-tata-surface rounded-2xl shadow-sm p-4 flex flex-col gap-1">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-tata-ink text-sm">{guardian.name}</span>
+                  <span
+                    className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                      guardian.userId
+                        ? "bg-tata-green/10 text-tata-green-dark"
+                        : "bg-tata-ink-muted/10 text-tata-ink-muted"
+                    }`}
+                  >
+                    {guardian.userId ? "Ativo" : "Sem acesso"}
+                  </span>
+                </div>
+                <span className="text-xs text-tata-ink-soft">{guardian.phone}</span>
+                <span className="text-xs text-tata-ink-muted">
+                  {guardian.children
+                    .map((gc) => `${gc.child.preferredName || gc.child.fullName} (${RELATIONSHIP_LABELS[gc.relationship]})`)
+                    .join(", ") || "—"}
+                </span>
+              </div>
+            ))}
           </div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs text-tata-ink-muted border-b border-tata-border">
-                <th className="p-4 font-semibold">Nome</th>
-                <th className="p-4 font-semibold">Contato</th>
-                <th className="p-4 font-semibold">Vinculado a</th>
-                <th className="p-4 font-semibold">Acesso ao portal</th>
-              </tr>
-            </thead>
-            <tbody>
-              {guardians.map((guardian) => (
-                <tr key={guardian.id} className="border-b border-tata-surface-hover last:border-0">
-                  <td className="p-4 font-medium text-tata-ink">{guardian.name}</td>
-                  <td className="p-4 text-tata-ink-soft">{guardian.phone}</td>
-                  <td className="p-4 text-tata-ink-soft">
-                    {guardian.children
-                      .map(
-                        (gc) =>
-                          `${gc.child.preferredName || gc.child.fullName} (${RELATIONSHIP_LABELS[gc.relationship]})`
-                      )
-                      .join(", ") || "—"}
-                  </td>
-                  <td className="p-4">
-                    <span
-                      className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                        guardian.userId
-                          ? "bg-tata-green/10 text-tata-green-dark"
-                          : "bg-tata-ink-muted/10 text-tata-ink-muted"
-                      }`}
-                    >
-                      {guardian.userId ? "Ativo" : "Sem acesso"}
-                    </span>
-                  </td>
+
+          {/* Desktop: table */}
+          <div className="hidden md:block bg-tata-surface rounded-2xl shadow-sm overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-tata-ink-muted border-b border-tata-border">
+                  <th className="p-4 font-semibold">Nome</th>
+                  <th className="p-4 font-semibold">Contato</th>
+                  <th className="p-4 font-semibold">Vinculado a</th>
+                  <th className="p-4 font-semibold">Acesso ao portal</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+              </thead>
+              <tbody>
+                {guardians.map((guardian) => (
+                  <tr key={guardian.id} className="border-b border-tata-surface-hover last:border-0">
+                    <td className="p-4 font-medium text-tata-ink">{guardian.name}</td>
+                    <td className="p-4 text-tata-ink-soft">{guardian.phone}</td>
+                    <td className="p-4 text-tata-ink-soft">
+                      {guardian.children
+                        .map(
+                          (gc) =>
+                            `${gc.child.preferredName || gc.child.fullName} (${RELATIONSHIP_LABELS[gc.relationship]})`
+                        )
+                        .join(", ") || "—"}
+                    </td>
+                    <td className="p-4">
+                      <span
+                        className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                          guardian.userId
+                            ? "bg-tata-green/10 text-tata-green-dark"
+                            : "bg-tata-ink-muted/10 text-tata-ink-muted"
+                        }`}
+                      >
+                        {guardian.userId ? "Ativo" : "Sem acesso"}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   );
 }

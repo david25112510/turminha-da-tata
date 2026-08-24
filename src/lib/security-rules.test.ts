@@ -142,6 +142,7 @@ describe("medicamento inválido é bloqueado (addMedicationAdministrationAction)
   const findUniqueAuthorization = vi.fn();
   const createAdministration = vi.fn();
   const notifyGuardians = vi.fn();
+  const notifyAdmins = vi.fn();
 
   beforeEach(() => {
     vi.resetModules();
@@ -149,7 +150,10 @@ describe("medicamento inválido é bloqueado (addMedicationAdministrationAction)
     vi.doMock("@/lib/authz", () => ({
       requireCaregiverChild: (...args: unknown[]) => requireCaregiverChild(...args),
     }));
-    vi.doMock("@/lib/notifications", () => ({ notifyGuardians: (...args: unknown[]) => notifyGuardians(...args) }));
+    vi.doMock("@/lib/notifications", () => ({
+      notifyGuardians: (...args: unknown[]) => notifyGuardians(...args),
+      notifyAdmins: (...args: unknown[]) => notifyAdmins(...args),
+    }));
     vi.doMock("@/lib/prisma", () => ({
       prisma: {
         medicationAuthorization: { findUnique: (...args: unknown[]) => findUniqueAuthorization(...args) },
@@ -160,6 +164,7 @@ describe("medicamento inválido é bloqueado (addMedicationAdministrationAction)
     findUniqueAuthorization.mockReset();
     createAdministration.mockReset();
     notifyGuardians.mockReset().mockResolvedValue(undefined);
+    notifyAdmins.mockReset().mockResolvedValue(undefined);
   });
 
   function formData(authorizationId: string) {
@@ -525,6 +530,7 @@ describe("eventos de rotina não geram AuditLog administrativo (addMedicationAdm
   const createAdministration = vi.fn();
   const recordAuditLog = vi.fn();
   const notifyGuardians = vi.fn();
+  const notifyAdmins = vi.fn();
 
   beforeEach(() => {
     vi.resetModules();
@@ -532,7 +538,10 @@ describe("eventos de rotina não geram AuditLog administrativo (addMedicationAdm
     vi.doMock("@/lib/authz", () => ({
       requireCaregiverChild: (...args: unknown[]) => requireCaregiverChild(...args),
     }));
-    vi.doMock("@/lib/notifications", () => ({ notifyGuardians: (...args: unknown[]) => notifyGuardians(...args) }));
+    vi.doMock("@/lib/notifications", () => ({
+      notifyGuardians: (...args: unknown[]) => notifyGuardians(...args),
+      notifyAdmins: (...args: unknown[]) => notifyAdmins(...args),
+    }));
     // Espiona recordAuditLog só para provar que uma Server Action puramente operacional nunca a chama —
     // cuidadora/criancas/[id]/actions.ts nem importa "@/lib/audit-log" hoje; este teste é uma trava de regressão.
     vi.doMock("@/lib/audit-log", () => ({ recordAuditLog: (...args: unknown[]) => recordAuditLog(...args) }));
@@ -554,6 +563,7 @@ describe("eventos de rotina não geram AuditLog administrativo (addMedicationAdm
     createAdministration.mockReset().mockResolvedValue({ id: "adm-1", child: { preferredName: "Maria", fullName: "Maria Silva" } });
     recordAuditLog.mockReset().mockResolvedValue(undefined);
     notifyGuardians.mockReset().mockResolvedValue(undefined);
+    notifyAdmins.mockReset().mockResolvedValue(undefined);
   });
 
   it("registrar administração de medicamento não gera entrada de AuditLog", async () => {
@@ -566,5 +576,75 @@ describe("eventos de rotina não geram AuditLog administrativo (addMedicationAdm
 
     expect(createAdministration).toHaveBeenCalledOnce();
     expect(recordAuditLog).not.toHaveBeenCalled();
+  });
+});
+
+// Os dois blocos abaixo mockam "@/lib/authz" (só um subconjunto de exports) — colocados por último de
+// propósito, para não vazar esse mock parcial para os blocos acima, que precisam do módulo authz.ts real.
+
+describe("cuidadora não altera financeiro (registerPaymentAction usa requireAdmin)", () => {
+  const requireAdmin = vi.fn();
+
+  beforeEach(() => {
+    vi.resetModules();
+    vi.doMock("next/cache", () => ({ revalidatePath: () => {} }));
+    vi.doMock("@/lib/authz", () => ({ requireAdmin: (...args: unknown[]) => requireAdmin(...args) }));
+    vi.doMock("@/lib/audit-log", () => ({ recordAuditLog: vi.fn() }));
+    vi.doMock("@/lib/prisma", () => ({ prisma: { $transaction: vi.fn() } }));
+    requireAdmin.mockReset();
+  });
+
+  it("recusa registrar pagamento quando quem chama não é ADMIN", async () => {
+    requireAdmin.mockRejectedValueOnce(new Error("Você não tem permissão para realizar esta operação."));
+    const { registerPaymentAction } = await import("@/app/admin/financeiro/actions");
+
+    const fd = new FormData();
+    fd.set("invoiceId", "invoice-1");
+    fd.set("childId", "child-1");
+    fd.set("amount", "50");
+
+    await expect(registerPaymentAction(fd)).rejects.toThrow("Você não tem permissão para realizar esta operação.");
+  });
+});
+
+describe("cuidadora nunca pode ser criada como administradora (createCaregiverAction)", () => {
+  const requireAdmin = vi.fn();
+  const findUniqueUser = vi.fn();
+  const createUser = vi.fn();
+
+  beforeEach(() => {
+    vi.resetModules();
+    vi.doMock("next/cache", () => ({ revalidatePath: () => {} }));
+    vi.doMock("@/lib/authz", () => ({ requireAdmin: (...args: unknown[]) => requireAdmin(...args) }));
+    vi.doMock("@/lib/audit-log", () => ({ recordAuditLog: vi.fn().mockResolvedValue(undefined) }));
+    vi.doMock("@/lib/notifications", () => ({ notifyAdmins: vi.fn().mockResolvedValue(undefined) }));
+    vi.doMock("@/lib/user-actions", () => ({ toggleUserActive: vi.fn() }));
+    vi.doMock("@/lib/storage", () => ({ uploadFile: vi.fn() }));
+    vi.doMock("@/lib/prisma", () => ({
+      prisma: {
+        user: {
+          findUnique: (...args: unknown[]) => findUniqueUser(...args),
+          create: (...args: unknown[]) => createUser(...args),
+        },
+      },
+    }));
+    requireAdmin.mockReset().mockResolvedValue({ id: "admin-1" });
+    findUniqueUser.mockReset().mockResolvedValue(null);
+    createUser.mockReset().mockResolvedValue({ id: "caregiver-1", name: "Ana" });
+  });
+
+  it("o formulário de cadastro de cuidadora não tem como definir role — sempre grava CAREGIVER", async () => {
+    const { createCaregiverAction } = await import("@/app/admin/cuidadoras/actions");
+    const fd = new FormData();
+    fd.set("name", "Ana");
+    fd.set("email", "ana@turminhadatata.com.br");
+    fd.set("phone", "11999999999");
+    fd.set("tempPassword", "SenhaInicial123");
+    // Tentativa de manipular o role diretamente pelo FormData — o campo nem é lido pela action.
+    fd.set("role", "ADMIN");
+
+    await createCaregiverAction(undefined, fd);
+
+    expect(createUser).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ role: "CAREGIVER" }) }));
   });
 });

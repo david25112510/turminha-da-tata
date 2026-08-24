@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { RELATIONSHIP_LABELS, CHILD_STATUS_LABELS } from "@/lib/labels";
 import { uploadChildPhotoAction } from "@/lib/photo-actions";
+import { buildTimeline } from "@/lib/journey";
+import { todayRange, formatTime } from "@/lib/date";
 import { addAuthorizedPersonAction, toggleAuthorizedPersonStatusAction } from "./actions";
 
 const inputClass =
@@ -23,8 +25,11 @@ export default async function ChildDetailPage({ params }: { params: Promise<{ id
   });
   if (!child) notFound();
 
+  const { start, end } = todayRange();
+  const timeline = await buildTimeline(childId, start, end);
+
   return (
-    <div className="p-8 flex flex-col gap-6 max-w-4xl">
+    <div className="p-4 sm:p-8 flex flex-col gap-6 max-w-4xl">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-tata-ink">
@@ -39,6 +44,23 @@ export default async function ChildDetailPage({ params }: { params: Promise<{ id
         >
           {CHILD_STATUS_LABELS[child.status]}
         </span>
+      </div>
+
+      <div className={cardClass}>
+        <span className={cardTitle}>Rotina de hoje</span>
+        {timeline.length === 0 ? (
+          <p className="text-sm text-tata-ink-muted-alt">Nenhum registro de rotina ainda hoje.</p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {timeline.map((entry, i) => (
+              <li key={i} className="text-sm flex items-baseline gap-3 border-b border-tata-surface-hover pb-2 last:border-0">
+                <span className="text-tata-ink-muted text-xs shrink-0 w-12">{formatTime(entry.time)}</span>
+                <span className="font-medium text-tata-ink shrink-0">{entry.label}</span>
+                <span className="text-tata-ink-soft">{entry.detail}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className={cardClass}>

@@ -13,11 +13,11 @@ import {
   MOOD_LABELS,
   INCIDENT_TYPE_LABELS,
 } from "@/lib/labels";
+import { Card } from "@/components/tata/Card";
+import { SectionHeader } from "@/components/tata/SectionHeader";
 
 const inputClass =
-  "border border-tata-border rounded-xl px-3 py-2 text-sm outline-none focus:border-tata-green transition-colors bg-tata-surface";
-const sectionClass = "bg-tata-surface rounded-2xl shadow-sm p-5 flex flex-col gap-3";
-const sectionTitle = "font-[family-name:var(--font-baloo)] font-semibold text-base text-tata-ink";
+  "min-h-11 border border-tata-border rounded-xl px-3 py-2 text-sm outline-none focus:border-tata-green transition-colors bg-tata-surface";
 const currency = (n: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
 
 function toDateInput(d: Date) {
@@ -41,12 +41,12 @@ export default async function ReportsPage({
   ]);
 
   return (
-    <div className="p-8 flex flex-col gap-6 max-w-4xl">
+    <div className="p-4 sm:p-8 flex flex-col gap-6 max-w-4xl">
       <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-tata-ink">
         Relatórios
       </h1>
 
-      <form className="flex gap-3 items-end">
+      <form className="flex flex-wrap gap-3 items-end">
         <label className="flex flex-col gap-1 text-xs text-tata-ink-soft">
           De
           <input type="date" name="from" defaultValue={toDateInput(start)} className={inputClass} />
@@ -55,14 +55,34 @@ export default async function ReportsPage({
           Até
           <input type="date" name="to" defaultValue={toDateInput(end)} className={inputClass} />
         </label>
-        <button type="submit" className="bg-tata-green text-white rounded-xl px-4 py-2 text-sm font-semibold font-[family-name:var(--font-baloo)]">
+        <button type="submit" className="min-h-11 bg-tata-green text-white rounded-xl px-4 py-2 text-sm font-semibold font-[family-name:var(--font-baloo)]">
           Filtrar
         </button>
       </form>
 
-      <div className={sectionClass}>
-        <span className={sectionTitle}>Crianças</span>
-        <table className="w-full text-sm">
+      <Card accent="green" className="flex flex-col gap-3">
+        <SectionHeader icon="👧" title="Crianças" />
+
+        {/* Mobile: cards */}
+        <div className="flex flex-col gap-2 sm:hidden">
+          {children.map((row) => (
+            <div key={row.child.id} className="border border-tata-border rounded-xl p-3 flex flex-col gap-1">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-tata-ink text-sm">{row.child.preferredName || row.child.fullName}</span>
+                <span className="text-xs text-tata-ink-soft">{CHILD_STATUS_LABELS[row.status]}</span>
+              </div>
+              <span className="text-xs text-tata-ink-muted">Frequência: {row.frequency}</span>
+              <span className="text-xs text-tata-ink-muted">Entradas: {row.entries} — Saídas: {row.exits}</span>
+              <span className="text-xs text-tata-ink-muted">
+                Permanência média:{" "}
+                {row.avgMinutesPresent > 0 ? `${Math.floor(row.avgMinutesPresent / 60)}h${(row.avgMinutesPresent % 60).toString().padStart(2, "0")}` : "—"}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop: table */}
+        <table className="w-full text-sm hidden sm:table">
           <thead>
             <tr className="text-left text-xs text-tata-ink-muted border-b border-tata-border">
               <th className="py-2 font-semibold">Nome</th>
@@ -88,11 +108,11 @@ export default async function ReportsPage({
             ))}
           </tbody>
         </table>
-      </div>
+      </Card>
 
-      <div className={sectionClass}>
-        <span className={sectionTitle}>Rotina</span>
-        <div className="grid grid-cols-2 gap-4 text-sm">
+      <Card accent="yellow" className="flex flex-col gap-3">
+        <SectionHeader icon="📋" title="Rotina" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
           <div>
             <span className="text-xs font-semibold text-tata-ink-muted">Alimentação</span>
             <ul className="mt-1 flex flex-col gap-0.5">
@@ -136,11 +156,11 @@ export default async function ReportsPage({
             <p className="text-tata-ink-soft">{routine.observations}</p>
           </div>
         </div>
-      </div>
+      </Card>
 
-      <div className={sectionClass}>
-        <span className={sectionTitle}>Segurança</span>
-        <div className="grid grid-cols-2 gap-4 text-sm">
+      <Card accent="coral" className="flex flex-col gap-3">
+        <SectionHeader icon="🔒" title="Segurança" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
           <p className="text-tata-ink-soft">Entradas: {security.entries} — Saídas: {security.exits}</p>
           <div>
             <span className="text-xs font-semibold text-tata-ink-muted">Pessoas que retiraram crianças</span>
@@ -165,11 +185,11 @@ export default async function ReportsPage({
             </ul>
           </div>
         )}
-      </div>
+      </Card>
 
-      <div className={sectionClass}>
-        <span className={sectionTitle}>Financeiro</span>
-        <div className="grid grid-cols-4 gap-3 text-sm">
+      <Card accent="blue" className="flex flex-col gap-3">
+        <SectionHeader icon="💰" title="Financeiro" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
           <div>
             <span className="text-xs text-tata-ink-muted block">Mensalidades emitidas</span>
             <span className="font-semibold text-tata-ink">{financial.invoicesIssued}</span>
@@ -199,7 +219,7 @@ export default async function ReportsPage({
             </ul>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

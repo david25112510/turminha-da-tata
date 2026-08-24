@@ -35,7 +35,7 @@ export default async function GuardianAgendaPage() {
           Próximos eventos
         </span>
         {upcoming.length === 0 ? (
-          <EmptyState message="Nenhum evento agendado por enquanto 💛" />
+          <EmptyState message="Nenhum evento agendado por enquanto 💛" withMascot />
         ) : (
           upcoming.map((e) => (
             <div key={e.id} className="bg-tata-surface rounded-2xl shadow-sm p-4 flex items-center justify-between">

@@ -13,16 +13,23 @@ enum Role {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
+  id           String    @id @default(cuid())
+  email        String    @unique
   passwordHash String
   name         String
   role         Role
-  active       Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  active       Boolean   @default(true)
+  phone        String?
+  cpf          String?
+  birthDate    DateTime?
+  photoUrl     String?
+  notes        String?
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  guardian Guardian?
+  guardian            Guardian?
+  passwordResetTokens PasswordResetToken[]
 
   attendanceCheckIns      Attendance[]              @relation("AttendanceCheckInBy")
   attendanceCheckOuts     Attendance[]              @relation("AttendanceCheckOutBy")
@@ -704,6 +711,49 @@ model PushSubscription {
 
   @@index([guardianId])
   @@map("push_subscriptions")
+}
+
+// ---------------------------------------------------------------------------
+// Recuperação de senha
+// ---------------------------------------------------------------------------
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+// ---------------------------------------------------------------------------
+// Notificações administrativas
+// ---------------------------------------------------------------------------
+
+enum AdminNotificationType {
+  INCIDENT
+  MEDICATION
+  INVOICE_OVERDUE
+  CAREGIVER_CREATED
+}
+
+model AdminNotification {
+  id        String                @id @default(cuid())
+  type      AdminNotificationType
+  title     String
+  body      String
+  entity    String?
+  entityId  String?
+  read      Boolean               @default(false)
+  createdAt DateTime              @default(now())
+
+  @@index([read, createdAt])
+  @@map("admin_notifications")
 }
 
 // ---------------------------------------------------------------------------

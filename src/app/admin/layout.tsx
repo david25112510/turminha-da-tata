@@ -1,26 +1,59 @@
 import Link from "next/link";
 import Image from "next/image";
 import { auth, signOut } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import { AdminBottomNav } from "./BottomNav";
 
 export const dynamic = "force-dynamic";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "Início" },
   { href: "/admin/criancas", label: "Crianças" },
+  { href: "/admin/cuidadoras", label: "Cuidadoras" },
   { href: "/admin/responsaveis", label: "Responsáveis" },
+  { href: "/admin/rotina", label: "Rotina" },
   { href: "/admin/comunicados", label: "Comunicados" },
   { href: "/admin/financeiro", label: "Financeiro" },
   { href: "/admin/relatorios", label: "Relatórios" },
+  { href: "/admin/notificacoes", label: "Notificações" },
   { href: "/admin/auditoria", label: "Auditoria" },
   { href: "/admin/configuracoes", label: "Configurações" },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
+  const unreadNotifications = await prisma.adminNotification.count({ where: { read: false } });
 
   return (
-    <div className="min-h-screen flex bg-tata-surface-alt">
-      <aside className="w-[232px] bg-tata-surface border-r border-tata-border flex flex-col gap-6 p-5 shrink-0">
+    <div className="min-h-screen flex flex-col md:flex-row bg-tata-surface-alt">
+      {/* Header mobile */}
+      <header className="md:hidden flex items-center justify-between px-4 py-3 bg-tata-surface border-b border-tata-border">
+        <Link href="/admin" className="flex items-baseline gap-1.5 font-[family-name:var(--font-baloo)] font-bold text-lg">
+          <span className="text-tata-green">Turminha</span>
+          <span className="text-tata-coral">Tata</span>
+        </Link>
+        <div className="flex items-center gap-3">
+          <Link href="/admin/notificacoes" aria-label="Notificações" className="relative min-h-11 min-w-11 flex items-center justify-center text-lg">
+            🔔
+            {unreadNotifications > 0 && (
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-tata-coral" />
+            )}
+          </Link>
+          <form
+            action={async () => {
+              "use server";
+              await signOut({ redirectTo: "/login" });
+            }}
+          >
+            <button type="submit" className="min-h-11 px-2 text-xs font-semibold text-tata-coral-dark">
+              Sair
+            </button>
+          </form>
+        </div>
+      </header>
+
+      {/* Sidebar desktop */}
+      <aside className="hidden md:flex w-[232px] bg-tata-surface border-r border-tata-border flex-col gap-6 p-5 shrink-0">
         <div className="flex items-baseline gap-1.5 font-[family-name:var(--font-baloo)] font-bold text-lg px-2">
           <span className="text-tata-green">Turminha</span>
           <span className="text-tata-coral">Tata</span>
@@ -34,6 +67,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-sm font-semibold text-tata-ink-soft hover:bg-tata-surface-hover transition-colors"
             >
               {item.label}
+              {item.href === "/admin/notificacoes" && unreadNotifications > 0 && (
+                <span className="ml-auto text-xs font-bold bg-tata-coral text-white rounded-full px-1.5 py-0.5">
+                  {unreadNotifications}
+                </span>
+              )}
             </Link>
           ))}
         </nav>
@@ -64,7 +102,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </div>
       </aside>
 
-      <main className="flex-1 min-w-0">{children}</main>
+      <main className="flex-1 min-w-0 pb-20 md:pb-0">{children}</main>
+
+      <AdminBottomNav />
     </div>
   );
 }

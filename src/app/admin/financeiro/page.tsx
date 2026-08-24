@@ -27,12 +27,39 @@ export default async function FinancialOverviewPage() {
   );
 
   return (
-    <div className="p-8 flex flex-col gap-6">
+    <div className="p-4 sm:p-8 flex flex-col gap-6">
       <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-tata-ink">
         Financeiro — {MONTH_LABELS[month - 1]} de {year}
       </h1>
 
-      <div className="bg-tata-surface rounded-2xl shadow-sm overflow-hidden">
+      {/* Mobile: cards */}
+      <div className="flex flex-col gap-2.5 md:hidden">
+        {rows.map(({ child, overtimeSoFar, invoice }) => (
+          <Link
+            key={child.id}
+            href={`/admin/financeiro/${child.id}`}
+            className="bg-tata-surface rounded-2xl shadow-sm p-4 flex flex-col gap-1.5 min-h-11 border-l-4 border-l-tata-green"
+          >
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-tata-ink text-sm">{child.preferredName || child.fullName}</span>
+              {invoice ? (
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-tata-green/10 text-tata-green-dark">
+                  {INVOICE_STATUS_LABELS[invoice.status]}
+                </span>
+              ) : (
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-tata-ink-muted/10 text-tata-ink-muted">
+                  Não fechado
+                </span>
+              )}
+            </div>
+            <span className="text-xs text-tata-ink-soft">Mensalidade: {currency(Number(child.monthlyFee))}</span>
+            <span className="text-xs text-tata-ink-muted">Horas excedentes (mês): {currency(overtimeSoFar)}</span>
+          </Link>
+        ))}
+      </div>
+
+      {/* Desktop: table */}
+      <div className="hidden md:block bg-tata-surface rounded-2xl shadow-sm overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-xs text-tata-ink-muted border-b border-tata-border">

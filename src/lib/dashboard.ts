@@ -1,6 +1,32 @@
 import { prisma } from "@/lib/prisma";
 import { todayRange } from "@/lib/date";
 import { calculateOvertimeForAttendance, effectiveStatus } from "@/lib/financial";
+import { notifyAdmins } from "@/lib/notifications";
+import type { MonthlyInvoice, Child } from "@prisma/client";
+
+/** Creates an admin notification for each overdue invoice that doesn't already have one — checked by
+ * entityId, so re-running on every dashboard load (force-dynamic) never duplicates. */
+async function syncOverdueInvoiceNotifications(overdueInvoices: (MonthlyInvoice & { child: Child })[]) {
+  if (overdueInvoices.length === 0) return;
+
+  const existing = await prisma.adminNotification.findMany({
+    where: { type: "INVOICE_OVERDUE", entityId: { in: overdueInvoices.map((inv) => inv.id) } },
+    select: { entityId: true },
+  });
+  const notified = new Set(existing.map((n) => n.entityId));
+
+  const toNotify = overdueInvoices.filter((inv) => !notified.has(inv.id));
+  await Promise.all(
+    toNotify.map((inv) =>
+      notifyAdmins(
+        "INVOICE_OVERDUE",
+        "Mensalidade vencida",
+        `${inv.child.preferredName || inv.child.fullName}: mensalidade de ${inv.referenceMonth}/${inv.referenceYear} está vencida.`,
+        { entity: "MonthlyInvoice", entityId: inv.id }
+      )
+    )
+  );
+}
 
 export async function getDashboardData() {
   const { start, end } = todayRange();
@@ -95,6 +121,8 @@ export async function getDashboardData() {
 
   const overdueInvoices = pendingInvoices.filter((inv) => effectiveStatus(inv) === "OVERDUE");
   const pendingInvoicesTotal = pendingInvoices.reduce((sum, inv) => sum + Number(inv.totalAmount) - Number(inv.paidAmount), 0);
+
+  await syncOverdueInvoiceNotifications(overdueInvoices);
 
   const administeredAuthIds = new Set(todaysMedicationAdmins.map((m) => m.authorizationId));
   const medicationsPending = activeMedicationAuthorizations.filter((m) => !administeredAuthIds.has(m.id));

@@ -50,3 +50,28 @@ test("cuidadora não acessa área administrativa", async ({ page }) => {
   await page.goto("/admin");
   await expect(page).toHaveURL(/\/login/);
 });
+
+test("cuidadora não acessa o Portal dos Pais", async ({ page }) => {
+  await page.goto("/login");
+  await page.fill('input[name="email"]', E2E_CAREGIVER.email);
+  await page.fill('input[name="password"]', E2E_PASSWORD);
+  await page.click('button[type="submit"]');
+  await page.waitForURL("**/cuidadora", { timeout: 10_000 });
+
+  await page.goto("/pais");
+  await expect(page).toHaveURL(/\/login/);
+});
+
+test("responsável não acessa área administrativa nem área da cuidadora", async ({ page }) => {
+  await page.goto("/login");
+  await page.fill('input[name="email"]', E2E_GUARDIAN_A_USER.email);
+  await page.fill('input[name="password"]', E2E_PASSWORD);
+  await page.click('button[type="submit"]');
+  await page.waitForURL("**/pais", { timeout: 10_000 });
+
+  await page.goto("/admin");
+  await expect(page).toHaveURL(/\/login/);
+
+  await page.goto("/cuidadora");
+  await expect(page).toHaveURL(/\/login/);
+});

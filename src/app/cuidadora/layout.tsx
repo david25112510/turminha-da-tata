@@ -27,6 +27,9 @@ export default async function CaregiverLayout({ children }: { children: React.Re
             <Image src="/images/tata-mascote.png" alt="" fill className="object-contain" />
           </div>
           <div className="text-sm font-semibold text-tata-ink-deep hidden sm:block">{session?.user.name}</div>
+          <Link href="/cuidadora/perfil" aria-label="Meu perfil" className="min-h-11 min-w-11 flex items-center justify-center text-lg">
+            👤
+          </Link>
           <form
             action={async () => {
               "use server";

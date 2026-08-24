@@ -11,7 +11,7 @@ export default async function AdminHome() {
     { label: "Presentes hoje", value: indicators.present },
     { label: "Ainda não chegaram", value: indicators.notArrived },
     { label: "Ainda na escola", value: indicators.stillAtSchool },
-    { label: "Cuidadores ativos", value: indicators.caregiversActive },
+    { label: "Cuidadoras ativas", value: indicators.caregiversActive, href: "/admin/cuidadoras" },
     { label: "Entradas hoje", value: indicators.entriesToday },
     { label: "Saídas hoje", value: indicators.exitsToday },
     { label: "Ocorrências hoje", value: indicators.occurrencesToday },
@@ -31,20 +31,32 @@ export default async function AdminHome() {
   ];
 
   return (
-    <div className="p-8 flex flex-col gap-8">
+    <div className="p-4 sm:p-8 flex flex-col gap-8">
       <div>
         <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-tata-ink mb-4">
           Visão geral
         </h1>
-        <div className="grid grid-cols-4 gap-3">
-          {indicatorCards.map((card) => (
-            <div key={card.label} className="bg-tata-surface rounded-2xl p-4 shadow-sm flex flex-col gap-1">
-              <div className="font-[family-name:var(--font-baloo)] font-bold text-lg text-tata-ink">
-                {card.value}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          {indicatorCards.map((card) => {
+            const cardClass = "bg-tata-surface rounded-2xl p-4 shadow-sm flex flex-col gap-1";
+            const content = (
+              <>
+                <div className="font-[family-name:var(--font-baloo)] font-bold text-lg text-tata-ink">
+                  {card.value}
+                </div>
+                <div className="text-xs text-tata-ink-muted-alt">{card.label}</div>
+              </>
+            );
+            return "href" in card && card.href ? (
+              <Link key={card.label} href={card.href} className={`${cardClass} hover:bg-tata-surface-hover transition-colors`}>
+                {content}
+              </Link>
+            ) : (
+              <div key={card.label} className={cardClass}>
+                {content}
               </div>
-              <div className="text-xs text-tata-ink-muted-alt">{card.label}</div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -52,7 +64,7 @@ export default async function AdminHome() {
         <h2 className="font-[family-name:var(--font-baloo)] font-semibold text-base text-tata-ink mb-3">
           Resumo da rotina de hoje
         </h2>
-        <div className="grid grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
           {routineCards.map((card) => (
             <div key={card.label} className="bg-tata-surface rounded-2xl p-4 shadow-sm flex flex-col gap-1">
               <div className="font-[family-name:var(--font-baloo)] font-bold text-lg text-tata-green-dark">

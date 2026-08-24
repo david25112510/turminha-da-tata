@@ -11,7 +11,7 @@ export function EmptyState({ message, withMascot }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center gap-2 py-8 text-center">
       {withMascot && (
-        <div className="relative w-16 h-20 mb-1">
+        <div className="relative w-16 h-20 mb-1 tata-mascot-idle">
           <Image src="/images/tata-mascote.png" alt="" fill className="object-contain opacity-90" />
         </div>
       )}
