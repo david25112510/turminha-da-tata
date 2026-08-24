@@ -16,19 +16,20 @@ async function loginAsAdmin(page: Page) {
  * Fluxo completo de gestão de cuidadoras pelo admin (seções 4-8 e 17 do spec): cadastrar, a cuidadora
  * recém-criada conseguir logar, o admin desativá-la, e a cuidadora desativada não conseguir mais logar.
  *
- * fixme: a lógica de createCaregiverAction está 100% coberta e verde em
- * src/app/admin/cuidadoras/actions.test.ts (unit, mockando a camada de framework) — o que falha aqui é
- * especificamente o passo pelo navegador de verdade. Isolei a causa a um bug de stack (não desta app):
- * qualquer prisma.<model>.create() (INSERT) dentro de uma Server Action de uma rota coberta por
- * src/proxy.ts derruba a sessão da requisição nesta versão (Next 16 + Prisma 7 com adapter-pg, sem engine
- * Rust + NextAuth v5 beta) — reproduzido isolado com uma Server Action mínima (só um
- * prisma.user.create(), sem bcrypt, sem redirect(), sem lógica alguma) e também com createChildAction
- * (rota pré-existente, não modificada nesta sessão). prisma.<model>.update() NÃO reproduz — só create().
- * Repetível 100% das vezes, em servidor frio ou aquecido. Requer investigação dedicada (possivelmente
- * junto ao Prisma ou Next.js) antes de poder ser corrigido com confiança; não é seguro adivinhar uma
- * correção nesse nível de stack sem mais tempo dedicado. Ver relatório da sessão para detalhes completos.
+ * Antes marcado test.fixme sob a hipótese de um bug de framework (prisma.create() dentro de Server
+ * Action derrubando a sessão). Não era isso: o seletor 'button[type="submit"]' usado para submeter o
+ * formulário também casava com o botão "Sair" do header/sidebar do admin (mesmo tipo de botão, sempre
+ * presente no layout autenticado) — clicava em "Sair" em vez de "Salvar", deslogando o admin, o que
+ * parecia exatamente uma sessão perdida. Corrigido apontando para o botão certo (linha abaixo); não há
+ * bug de framework nenhum.
  */
-test.fixme("admin cadastra cuidadora, ela loga, admin desativa e o login passa a ser recusado", async ({ page }) => {
+test("admin cadastra cuidadora, ela loga, admin desativa e o login passa a ser recusado", async ({ page }) => {
+  // Timeout maior que o padrão (30s): este teste encadeia 4 logins reais e várias navegações completas
+  // (cria, verifica lista, loga como a nova cuidadora, loga de volta como admin, desativa, tenta logar de
+  // novo) — mais passos sequenciais que os outros specs, e cada navegação real soma alguns segundos neste
+  // ambiente de dev (filesystem lento, ver aviso "Slow filesystem detected" do Next).
+  test.setTimeout(60_000);
+
   await loginAsAdmin(page);
 
   await page.goto("/admin/cuidadoras");
@@ -39,7 +40,12 @@ test.fixme("admin cadastra cuidadora, ela loga, admin desativa e o login passa a
   await page.fill('input[name="phone"]', "11977777777");
   await page.fill('input[name="email"]', NEW_CAREGIVER_EMAIL);
   await page.fill('input[name="tempPassword"]', NEW_CAREGIVER_PASSWORD);
-  await page.click('button[type="submit"]');
+  // Seletor específico de propósito: 'button[type="submit"]' também casa com o botão "Sair" do
+  // header/sidebar do admin (mesmo tipo de botão, sempre presente no layout autenticado) — um
+  // seletor genérico clica no primeiro em ordem de DOM, que é o "Sair" do header mobile, deslogando
+  // em vez de submeter o formulário. Foi a causa real de uma investigação enorme numa sessão anterior
+  // que erroneamente concluiu haver um bug de framework em prisma.create() dentro de Server Actions.
+  await page.click('button:has-text("Salvar")');
 
   await expect(page.getByText("foi cadastrada com sucesso")).toBeVisible({ timeout: 10_000 });
   await page.click('a:has-text("Voltar para a lista")');
