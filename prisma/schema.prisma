@@ -37,6 +37,7 @@ model User {
   sleepRecordsStarted     SleepRecord[]             @relation("SleepStartedBy")
   sleepRecordsEnded       SleepRecord[]             @relation("SleepEndedBy")
   hygieneRecords          HygieneRecord[]
+  waterRecords            WaterRecord[]
   activities              Activity[]
   moodRecords             MoodRecord[]
   healthLogs              HealthLog[]
@@ -46,6 +47,8 @@ model User {
   announcementsCreated    Announcement[]
   paymentsRecorded        Payment[]
   auditLogs               AuditLog[]
+  contractVersionsCreated ContractVersion[]
+  contractAcceptancesMade ContractAcceptance[]
 
   @@map("users")
 }
@@ -106,6 +109,7 @@ model Child {
   meals                    MealRecord[]
   sleeps                   SleepRecord[]
   hygieneRecords           HygieneRecord[]
+  waterRecords             WaterRecord[]
   moods                    MoodRecord[]
   activities               ActivityChild[]
   healthProfile            HealthProfile?
@@ -117,6 +121,7 @@ model Child {
   announcementsTargeted    Announcement[]
   notifications            Notification[]
   invoices                 MonthlyInvoice[]
+  contractAcceptances      ContractAcceptance[]
 
   @@map("children")
 }
@@ -146,6 +151,7 @@ model Guardian {
   pushSubscriptions        PushSubscription[]
   attendanceCheckIns       Attendance[] @relation("AttendanceCheckInGuardian")
   attendanceCheckOuts      Attendance[] @relation("AttendanceCheckOutGuardian")
+  contractAcceptances      ContractAcceptance[]
 
   @@map("guardians")
 }
@@ -335,6 +341,28 @@ model HygieneRecord {
   @@index([childId, time])
   @@index([time])
   @@map("hygiene_records")
+}
+
+enum WaterAmount {
+  LITTLE
+  MEDIUM
+  A_LOT
+}
+
+model WaterRecord {
+  id           String      @id @default(cuid())
+  childId      String
+  time         DateTime    @default(now())
+  amount       WaterAmount
+  notes        String?
+  recordedById String
+
+  child      Child @relation(fields: [childId], references: [id], onDelete: Cascade)
+  recordedBy User  @relation(fields: [recordedById], references: [id])
+
+  @@index([childId, time])
+  @@index([time])
+  @@map("water_records")
 }
 
 enum ActivityCategory {
@@ -777,4 +805,61 @@ model AuditLog {
   @@index([entity, entityId])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+// ---------------------------------------------------------------------------
+// Contrato digital
+// ---------------------------------------------------------------------------
+
+enum ContractVersionStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model ContractVersion {
+  id          String                @id @default(cuid())
+  version     String
+  content     String
+  status      ContractVersionStatus @default(PUBLISHED)
+  createdById String?
+  createdAt   DateTime              @default(now())
+  publishedAt DateTime?
+
+  // SetNull (não Restrict): a versão do contrato sobrevive mesmo que o admin que a criou seja removido —
+  // não é razão para bloquear a exclusão de um usuário. Quem criou fica registrado de forma permanente no
+  // AuditLog (CONTRATO_CRIADO/CONTRATO_PUBLICADO), que não depende deste campo.
+  createdBy   User?                 @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  acceptances ContractAcceptance[]
+
+  @@map("contract_versions")
+}
+
+enum ContractAcceptanceStatus {
+  PENDING
+  ACCEPTED
+  CANCELLED
+}
+
+model ContractAcceptance {
+  id               String                    @id @default(cuid())
+  childId          String
+  guardianId       String
+  versionId        String
+  status           ContractAcceptanceStatus  @default(PENDING)
+  acceptedAt       DateTime?
+  acceptedByUserId String?
+  ip               String?
+  userAgent        String?
+  createdAt        DateTime                  @default(now())
+
+  child          Child           @relation(fields: [childId], references: [id], onDelete: Cascade)
+  guardian       Guardian        @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+  version        ContractVersion @relation(fields: [versionId], references: [id])
+  acceptedByUser User?           @relation(fields: [acceptedByUserId], references: [id], onDelete: SetNull)
+
+  @@unique([childId, guardianId, versionId])
+  @@index([guardianId, status])
+  @@index([childId])
+  @@map("contract_acceptances")
 }

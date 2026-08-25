@@ -4,6 +4,7 @@ import {
   MEAL_TYPE_LABELS,
   CONSUMPTION_LABELS,
   HYGIENE_TYPE_LABELS,
+  WATER_AMOUNT_LABELS,
   ACTIVITY_CATEGORY_LABELS,
   MOOD_LABELS,
   INCIDENT_TYPE_LABELS,
@@ -16,12 +17,13 @@ const relationshipLabel = (relationship: string | null) =>
 export type TimelineEntry = { time: Date; label: string; detail: string };
 
 export async function buildTimeline(childId: string, start: Date, end: Date): Promise<TimelineEntry[]> {
-  const [attendance, meals, sleeps, hygiene, moods, healthLogs, incidents, medicationAdmins, activityLinks, photos] =
+  const [attendance, meals, sleeps, hygiene, waters, moods, healthLogs, incidents, medicationAdmins, activityLinks, photos] =
     await Promise.all([
       prisma.attendance.findFirst({ where: { childId, date: start } }),
       prisma.mealRecord.findMany({ where: { childId, time: { gte: start, lt: end } } }),
       prisma.sleepRecord.findMany({ where: { childId, startTime: { gte: start, lt: end } } }),
       prisma.hygieneRecord.findMany({ where: { childId, time: { gte: start, lt: end } } }),
+      prisma.waterRecord.findMany({ where: { childId, time: { gte: start, lt: end } } }),
       prisma.moodRecord.findMany({ where: { childId, time: { gte: start, lt: end } } }),
       prisma.healthLog.findMany({ where: { childId, time: { gte: start, lt: end } } }),
       prisma.incident.findMany({ where: { childId, time: { gte: start, lt: end } } }),
@@ -68,6 +70,9 @@ export async function buildTimeline(childId: string, start: Date, end: Date): Pr
   }
   for (const h of hygiene) {
     timeline.push({ time: h.time, label: "Higiene", detail: HYGIENE_TYPE_LABELS[h.type] });
+  }
+  for (const w of waters) {
+    timeline.push({ time: w.time, label: "Água", detail: WATER_AMOUNT_LABELS[w.amount] });
   }
   for (const mo of moods) {
     timeline.push({ time: mo.time, label: "Humor", detail: MOOD_LABELS[mo.mood] });

@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { href: "/admin/rotina", label: "Rotina" },
   { href: "/admin/comunicados", label: "Comunicados" },
   { href: "/admin/financeiro", label: "Financeiro" },
+  { href: "/admin/contratos", label: "Contratos" },
   { href: "/admin/relatorios", label: "Relatórios" },
   { href: "/admin/notificacoes", label: "Notificações" },
   { href: "/admin/auditoria", label: "Auditoria" },

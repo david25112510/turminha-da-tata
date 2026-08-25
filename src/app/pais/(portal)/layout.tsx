@@ -1,11 +1,12 @@
 import Link from "next/link";
 import Image from "next/image";
+import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { requireGuardian } from "@/lib/guardian";
 import { PushNotificationToggle } from "./PushNotificationToggle";
 import { BottomNav } from "./BottomNav";
-import { OfflineBanner } from "../cuidadora/OfflineBanner";
+import { OfflineBanner } from "../../cuidadora/OfflineBanner";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,12 @@ const NAV_ITEMS = [
 export default async function GuardianLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   const guardian = await requireGuardian();
+
+  const pendingContracts = await prisma.contractAcceptance.count({
+    where: { guardianId: guardian.id, status: "PENDING" },
+  });
+  if (pendingContracts > 0) redirect("/pais/contrato");
+
   const unreadCount = await prisma.notification.count({
     where: { guardianId: guardian.id, read: false },
   });

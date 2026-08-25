@@ -54,6 +54,12 @@ export const CONSUMPTION_LABELS: Record<string, string> = {
   NONE: "Não quis comer",
 };
 
+export const WATER_AMOUNT_LABELS: Record<string, string> = {
+  LITTLE: "Pouco",
+  MEDIUM: "Médio",
+  A_LOT: "Muito",
+};
+
 export const HYGIENE_TYPE_LABELS: Record<string, string> = {
   BATHROOM: "Banheiro",
   DIAPER_CHANGE: "Troca de fralda",

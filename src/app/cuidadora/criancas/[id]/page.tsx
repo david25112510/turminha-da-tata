@@ -14,6 +14,7 @@ import {
   startSleepAction,
   endSleepAction,
   addHygieneAction,
+  addWaterAction,
   addMoodAction,
   addIncidentAction,
   addMedicationAdministrationAction,
@@ -104,6 +105,7 @@ export default async function ChildProfilePage({ params }: { params: Promise<{ i
           startSleepAction={startSleepAction}
           endSleepAction={endSleepAction}
           addHygieneAction={addHygieneAction}
+          addWaterAction={addWaterAction}
           addActivityAction={addActivityAction}
           addMoodAction={addMoodAction}
           addIncidentAction={addIncidentAction}

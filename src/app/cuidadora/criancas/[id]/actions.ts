@@ -78,6 +78,15 @@ export async function addHygieneAction(formData: FormData) {
   revalidate(childId);
 }
 
+export async function addWaterAction(formData: FormData) {
+  const childId = String(formData.get("childId") ?? "");
+  const { user } = await requireCaregiverChild(childId);
+  const amount = String(formData.get("amount") ?? "MEDIUM");
+  const notes = String(formData.get("notes") ?? "").trim();
+  await prisma.waterRecord.create({ data: { childId, amount: amount as never, notes: notes || null, recordedById: user.id } });
+  revalidate(childId);
+}
+
 export async function addMoodAction(formData: FormData) {
   const childId = String(formData.get("childId") ?? "");
   const { user } = await requireCaregiverChild(childId);

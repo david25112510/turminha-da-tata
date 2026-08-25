@@ -5,6 +5,7 @@ import {
   MEAL_TYPE_LABELS,
   CONSUMPTION_LABELS,
   HYGIENE_TYPE_LABELS,
+  WATER_AMOUNT_LABELS,
   ACTIVITY_CATEGORY_LABELS,
   INCIDENT_TYPE_LABELS,
 } from "@/lib/labels";
@@ -79,6 +80,7 @@ export function ChildActionsGrid({
   startSleepAction,
   endSleepAction,
   addHygieneAction,
+  addWaterAction,
   addActivityAction,
   addMoodAction,
   addIncidentAction,
@@ -94,6 +96,7 @@ export function ChildActionsGrid({
   startSleepAction: ActionFn;
   endSleepAction: ActionFn;
   addHygieneAction: ActionFn;
+  addWaterAction: ActionFn;
   addActivityAction: ActionFn;
   addMoodAction: ActionFn;
   addIncidentAction: ActionFn;
@@ -124,6 +127,17 @@ export function ChildActionsGrid({
         <QuickActionForm action={addHygieneAction} hiddenFields={{ childId }} successMessage="Higiene registrada" submitLabel="Registrar">
           <select name="type" className={selectClass} defaultValue="DIAPER_CHANGE">
             {Object.entries(HYGIENE_TYPE_LABELS).map(([v, l]) => (
+              <option key={v} value={v}>{l}</option>
+            ))}
+          </select>
+          <input name="notes" placeholder="Observação (opcional)" className={inputClass} />
+        </QuickActionForm>
+      </ActionDialogButton>
+
+      <ActionDialogButton icon="💧" label="Água" dialogTitle="Água" accent="blue">
+        <QuickActionForm action={addWaterAction} hiddenFields={{ childId }} successMessage="Água registrada" submitLabel="Registrar">
+          <select name="amount" className={selectClass} defaultValue="MEDIUM">
+            {Object.entries(WATER_AMOUNT_LABELS).map(([v, l]) => (
               <option key={v} value={v}>{l}</option>
             ))}
           </select>

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { RELATIONSHIP_LABELS, CHILD_STATUS_LABELS } from "@/lib/labels";
 import { uploadChildPhotoAction } from "@/lib/photo-actions";
 import { buildTimeline } from "@/lib/journey";
-import { todayRange, formatTime } from "@/lib/date";
+import { todayRange, formatTime, formatDateTime } from "@/lib/date";
 import { addAuthorizedPersonAction, toggleAuthorizedPersonStatusAction } from "./actions";
 
 const inputClass =
@@ -26,7 +26,14 @@ export default async function ChildDetailPage({ params }: { params: Promise<{ id
   if (!child) notFound();
 
   const { start, end } = todayRange();
-  const timeline = await buildTimeline(childId, start, end);
+  const [timeline, contracts] = await Promise.all([
+    buildTimeline(childId, start, end),
+    prisma.contractAcceptance.findMany({
+      where: { childId },
+      include: { guardian: true, version: true },
+      orderBy: [{ version: { createdAt: "desc" } }, { createdAt: "desc" }],
+    }),
+  ]);
 
   return (
     <div className="p-4 sm:p-8 flex flex-col gap-6 max-w-4xl">
@@ -77,6 +84,27 @@ export default async function ChildDetailPage({ params }: { params: Promise<{ id
                   {gc.isFinancialResponsible && <span className="ml-2 text-xs text-tata-ink-muted">financeiro</span>}
                 </span>
                 <span className="text-tata-ink-soft">{gc.guardian.phone}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div className={cardClass}>
+        <span className={cardTitle}>Contrato</span>
+        {contracts.length === 0 ? (
+          <p className="text-sm text-tata-ink-muted-alt">Nenhum contrato gerado ainda.</p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {contracts.map((c) => (
+              <li key={c.id} className="text-sm flex items-center justify-between gap-3 border-b border-tata-surface-hover pb-2 last:border-0">
+                <div>
+                  <span className="font-medium text-tata-ink">
+                    {c.status === "ACCEPTED" ? "🟢 Contrato aceito" : c.status === "PENDING" ? "🟡 Contrato pendente" : "🔴 Cancelado"}
+                  </span>
+                  <span className="text-tata-ink-soft ml-2">v{c.version.version} — {c.guardian.name}</span>
+                </div>
+                {c.acceptedAt && <span className="text-xs text-tata-ink-muted shrink-0">{formatDateTime(c.acceptedAt)}</span>}
               </li>
             ))}
           </ul>

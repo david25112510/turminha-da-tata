@@ -77,5 +77,19 @@ export default async function globalSetup() {
     },
   });
 
+  // Contrato já aceito para os dois guardians fixos — sem isso, todo o resto da suíte (que não testa o
+  // fluxo de contrato) cairia no bloqueio de /pais/contrato ao logar como responsável. Quem quer testar o
+  // fluxo de contrato em si usa a UI real (e2e/contract.spec.ts), não este atalho.
+  const admin = await prisma.user.findUniqueOrThrow({ where: { id: E2E_ADMIN.id } });
+  const contractVersion = await prisma.contractVersion.create({
+    data: { version: "1.0", content: "Contrato de teste e2e.", status: "PUBLISHED", createdById: admin.id, publishedAt: new Date() },
+  });
+  await prisma.contractAcceptance.createMany({
+    data: [
+      { childId: childA.id, guardianId: guardianA.id, versionId: contractVersion.id, status: "ACCEPTED", acceptedAt: new Date(), acceptedByUserId: guardianUserA.id },
+      { childId: childB.id, guardianId: guardianB.id, versionId: contractVersion.id, status: "ACCEPTED", acceptedAt: new Date(), acceptedByUserId: guardianUserB.id },
+    ],
+  });
+
   await prisma.$disconnect();
 }

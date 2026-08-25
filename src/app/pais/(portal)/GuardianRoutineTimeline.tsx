@@ -8,6 +8,7 @@ const ICONS: Record<string, string> = {
   Saída: "🔵",
   Soneca: "😴",
   Higiene: "🧼",
+  Água: "💧",
   Atividade: "🎨",
   Humor: "😊",
   Saúde: "🩺",
