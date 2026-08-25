@@ -45,11 +45,13 @@ não implica aceitar as outras:
 
 ## Retenção e encerramento
 
-`Child.inactivatedAt` (adicionado nesta rodada) guarda quando uma criança deixou de ser `ACTIVE` —
-é a base de qualquer cálculo de retenção futuro. **Hoje esse campo não é preenchido
-automaticamente**: não existe ainda uma tela que desative uma criança (ver "Sem tela de edição de
-criança" em `docs/architecture.md`, Fase 2 do plano de trabalho) — é preparação de schema, não uma
-política já em vigor.
+`Child.inactivatedAt` guarda quando uma criança deixou de ser `ACTIVE` — é a base de qualquer
+cálculo de retenção futuro. Preenchido automaticamente por `updateChildAction`
+(`/admin/criancas/[id]/editar`) sempre que o status muda para `INACTIVE`, e limpo de volta para
+`null` se a criança for reativada. **O que ainda não existe é o processo automatizado de
+anonimização/exclusão em si** — a política abaixo (prazos de guarda) segue pendente de aprovação
+da administração/encarregado de dados; `inactivatedAt` só marca o ponto de partida para quando
+esse processo for implementado.
 
 Política de retenção proposta (**pendente de aprovação da administração/encarregado de dados** —
 não é uma obrigação legal com prazo fixo definido por lei para este tipo de dado, e sim uma decisão

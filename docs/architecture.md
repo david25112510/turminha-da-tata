@@ -133,7 +133,7 @@ O dashboard (`getDashboardData`) calcula indicadores e alertas em tempo real a c
 | Público | `/login` | Autenticação; redireciona por papel após o login |
 | Público | `/esqueci-senha`, `/redefinir-senha` | Recuperação de senha por e-mail (token de uso único, 1h de validade) |
 | Admin | `/admin` | Dashboard (indicadores, rotina do dia, alertas) |
-| Admin | `/admin/criancas`, `/admin/criancas/nova`, `/admin/criancas/[id]` | Cadastro, listagem e detalhe (responsáveis, pessoas autorizadas, fotos) |
+| Admin | `/admin/criancas`, `/admin/criancas/nova`, `/admin/criancas/[id]`, `/admin/criancas/[id]/editar` | Cadastro, listagem, detalhe (responsáveis, pessoas autorizadas, fotos) e edição dos campos operacionais/contratuais (identidade — nome, CPF, sexo, data de nascimento — não é editável por lá) |
 | Admin | `/admin/responsaveis`, `/admin/responsaveis/novo` | Cadastro e listagem de responsáveis |
 | Admin | `/admin/financeiro`, `/admin/financeiro/[childId]` | Visão geral e fechamento mensal por criança |
 | Admin | `/admin/comunicados` | Publicação de comunicados/avisos/eventos |
@@ -174,7 +174,6 @@ Rotas com `[id]`/`[childId]`/`[acceptanceId]` são dinâmicas; todas as demais l
 - **Senha padrão do admin fixa no código**: `prisma/seed.ts` cria sempre `admin@turminhadatata.com.br` / `TrocarSenha123!` — previsível para qualquer pessoa com acesso ao repositório. Precisa ser trocada manualmente logo após o primeiro deploy (ver `deploy.md`); o ideal seria o seed gerar uma senha aleatória e imprimi-la uma vez no log, em vez de uma fixa.
 - **Uploads**: `src/lib/storage.ts` envia para um bucket S3-compatível quando `STORAGE_S3_BUCKET` está configurado; sem isso, cai para disco local (`public/uploads/`), que não funciona em hospedagem com múltiplas instâncias ou filesystem somente-leitura (ex. Vercel) — detalhado em `deploy.md`.
 - **Rate limiting do login em memória** (`src/lib/rate-limit.ts`): não sobrevive a restart nem é compartilhado entre múltiplas instâncias. Migrar para um store compartilhado (Redis) antes de hospedar com mais de uma instância — detalhado em `deploy.md`.
-- **Sem tela de edição de criança**: `createChildAction` é create-only; alterar mensalidade, horário contratado ou tolerância depois do cadastro exige acesso direto ao banco (Prisma Studio). Adicionar essa tela deve vir acompanhada de log em `AuditLog` (ver "Auditoria"), do mesmo jeito que as demais mutações administrativas.
 - **Notificações são in-app + push** (tabela `Notification` e Web Push via `PushSubscription`/`src/lib/push.ts`); não há e-mail/SMS.
 - **`getDashboardData`/relatórios recalculam tudo a cada request** — não há cache. Para o volume de uma creche isso não é um problema hoje, mas não escala indefinidamente sem revisão.
 - **Alertas de "horas excedentes acumuladas"** no dashboard não têm um limiar configurável — qualquer valor acima de zero aparece como alerta.

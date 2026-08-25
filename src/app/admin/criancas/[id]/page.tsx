@@ -45,13 +45,21 @@ export default async function ChildDetailPage({ params }: { params: Promise<{ id
           </h1>
           <p className="text-sm text-tata-ink-muted-alt">{child.fullName}</p>
         </div>
-        <span
-          className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-            child.status === "ACTIVE" ? "bg-tata-green/10 text-tata-green-dark" : "bg-tata-coral-dark/10 text-tata-coral-dark"
-          }`}
-        >
-          {CHILD_STATUS_LABELS[child.status]}
-        </span>
+        <div className="flex items-center gap-2.5">
+          <Link
+            href={`/admin/criancas/${childId}/editar`}
+            className="min-h-11 flex items-center bg-tata-surface border border-tata-border text-tata-ink-soft text-sm font-semibold rounded-xl px-4 font-[family-name:var(--font-baloo)]"
+          >
+            Editar
+          </Link>
+          <span
+            className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+              child.status === "ACTIVE" ? "bg-tata-green/10 text-tata-green-dark" : "bg-tata-coral-dark/10 text-tata-coral-dark"
+            }`}
+          >
+            {CHILD_STATUS_LABELS[child.status]}
+          </span>
+        </div>
       </div>
 
       <div className={cardClass}>
