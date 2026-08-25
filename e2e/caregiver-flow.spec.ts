@@ -15,6 +15,11 @@ async function loginAsCaregiver(page: Page) {
  * registrar alimentação/humor/sono → conferir a timeline atualizada.
  */
 test("cuidadora registra a rotina de uma criança do início ao fim", async ({ page }) => {
+  // Timeout maior que o padrão (30s): login + 5 registros sequenciais (chegada, alimentação, humor,
+  // soneca, conferência da timeline) — mesmo motivo já documentado em admin-caregivers.spec.ts e
+  // guardian-flow.spec.ts para fluxos multi-passo neste ambiente de dev (filesystem lento).
+  test.setTimeout(60_000);
+
   const consoleErrors: string[] = [];
   page.on("console", (msg) => {
     if (msg.type() === "error") consoleErrors.push(msg.text());
