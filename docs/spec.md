@@ -1215,11 +1215,11 @@ Isso reduzirá muito o trabalho manual.
 
 # 46. Visão futura
 
-Contratos digitais e assinatura eletrônica já foram implementados — ver seção 48. A arquitetura
-deverá permitir futuramente adicionar:
+Contratos digitais e assinatura eletrônica já foram implementados — ver seção 48. Pagamento via PIX
+(Mercado Pago) também já foi implementado — ver `docs/architecture.md` § "Pagamento via Pix". A
+arquitetura deverá permitir futuramente adicionar:
 
-* PIX
-* Pagamento online
+* Outras formas de pagamento online (cartão, boleto)
 * Chat entre escola e responsáveis
 * Agenda pedagógica
 * Avaliações de desenvolvimento

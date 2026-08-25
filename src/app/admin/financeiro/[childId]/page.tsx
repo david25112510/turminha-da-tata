@@ -34,7 +34,11 @@ export default async function ChildFinancialDetailPage({
     }),
     prisma.monthlyInvoice.findUnique({
       where: { childId_referenceMonth_referenceYear: { childId, referenceMonth: month, referenceYear: year } },
-      include: { payments: { orderBy: { paidAt: "desc" } }, items: { orderBy: { createdAt: "asc" } } },
+      include: {
+        payments: { orderBy: { paidAt: "desc" } },
+        items: { orderBy: { createdAt: "asc" } },
+        pixCharges: { orderBy: { createdAt: "desc" } },
+      },
     }),
   ]);
 
@@ -180,6 +184,22 @@ export default async function ChildFinancialDetailPage({
                   <div key={p.id} className="text-xs text-tata-ink-soft flex justify-between">
                     <span>{new Intl.DateTimeFormat("pt-BR").format(p.paidAt)} {p.method ? `— ${p.method}` : ""}</span>
                     <span>{currency(Number(p.amount))}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {currentInvoice.pixCharges.length > 0 && (
+              <div className="border-t border-tata-border pt-3 flex flex-col gap-1">
+                <span className="text-xs font-semibold text-tata-ink-muted">Cobranças Pix</span>
+                {currentInvoice.pixCharges.map((charge) => (
+                  <div key={charge.id} className="text-xs text-tata-ink-soft flex justify-between items-center">
+                    <span>
+                      {new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(charge.createdAt)}
+                      {" — "}
+                      {charge.status === "approved" ? "✓ Pago" : charge.status === "pending" ? "Aguardando pagamento" : charge.status}
+                    </span>
+                    <span>{currency(Number(charge.amount))}</span>
                   </div>
                 ))}
               </div>

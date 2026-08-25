@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requireGuardian, pickChildLink } from "@/lib/guardian";
+import { isMercadoPagoConfigured } from "@/lib/mercadopago";
 import { EmptyState } from "@/components/tata/EmptyState";
 import { ChildSwitcher } from "../ChildSwitcher";
 import { FinanceCard } from "./FinanceCard";
@@ -46,7 +47,12 @@ export default async function GuardianFinancialPage({
       ) : (
         <div className="flex flex-col gap-3">
           {invoices.map((invoice, i) => (
-            <FinanceCard key={invoice.id} invoice={invoice} delayMs={Math.min(i, 8) * 40} />
+            <FinanceCard
+              key={invoice.id}
+              invoice={invoice}
+              delayMs={Math.min(i, 8) * 40}
+              pixEnabled={isMercadoPagoConfigured()}
+            />
           ))}
         </div>
       )}

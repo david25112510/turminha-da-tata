@@ -19,7 +19,9 @@ Passo a passo específico (o restante deste documento vale para qualquer hospeda
    ou seu domínio customizado depois de configurado), e as de storage (`STORAGE_S3_BUCKET` e as
    demais — ver seção "Uploads de imagem" abaixo). `RESEND_API_KEY`/`EMAIL_FROM` e as `VAPID_*` são
    opcionais, mas sem elas recuperação de senha por e-mail e notificações push ficam desativadas
-   (o app funciona normalmente sem isso, só sem esses dois recursos).
+   (o app funciona normalmente sem isso, só sem esses dois recursos). `MERCADO_PAGO_ACCESS_TOKEN`/
+   `MERCADO_PAGO_WEBHOOK_SECRET` também são opcionais — sem eles, some só o botão "Pagar com Pix"
+   (ver seção "Pagamento via Pix" abaixo).
 4. **Primeiro deploy**: o Railway builda e sobe automaticamente após o push. Acompanhe os logs —
    a primeira execução do `startCommand` já aplica as migrations no banco novo.
 5. **Seed inicial** (uma única vez): pela aba "Settings" → "Deploy" do serviço, ou via Railway CLI
@@ -131,3 +133,8 @@ Isso **não** significa que o app funciona totalmente offline — como o sistema
 - **Rate limiting**: `src/lib/rate-limit.ts` usa Upstash Redis (REST) quando `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` estão configurados (ver `.env.example`) — necessário para qualquer hospedagem com mais de uma instância. Sem essas variáveis, cai para um Map em memória do processo (não sobrevive a restart, não é compartilhado entre instâncias) — só adequado para dev local ou instância única.
 - **Backups automatizados**: os scripts existem, mas precisam ser agendados na infraestrutura escolhida
 - **Rotação de segredos**: defina um processo para trocar `AUTH_SECRET` e credenciais do banco periodicamente
+- **Webhook do Mercado Pago sem `MERCADO_PAGO_WEBHOOK_SECRET`**: o endpoint aceita qualquer notificação sem checar assinatura — só aceitável em dev local. Configure o segredo (painel do Mercado Pago → notificações webhook) antes de expor `MERCADO_PAGO_ACCESS_TOKEN` em produção.
+
+## Pagamento via Pix
+
+`MERCADO_PAGO_ACCESS_TOKEN` (obrigatório) e `MERCADO_PAGO_WEBHOOK_SECRET` (opcional, mas recomendado — ver acima) habilitam o botão "Pagar com Pix" no Portal dos Pais. Depois de configurar as variáveis, cadastre a URL do webhook no painel do Mercado Pago apontando para `{APP_URL}/api/webhooks/mercadopago`, evento "Pagamentos". Sem essas variáveis, o recurso simplesmente não aparece — o resto do financeiro (registro manual de pagamento pelo admin) continua funcionando normalmente. Ver `docs/architecture.md` § "Pagamento via Pix" para o fluxo completo.

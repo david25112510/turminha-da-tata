@@ -2,6 +2,7 @@ import type { InvoiceItem, InvoiceStatus, MonthlyInvoice } from "@prisma/client"
 import { effectiveStatus } from "@/lib/financial";
 import { INVOICE_ITEM_TYPE_LABELS, INVOICE_STATUS_LABELS, MONTH_LABELS } from "@/lib/labels";
 import { Card } from "@/components/tata/Card";
+import { PixPaymentButton } from "./PixPaymentButton";
 
 const currency = (n: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
 
@@ -15,11 +16,20 @@ const STATUS_STYLE: Record<InvoiceStatus, { icon: string; className: string }> =
 
 type Invoice = MonthlyInvoice & { items: InvoiceItem[] };
 
-export function FinanceCard({ invoice, delayMs = 0 }: { invoice: Invoice; delayMs?: number }) {
+export function FinanceCard({
+  invoice,
+  delayMs = 0,
+  pixEnabled = false,
+}: {
+  invoice: Invoice;
+  delayMs?: number;
+  pixEnabled?: boolean;
+}) {
   const overtimeItems = invoice.items.filter((item) => item.type === "OVERTIME");
   const otherItems = invoice.items.filter((item) => item.type !== "OVERTIME" && item.type !== "MONTHLY_FEE");
   const status = effectiveStatus(invoice);
   const statusStyle = STATUS_STYLE[status] ?? STATUS_STYLE.PENDING;
+  const payable = status === "PENDING" || status === "OVERDUE" || status === "PARTIALLY_PAID";
 
   return (
     <Card animate style={{ animationDelay: `${delayMs}ms` }}>
@@ -86,6 +96,12 @@ export function FinanceCard({ invoice, delayMs = 0 }: { invoice: Invoice; delayM
               <span>{currency(Number(item.amount))}</span>
             </div>
           ))}
+        </div>
+      )}
+
+      {pixEnabled && payable && (
+        <div className="mt-3">
+          <PixPaymentButton invoiceId={invoice.id} childId={invoice.childId} />
         </div>
       )}
     </Card>

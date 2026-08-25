@@ -681,14 +681,39 @@ model MonthlyInvoice {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  child    Child         @relation(fields: [childId], references: [id], onDelete: Cascade)
-  payments Payment[]
-  items    InvoiceItem[]
+  child      Child         @relation(fields: [childId], references: [id], onDelete: Cascade)
+  payments   Payment[]
+  items      InvoiceItem[]
+  pixCharges PixCharge[]
 
   @@unique([childId, referenceMonth, referenceYear])
   @@index([status])
   @@index([createdAt])
   @@map("monthly_invoices")
+}
+
+/// Cobrança Pix gerada via Mercado Pago para uma fatura — ver src/lib/mercadopago.ts. Uma fatura
+/// pode acumular várias (a anterior expira sem ser paga, o responsável gera outra); a confirmação
+/// chega pelo webhook (src/app/api/webhooks/mercadopago/route.ts), nunca por polling do cliente.
+model PixCharge {
+  id                String    @id @default(cuid())
+  invoiceId         String
+  externalPaymentId String    @unique
+  initiatedByUserId String
+  status            String    @default("pending")
+  amount            Decimal   @db.Decimal(10, 2)
+  qrCode            String    @db.Text
+  qrCodeText        String    @db.Text
+  expiresAt         DateTime
+  paidAt            DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  invoice MonthlyInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@map("pix_charges")
 }
 
 enum InvoiceItemType {
