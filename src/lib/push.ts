@@ -24,13 +24,18 @@ export function isPushConfigured() {
 
 type PushPayload = { title: string; body: string; url?: string };
 
-/** Sends a push notification to every subscription registered for a guardian, pruning dead subscriptions. */
-export async function sendPushToGuardian(guardianId: string, payload: PushPayload) {
-  if (!isPushConfigured()) return;
+/**
+ * Envia push para toda assinatura registrada de um guardian, podando assinaturas mortas. Retorna se
+ * havia pelo menos uma assinatura para tentar — "false" significa "esse responsável nunca habilitou
+ * push neste dispositivo", o sinal que src/lib/notifications.ts usa para cair no fallback de e-mail.
+ * Não é sobre sucesso de entrega de uma assinatura já existente (isso não tenta detectar).
+ */
+export async function sendPushToGuardian(guardianId: string, payload: PushPayload): Promise<boolean> {
+  if (!isPushConfigured()) return false;
   ensureConfigured();
 
   const subscriptions = await prisma.pushSubscription.findMany({ where: { guardianId } });
-  if (subscriptions.length === 0) return;
+  if (subscriptions.length === 0) return false;
 
   const body = JSON.stringify(payload);
 
@@ -49,4 +54,6 @@ export async function sendPushToGuardian(guardianId: string, payload: PushPayloa
       }
     })
   );
+
+  return true;
 }

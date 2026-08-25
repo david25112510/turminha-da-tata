@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import type { AdminNotificationType, NotificationType } from "@prisma/client";
 import { isPushConfigured, sendPushToGuardian } from "@/lib/push";
+import { isEmailConfigured, sendEmail } from "@/lib/email";
 
 export async function notifyGuardians(
   childId: string,
@@ -15,7 +16,7 @@ export async function notifyGuardians(
       receiveNotifications: true,
       ...(requirePermission ? { [requirePermission]: true } : {}),
     },
-    select: { guardianId: true },
+    select: { guardianId: true, guardian: { select: { email: true, name: true } } },
   });
 
   if (links.length === 0) return;
@@ -30,10 +31,24 @@ export async function notifyGuardians(
     })),
   });
 
-  if (isPushConfigured()) {
-    const url = `/pais/jornada?childId=${childId}`;
-    await Promise.all(links.map((link) => sendPushToGuardian(link.guardianId, { title, body, url })));
-  }
+  const url = `/pais/jornada?childId=${childId}`;
+  const emailConfigured = isEmailConfigured();
+  const pushConfigured = isPushConfigured();
+
+  await Promise.all(
+    links.map(async (link) => {
+      // Push é a preferência; e-mail é só fallback para quem nunca habilitou push neste dispositivo
+      // (sendPushToGuardian retorna false nesse caso — não quando uma entrega falha isoladamente).
+      const pushSent = pushConfigured && (await sendPushToGuardian(link.guardianId, { title, body, url }));
+      if (!pushSent && emailConfigured && link.guardian.email) {
+        await sendEmail({
+          to: link.guardian.email,
+          subject: title,
+          html: `<p>Olá, ${link.guardian.name}.</p><p>${body}</p><p><a href="${(process.env.APP_URL ?? "http://localhost:3000") + url}">Ver no Portal dos Pais</a></p>`,
+        });
+      }
+    })
+  );
 }
 
 /**
