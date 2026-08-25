@@ -22,7 +22,7 @@ export async function loginAction(
   // Enforcement (recording attempts, resetting on success) happens inside
   // auth.ts's authorize(), since that's reached by every sign-in path, not
   // just this form. This is only a pre-check for a friendlier message.
-  if (isRateLimited(email)) {
+  if (await isRateLimited(email)) {
     return { error: "Muitas tentativas de login. Tente novamente em alguns minutos." };
   }
 

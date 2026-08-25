@@ -19,15 +19,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const email = credentials?.email as string | undefined;
         const password = credentials?.password as string | undefined;
 
-        if (email && isRateLimited(email)) return null;
+        if (email && (await isRateLimited(email))) return null;
 
         const user = await verifyCredentials(email, password);
         if (!user) {
-          if (email) recordFailedAttempt(email);
+          if (email) await recordFailedAttempt(email);
           return null;
         }
 
-        resetAttempts(email!);
+        await resetAttempts(email!);
         return user;
       },
     }),

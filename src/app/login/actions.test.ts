@@ -42,7 +42,7 @@ beforeEach(() => {
     isRateLimited: (...args: unknown[]) => isRateLimited(...args),
   }));
 
-  isRateLimited.mockReset().mockReturnValue(false);
+  isRateLimited.mockReset().mockResolvedValue(false);
   signIn.mockReset().mockResolvedValue(undefined);
   findUniqueUser.mockReset();
   redirectSpy.mockReset();
@@ -81,7 +81,7 @@ describe("loginAction", () => {
   });
 
   it("recusa login quando a taxa de tentativas foi excedida, sem sequer chamar signIn", async () => {
-    isRateLimited.mockReturnValue(true);
+    isRateLimited.mockResolvedValue(true);
     const { loginAction } = await import("./actions");
 
     const result = await loginAction(undefined, formData("a@b.com", "x"));

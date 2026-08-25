@@ -17,10 +17,10 @@ export async function requestPasswordResetAction(
   // Same rate-limit primitive login uses, keyed separately so a burst of reset requests can't also
   // lock the person out of signing in.
   const key = `reset:${email}`;
-  if (isRateLimited(key)) {
+  if (await isRateLimited(key)) {
     return { error: "Muitos pedidos de recuperação. Tente novamente em alguns minutos." };
   }
-  recordFailedAttempt(key);
+  await recordFailedAttempt(key);
 
   const user = await prisma.user.findUnique({ where: { email }, select: { id: true, name: true, active: true } });
 
