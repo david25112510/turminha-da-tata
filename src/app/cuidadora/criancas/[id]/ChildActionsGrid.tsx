@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import {
   MEAL_TYPE_LABELS,
   CONSUMPTION_LABELS,
@@ -9,7 +9,7 @@ import {
   ACTIVITY_CATEGORY_LABELS,
   INCIDENT_TYPE_LABELS,
 } from "@/lib/labels";
-import { formatTime } from "@/lib/date";
+import { formatDuration, formatTime } from "@/lib/date";
 import { toUserMessage } from "@/lib/user-error-message";
 import { ActionDialogButton } from "./ActionDialogButton";
 import { QuickActionForm } from "../../QuickActionForm";
@@ -46,6 +46,32 @@ function SleepButton({
     }
   }, null);
 
+  // "now" só é definido dentro do useEffect (nunca durante a renderização inicial) — calcular a
+  // duração a partir de Date.now() direto no render divergiria entre servidor e cliente e quebraria
+  // a hidratação, mesmo motivo já corrigido em OfflineBanner.tsx. No primeiro render (antes do
+  // useEffect rodar) "now" é null e o texto fica exatamente como antes ("Desde HH:mm" — ver
+  // sinceLabel abaixo, que só usa "now" quando openSleep também está presente, então não precisa
+  // resetar para null quando a soneca termina). 30s de intervalo — é só um indicador de quanto tempo
+  // já passou, não um cronômetro de precisão, e a cuidadora pode deixar essa tela aberta por horas.
+  const [now, setNow] = useState<Date | null>(null);
+  const openSleepId = openSleep?.id ?? null;
+  useEffect(() => {
+    if (!openSleepId) return;
+    // Guarda de hidratação intencional: "now" só pode existir depois de montado (ver comentário
+    // acima), então a primeira leitura do relógio precisa mesmo acontecer aqui, não em um cálculo
+    // derivado do render.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setNow(new Date());
+    const interval = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(interval);
+  }, [openSleepId]);
+
+  const sinceLabel = openSleep
+    ? now
+      ? `${formatDuration(openSleep.startTime.getTime(), now.getTime())} · desde ${formatTime(openSleep.startTime)}`
+      : `Desde ${formatTime(openSleep.startTime)}`
+    : null;
+
   return (
     <form action={formAction} className="contents">
       <input type="hidden" name="childId" value={childId} />
@@ -59,7 +85,7 @@ function SleepButton({
         <span className="text-xs font-semibold font-[family-name:var(--font-baloo)]">
           {openSleep ? "Finalizar soneca" : "Iniciar soneca"}
         </span>
-        {openSleep && <span className="text-[10px] text-tata-ink-muted">Desde {formatTime(openSleep.startTime)}</span>}
+        {sinceLabel && <span className="text-[10px] text-tata-ink-muted">{sinceLabel}</span>}
       </button>
       {state?.error && (
         <p role="alert" className="col-span-2 text-sm text-tata-coral-dark font-medium">
