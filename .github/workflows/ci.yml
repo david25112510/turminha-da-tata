@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    # Postgres de serviço para o Vitest (alguns testes de lib usam Prisma mockado, mas o build e o
+    # `prisma generate` do postinstall precisam de um DATABASE_URL válido para resolver o schema).
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: turminha_da_tata
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/turminha_da_tata?schema=public"
+      AUTH_SECRET: "ci-only-secret-never-used-in-production-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Aplica migrations no banco de CI
+        run: npx prisma migrate deploy
+
+      - run: npm run lint
+
+      - run: npm run test
+
+      - run: npm run build
+
+  # Os testes E2E (Playwright) não rodam neste workflow: cada um encadeia vários logins e navegações
+  # reais contra o servidor de dev (next dev), e a suíte já é sensível a timing mesmo localmente (ver
+  # comentários em e2e/*.spec.ts sobre test.setTimeout maior para fluxos multi-login) — rodar isso de
+  # forma confiável em runner compartilhado do GitHub Actions exigiria afinar timeouts específicos
+  # para aquele ambiente, o que não foi feito ainda. Rode localmente com Postgres disponível:
+  #
+  #   npm run test:e2e
+  #
+  # (requer Postgres em DATABASE_URL — e2e/global-setup.ts cria dados próprios prefixados "e2e-" e
+  # e2e/global-teardown.ts os remove depois; nunca toca em dados reais.)

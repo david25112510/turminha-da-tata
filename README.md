@@ -42,3 +42,9 @@ timeline) e isolamento de dados entre famílias. Requer Postgres rodando — `e2
 próprios prefixados `e2e-` antes da suíte e `e2e/global-teardown.ts` os remove depois; nunca toca em dados
 reais. Se o servidor de dev já estiver no ar em `http://localhost:3000`, a suíte o reaproveita; senão, sobe
 um sozinho. `npm run test:e2e:ui` abre o modo interativo do Playwright para depurar um teste específico.
+
+## CI
+
+`.github/workflows/ci.yml` roda `npm ci`, `npm run lint`, `npm run test` e `npm run build` a cada
+push/PR, com um Postgres de serviço. Os testes E2E não rodam no CI ainda — ver o comentário no
+próprio workflow para o motivo e como rodá-los localmente.
