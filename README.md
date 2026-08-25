@@ -5,6 +5,7 @@ Sistema de gestão e acompanhamento infantil — área administrativa, portal da
 Especificação completa: [docs/spec.md](docs/spec.md)
 Documentação técnica (arquitetura, modelo de dados, lógica de negócio): [docs/architecture.md](docs/architecture.md)
 Preparação para produção: [docs/deploy.md](docs/deploy.md)
+Proteção de dados pessoais (LGPD): [docs/lgpd.md](docs/lgpd.md)
 
 ## Stack
 

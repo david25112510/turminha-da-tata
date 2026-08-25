@@ -93,5 +93,16 @@ export default async function globalSetup() {
     ],
   });
 
+  // Mesmo raciocínio para o consentimento LGPD — bloqueia o portal do mesmo jeito que o contrato.
+  const consentVersion = await prisma.consentVersion.create({
+    data: { version: "1.0", content: "Consentimento LGPD de teste e2e.", status: "PUBLISHED", createdById: admin.id, publishedAt: new Date() },
+  });
+  await prisma.consentAcceptance.createMany({
+    data: [
+      { guardianId: guardianA.id, versionId: consentVersion.id, status: "ACCEPTED", acceptedAt: new Date(), acceptedByUserId: guardianUserA.id },
+      { guardianId: guardianB.id, versionId: consentVersion.id, status: "ACCEPTED", acceptedAt: new Date(), acceptedByUserId: guardianUserB.id },
+    ],
+  });
+
   await prisma.$disconnect();
 }

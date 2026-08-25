@@ -31,6 +31,13 @@ export default async function GuardianLayout({ children }: { children: React.Rea
   });
   if (pendingContracts > 0) redirect("/pais/contrato");
 
+  // Verificado depois do contrato de propósito: se os dois estiverem pendentes, o responsável vê
+  // primeiro o contrato de prestação de serviços, depois (na navegação seguinte) o consentimento.
+  const pendingConsents = await prisma.consentAcceptance.count({
+    where: { guardianId: guardian.id, status: "PENDING" },
+  });
+  if (pendingConsents > 0) redirect("/pais/consentimento");
+
   const unreadCount = await prisma.notification.count({
     where: { guardianId: guardian.id, read: false },
   });

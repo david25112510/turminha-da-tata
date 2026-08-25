@@ -30,19 +30,47 @@ async function drawSignature(page: Page) {
 }
 
 /**
- * Fluxo completo do contrato digital pela UI real (seção "TESTES" do pedido): cadastrar criança e
- * responsável gera o contrato automaticamente; o responsável cai em /pais/contrato em vez do portal
- * normal; lê, assina com o mouse (simula dedo/caneta — mesma API de Pointer Events), confirma e só
- * depois disso é que o portal abre; o contrato assinado fica visível tanto para o responsável
- * (/pais/documentos) quanto para o admin (/admin/contratos/[id]). Cria sua própria criança/responsável
- * (não reaproveita E2E_CHILD_A/B) e não publica nenhuma nova versão de contrato — a regra "nova versão
- * gera pendência só para vínculos ativos" já é coberta por src/app/admin/contratos/actions.test.ts a
- * nível de unidade, de propósito: publicar uma versão nova aqui afetaria TODOS os vínculos ativos do
- * banco (inclusive os guardians fixos A/B usados por outros specs), o que quebraria a suíte inteira
- * dependendo da ordem de execução dos arquivos.
+ * Percorre o wizard genérico de 3 passos (DocumentAcceptanceWizard) — usado tanto para o contrato
+ * quanto para o consentimento LGPD, que compartilham o mesmo componente de UI.
  */
-test("cadastro de criança e responsável gera contrato pendente; assinatura + aceite liberam o portal", async ({ page }) => {
-  test.setTimeout(90_000);
+async function completeDocumentWizard(
+  page: Page,
+  { checkboxLabel, confirmText, submitLabel, successText }: { checkboxLabel: string; confirmText: string; submitLabel: string; successText: string }
+) {
+  const continueButton = page.locator('button:has-text("Continuar"):visible');
+  await expect(continueButton).toBeDisabled();
+  await page.getByLabel(checkboxLabel).check();
+  await expect(continueButton).toBeEnabled();
+  await continueButton.click();
+
+  await expect(page.locator('button:has-text("Continuar"):visible')).toBeDisabled();
+  await drawSignature(page);
+  await expect(page.locator('button:has-text("Continuar"):visible')).toBeEnabled();
+  await page.locator('button:has-text("Continuar"):visible').click();
+
+  await expect(page.getByText(confirmText)).toBeVisible();
+  await page.click(`button:has-text("${submitLabel}")`);
+
+  await expect(page.getByText(successText)).toBeVisible({ timeout: 10_000 });
+  await page.click('a:has-text("Continuar para o Portal")');
+}
+
+/**
+ * Fluxo completo do contrato digital + consentimento LGPD pela UI real: cadastrar criança e
+ * responsável gera os dois pendentes automaticamente (ensureContractAcceptance +
+ * ensureConsentAcceptance, mesmo ponto de criação); o responsável cai em /pais/contrato primeiro,
+ * depois /pais/consentimento (mesmo wizard de 3 passos — ler, assinar com o mouse, confirmar —
+ * compartilhado via DocumentAcceptanceWizard), e só depois dos dois é que o portal abre. O contrato
+ * assinado fica visível tanto para o responsável (/pais/documentos) quanto para o admin
+ * (/admin/contratos/[id]). Cria sua própria criança/responsável (não reaproveita E2E_CHILD_A/B) e
+ * não publica nenhuma nova versão de contrato — a regra "nova versão gera pendência só para
+ * vínculos ativos" já é coberta por src/app/admin/contratos/actions.test.ts a nível de unidade, de
+ * propósito: publicar uma versão nova aqui afetaria TODOS os vínculos ativos do banco (inclusive os
+ * guardians fixos A/B usados por outros specs), o que quebraria a suíte inteira dependendo da ordem
+ * de execução dos arquivos.
+ */
+test("cadastro de criança e responsável gera contrato + consentimento LGPD pendentes; assinar os dois libera o portal", async ({ page }) => {
+  test.setTimeout(120_000);
 
   await loginAsAdmin(page);
 
@@ -76,26 +104,23 @@ test("cadastro de criança e responsável gera contrato pendente; assinatura + a
 
   await expect(page.getByText(CHILD_PREFERRED_NAME)).toBeVisible();
 
-  // Passo 1 — ler e marcar ciência.
-  const continueButton = page.locator('button:has-text("Continuar"):visible');
-  await expect(continueButton).toBeDisabled();
-  await page.getByLabel("Li e compreendi o conteúdo deste contrato.").check();
-  await expect(continueButton).toBeEnabled();
-  await continueButton.click();
+  await completeDocumentWizard(page, {
+    checkboxLabel: "Li e compreendi o conteúdo deste contrato.",
+    confirmText: "Você está prestes a aceitar o contrato",
+    submitLabel: "FINALIZAR E ACEITAR CONTRATO",
+    successText: "Contrato aceito com sucesso!",
+  });
 
-  // Passo 2 — assinar. Botão "Continuar" começa desabilitado (canvas vazio) e libera após o traço.
-  await expect(page.locator('button:has-text("Continuar"):visible')).toBeDisabled();
-  await drawSignature(page);
-  await expect(page.locator('button:has-text("Continuar"):visible')).toBeEnabled();
-  await page.locator('button:has-text("Continuar"):visible').click();
+  // O contrato gerou também um consentimento LGPD pendente (ensureConsentAcceptance, mesmo ponto de
+  // criação) — "Continuar para o Portal" leva a /pais/consentimento antes do portal em si.
+  await page.waitForURL("**/pais/consentimento", { timeout: 10_000 });
+  await completeDocumentWizard(page, {
+    checkboxLabel: "Li e compreendi como meus dados e os da criança são tratados.",
+    confirmText: "Você está prestes a registrar seu consentimento",
+    submitLabel: "FINALIZAR E REGISTRAR CONSENTIMENTO",
+    successText: "Consentimento registrado com sucesso!",
+  });
 
-  // Passo 3 — confirmar e finalizar.
-  await expect(page.getByText("Você está prestes a aceitar o contrato")).toBeVisible();
-  await page.click('button:has-text("FINALIZAR E ACEITAR CONTRATO")');
-
-  await expect(page.getByText("Contrato aceito com sucesso!")).toBeVisible({ timeout: 10_000 });
-
-  await page.click('a:has-text("Continuar para o Portal")');
   await page.waitForURL("**/pais", { timeout: 10_000 });
   // Confirma que o portal realmente abriu (não foi bloqueado de novo por engano).
   await expect(page).toHaveURL(/\/pais$/);

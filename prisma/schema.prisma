@@ -49,6 +49,8 @@ model User {
   auditLogs               AuditLog[]
   contractVersionsCreated ContractVersion[]
   contractAcceptancesMade ContractAcceptance[]
+  consentVersionsCreated  ConsentVersion[]
+  consentAcceptancesMade  ConsentAcceptance[]
 
   @@map("users")
 }
@@ -86,6 +88,11 @@ model Child {
   sex              Sex
   enrollmentDate   DateTime    @default(now())
   status           ChildStatus @default(ACTIVE)
+  // Quando a criança deixou de ser ativa — base para a política de retenção/anonimização de dados
+  // (ver docs/lgpd.md). Continua null enquanto ACTIVE; hoje não existe tela que desative uma
+  // criança (ver "Dívida técnica" em docs/architecture.md), então este campo é preparação de
+  // schema para quando essa tela existir, não uma automação já em funcionamento.
+  inactivatedAt    DateTime?
   generalNotes     String?
 
   imageAuthorized Boolean @default(false)
@@ -152,6 +159,7 @@ model Guardian {
   attendanceCheckIns       Attendance[] @relation("AttendanceCheckInGuardian")
   attendanceCheckOuts      Attendance[] @relation("AttendanceCheckOutGuardian")
   contractAcceptances      ContractAcceptance[]
+  consentAcceptances       ConsentAcceptance[]
 
   @@map("guardians")
 }
@@ -865,4 +873,61 @@ model ContractAcceptance {
   @@index([guardianId, status])
   @@index([childId])
   @@map("contract_acceptances")
+}
+
+// ---------------------------------------------------------------------------
+// Consentimento LGPD (tratamento de dados pessoais — distinto da autorização de
+// imagem de Child.imageAuthorized, e distinto do contrato de prestação de serviços acima)
+// ---------------------------------------------------------------------------
+
+enum ConsentVersionStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model ConsentVersion {
+  id          String               @id @default(cuid())
+  version     String
+  content     String
+  status      ConsentVersionStatus @default(PUBLISHED)
+  createdById String?
+  createdAt   DateTime             @default(now())
+  publishedAt DateTime?
+
+  createdBy   User?                @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  acceptances ConsentAcceptance[]
+
+  @@map("consent_versions")
+}
+
+enum ConsentAcceptanceStatus {
+  PENDING
+  ACCEPTED
+}
+
+/// Por guardian, não por criança: o consentimento é sobre o tratamento dos dados pessoais do
+/// próprio responsável (e, por extensão, os que ele fornece sobre a criança) — não faz sentido
+/// duplicar por filho quando a mesma pessoa tem mais de um vinculado.
+model ConsentAcceptance {
+  id               String                   @id @default(cuid())
+  guardianId       String
+  versionId        String
+  status           ConsentAcceptanceStatus  @default(PENDING)
+  acceptedAt       DateTime?
+  acceptedByUserId String?
+  ip               String?
+  userAgent        String?
+  signatureUrl     String?
+  signedAt         DateTime?
+  documentHash     String?
+  createdAt        DateTime                 @default(now())
+
+  guardian       Guardian       @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+  version        ConsentVersion @relation(fields: [versionId], references: [id])
+  acceptedByUser User?          @relation(fields: [acceptedByUserId], references: [id], onDelete: SetNull)
+
+  @@unique([guardianId, versionId])
+  @@index([guardianId, status])
+  @@map("consent_acceptances")
 }

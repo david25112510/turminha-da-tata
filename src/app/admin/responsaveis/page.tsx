@@ -5,7 +5,10 @@ import { RELATIONSHIP_LABELS } from "@/lib/labels";
 export default async function GuardiansListPage() {
   const guardians = await prisma.guardian.findMany({
     orderBy: { name: "asc" },
-    include: { children: { include: { child: true } } },
+    include: {
+      children: { include: { child: true } },
+      consentAcceptances: { orderBy: { createdAt: "desc" }, take: 1 },
+    },
   });
 
   return (
@@ -32,17 +35,28 @@ export default async function GuardiansListPage() {
           <div className="flex flex-col gap-2.5 md:hidden">
             {guardians.map((guardian) => (
               <div key={guardian.id} className="bg-tata-surface rounded-2xl shadow-sm p-4 flex flex-col gap-1">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <span className="font-semibold text-tata-ink text-sm">{guardian.name}</span>
-                  <span
-                    className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                      guardian.userId
-                        ? "bg-tata-green/10 text-tata-green-dark"
-                        : "bg-tata-ink-muted/10 text-tata-ink-muted"
-                    }`}
-                  >
-                    {guardian.userId ? "Ativo" : "Sem acesso"}
-                  </span>
+                  <div className="flex flex-wrap gap-1.5 justify-end shrink-0">
+                    <span
+                      className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                        guardian.userId
+                          ? "bg-tata-green/10 text-tata-green-dark"
+                          : "bg-tata-ink-muted/10 text-tata-ink-muted"
+                      }`}
+                    >
+                      {guardian.userId ? "Ativo" : "Sem acesso"}
+                    </span>
+                    <span
+                      className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                        guardian.consentAcceptances[0]?.status === "ACCEPTED"
+                          ? "bg-tata-green/10 text-tata-green-dark"
+                          : "bg-tata-yellow/10 text-tata-yellow-dark"
+                      }`}
+                    >
+                      LGPD {guardian.consentAcceptances[0]?.status === "ACCEPTED" ? "🟢" : "🟡"}
+                    </span>
+                  </div>
                 </div>
                 <span className="text-xs text-tata-ink-soft">{guardian.phone}</span>
                 <span className="text-xs text-tata-ink-muted">
@@ -63,6 +77,7 @@ export default async function GuardiansListPage() {
                   <th className="p-4 font-semibold">Contato</th>
                   <th className="p-4 font-semibold">Vinculado a</th>
                   <th className="p-4 font-semibold">Acesso ao portal</th>
+                  <th className="p-4 font-semibold">Consentimento LGPD</th>
                 </tr>
               </thead>
               <tbody>
@@ -87,6 +102,17 @@ export default async function GuardiansListPage() {
                         }`}
                       >
                         {guardian.userId ? "Ativo" : "Sem acesso"}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <span
+                        className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                          guardian.consentAcceptances[0]?.status === "ACCEPTED"
+                            ? "bg-tata-green/10 text-tata-green-dark"
+                            : "bg-tata-yellow/10 text-tata-yellow-dark"
+                        }`}
+                      >
+                        {guardian.consentAcceptances[0]?.status === "ACCEPTED" ? "🟢 Aceito" : "🟡 Pendente"}
                       </span>
                     </td>
                   </tr>

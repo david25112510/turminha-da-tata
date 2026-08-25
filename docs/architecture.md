@@ -1,6 +1,6 @@
 # Documentação técnica
 
-Referência de arquitetura do sistema Turminha da Tata. Para o comportamento esperado do produto, veja [spec.md](spec.md); para deploy e operação, veja [deploy.md](deploy.md).
+Referência de arquitetura do sistema Turminha da Tata. Para o comportamento esperado do produto, veja [spec.md](spec.md); para deploy e operação, veja [deploy.md](deploy.md); para proteção de dados pessoais, veja [lgpd.md](lgpd.md).
 
 ## Stack
 
@@ -81,6 +81,9 @@ O detalhamento diário das horas excedentes **não é armazenado** — é sempre
 - **ContractVersion** — o texto do contrato (`content`, texto plano) numa versão nomeada (`"1.0"`, `"2.0"`...) e um `status: DRAFT | PUBLISHED | ARCHIVED`. Só uma versão fica `PUBLISHED` por vez; publicar uma nova arquiva a anterior, nunca a edita ou apaga.
 - **ContractAcceptance** — o aceite de **um** responsável para **uma** criança numa **versão específica** do contrato (`@@unique([childId, guardianId, versionId])` — nunca sobrescrito, é assim que o histórico entre versões se preserva). Guarda `status: PENDING | ACCEPTED | CANCELLED`, `acceptedAt`/`acceptedByUserId`/`ip`/`userAgent`, e a assinatura manuscrita (`signatureUrl`, `signedAt`, `documentHash` — SHA-256 de versão+conteúdo+criança+responsável+assinatura, verificação de integridade simples, não criptográfica).
 
+### Consentimento LGPD
+- **ConsentVersion**/**ConsentAcceptance** — mesmo desenho do contrato digital acima (versão publicada, aceite com assinatura/hash/IP/userAgent), mas por **responsável**, não por par criança/responsável (`@@unique([guardianId, versionId])`) — o consentimento é sobre o tratamento dos dados pessoais do próprio titular, não faz sentido duplicar por filho. Distinto tanto do contrato de prestação de serviços quanto de `Child.imageAuthorized` — ver `docs/lgpd.md` para a finalidade de cada um dos três.
+
 ## Autenticação e controle de acesso
 
 - `src/auth.ts` configura o Credentials provider: `authorize()` delega a `src/lib/verify-credentials.ts` (`verifyCredentials(email, password)`, testável isoladamente com Prisma mockado), que busca o `User` por e-mail, confere `active` e o hash da senha, e retorna `{ id, email, name, role }`. A sessão é JWT; `role` e `id` são propagados no callback `jwt`/`session` e tipados em `src/types/next-auth.d.ts`.
@@ -108,6 +111,9 @@ Método de **tolerância como dedução**, não como limiar: o atraso bruto (sa�
 
 ### Auditoria (`src/lib/audit.ts`, `src/lib/audit-log.ts`)
 `getRecentActivity(start, end)` combina duas fontes: os models operacionais (mais `Payment`/`MonthlyInvoice`), agregados por intervalo como antes, **e** a tabela dedicada `AuditLog` (via `getAuditLogEntries`), que registra `actorUserId`, `entity`/`entityId`, `oldData`/`newData` (JSON) e IP/user-agent para as mutações administrativas sensíveis — cadastro de criança, cadastro/permissões de responsável, pessoa autorizada, fechamento de mês, pagamento, ativar/desativar usuário. `recordAuditLog()` em `src/lib/audit-log.ts` é chamado a partir de cada Server Action correspondente (nunca dentro de código de leitura); falha ao gravar o log não derruba a operação principal (try/catch com log em `console.error`). As duas fontes são mescladas e ordenadas antes de chegar em `/admin/auditoria`.
+
+### Consentimento LGPD (`src/lib/consent.ts`, `src/app/pais/consentimento/`)
+`ensureConsentAcceptance({ guardianId, actorUserId })` espelha `ensureContractAcceptance` (mesmo bootstrap preguiçoso da versão `PUBLISHED` a partir de `src/lib/consent-template.ts`) e é chamada logo depois dela em `createGuardianAction`. O wizard de aceite (ler → assinar → confirmar) e o próprio `SignaturePad` são reaproveitados do contrato via um componente genérico, `src/components/tata/DocumentAcceptanceWizard.tsx` — `ContractAcceptanceCard.tsx` e `ConsentAcceptanceCard.tsx` são hoje wrappers finos dele, cada um só passando os textos/rótulos específicos do seu documento. `acceptConsentAction` segue o mesmo padrão de hash/idempotência de `acceptContractAction`. O bloqueio do portal (`src/app/pais/(portal)/layout.tsx`) checa contrato pendente primeiro, consentimento depois — se os dois estiverem pendentes, o responsável só vê o consentimento na navegação seguinte ao aceitar o contrato.
 
 ### Contrato digital (`src/lib/contract.ts`, `src/app/pais/contrato/`, `src/app/admin/contratos/`)
 `ensureContractAcceptance({ childId, guardianId, actorUserId })` é chamada uma única vez, dentro de `createGuardianAction` (`src/app/admin/responsaveis/actions.ts`), logo depois de criar o vínculo `GuardianChild` — é o único lugar do código que cria esse vínculo hoje. Ela busca a `ContractVersion` `PUBLISHED` atual (criando a `"1.0"` com o texto padrão de `src/lib/contract-template.ts` na primeira vez que for necessária — bootstrap preguiçoso, sem passo de seed separado) e garante uma `ContractAcceptance` `PENDING` para aquele par criança/responsável.
@@ -137,6 +143,7 @@ O dashboard (`getDashboardData`) calcula indicadores e alertas em tempo real a c
 | Cuidadora | `/cuidadora` | Painel do dia (check-in/check-out por criança) |
 | Cuidadora | `/cuidadora/criancas/[id]` | Jornada + registro rápido de todos os tipos de evento |
 | Pais | `/pais/contrato` | Fora do route group `(portal)` — tela de aceite (ler, assinar, confirmar), sempre acessível independente de pendência |
+| Pais | `/pais/consentimento` | Fora do route group `(portal)` — mesmo wizard, para o termo LGPD; checada depois do contrato no layout |
 | Pais | `/pais` | Início — status do dia e notificações recentes |
 | Pais | `/pais/jornada`, `/pais/fotos`, `/pais/atividades`, `/pais/comunicados`, `/pais/agenda`, `/pais/financeiro`, `/pais/documentos`, `/pais/documentos/[acceptanceId]` | Cada seção do menu (todas respeitam a permissão correspondente em `GuardianChild`; `documentos` lista os contratos já aceitos) |
 

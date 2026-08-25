@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/authz";
 import { recordAuditLog } from "@/lib/audit-log";
 import { ensureContractAcceptance } from "@/lib/contract";
+import { ensureConsentAcceptance } from "@/lib/consent";
 
 export async function createGuardianAction(formData: FormData) {
   const admin = await requireAdmin();
@@ -76,6 +77,7 @@ export async function createGuardianAction(formData: FormData) {
   });
 
   await ensureContractAcceptance({ childId, guardianId: guardian.id, actorUserId: admin.id });
+  await ensureConsentAcceptance({ guardianId: guardian.id, actorUserId: admin.id });
 
   await recordAuditLog({
     actorUserId: admin.id,

@@ -841,6 +841,8 @@ Deverá possuir:
 * Auditoria
 * Controle de documentos
 * Controle de autorização de imagem
+* Consentimento para tratamento de dados pessoais (LGPD) — implementado; ver seção 48 e
+  `docs/lgpd.md` para categorias de dados, base legal e retenção
 * Controle de responsáveis
 * Backup
 * Proteção de informações sensíveis
@@ -1281,6 +1283,13 @@ A administração acompanha, numa área própria: todos os contratos por crianç
 status de cada um (aceito, pendente, cancelado), busca e filtro por período, e pode reenviar um
 lembrete para quem ainda não aceitou. Publicar uma nova versão do contrato nunca apaga nem altera
 o histórico das anteriores.
+
+## Consentimento LGPD (implementado, fluxo distinto)
+
+O mesmo mecanismo de leitura + assinatura + aceite existe também para o consentimento de
+tratamento de dados pessoais — um documento separado do contrato de prestação de serviços, exigido
+uma vez por responsável (não por criança). Ver seção 35 e `docs/lgpd.md` para o detalhamento
+completo (categorias de dados, base legal, retenção, encarregado de dados).
 
 ---
 
