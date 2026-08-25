@@ -369,6 +369,12 @@ Refeições configuráveis:
 * Jantar
 * Outras
 
+## Hidratação
+
+A cuidadora também poderá registrar quanto a criança bebeu de água ao longo do dia (pouco, médio,
+muito), com observação — item independente da alimentação, aparece junto na linha do tempo da
+rotina.
+
 ---
 
 # 15. Sono
@@ -645,9 +651,11 @@ A tolerância deverá ser configurável.
 
 # 28. Cálculo de hora excedente
 
-O sistema deverá trabalhar com minutos reais.
+O sistema deverá trabalhar com minutos reais. **A tolerância é um desconto sobre o atraso, não um
+limiar de tudo-ou-nada** — passar 1 minuto da tolerância cobra 1 minuto, não o atraso inteiro (ver
+regra completa na seção 29).
 
-Exemplo:
+Exemplo (sem tolerância, para isolar o cálculo do valor):
 
 Valor da hora:
 
@@ -665,17 +673,20 @@ Saída real:
 
 **18:12**
 
-Excedente:
+Excedente bruto:
 
 **42 minutos**
 
-Cálculo:
+Cálculo (tolerância 0):
 
 **42 × R$ 0,25 = R$ 10,50**
 
 ---
 
 # 29. Tolerância
+
+A tolerância **desconta** do atraso bruto — não é um limiar que libera cobrar o atraso inteiro
+quando ultrapassado.
 
 Exemplo:
 
@@ -687,21 +698,19 @@ Tolerância:
 
 15 minutos
 
-Saída:
+Valor da hora:
 
-17:42
+R$ 15,00 (R$ 0,25/minuto)
 
-Resultado:
+Saída 17:42 (12 minutos de atraso bruto, dentro da tolerância):
 
 **Sem cobrança.**
 
-Saída:
+Saída 17:50 (20 minutos de atraso bruto):
 
-17:50
+Minutos cobrados = 20 − 15 = **5 minutos**
 
-Tempo excedente considerado:
-
-**20 minutos**, caso essa seja a regra configurada para a escola.
+Valor cobrado = 5 × R$ 0,25 = **R$ 1,25**
 
 O sistema deverá deixar explícito qual método de cálculo está sendo utilizado.
 
@@ -960,6 +969,7 @@ Armazenamento seguro para:
 
 * Fotos
 * Documentos
+* Assinaturas
 * Autorizações
 * Relatórios
 
@@ -979,12 +989,13 @@ USUÁRIOS
            ▼
         CRIANÇAS
            │
-     ┌─────┼─────────────┐
-     ▼     ▼             ▼
-  PRESENÇA ROTINA      FINANCEIRO
-     │     │             │
-     │     ├── Alimentação
-     │     ├── Sono
+     ┌─────┼─────────────┬───────────┐
+     ▼     ▼             ▼           ▼
+  PRESENÇA ROTINA      FINANCEIRO  CONTRATO
+     │     │             │           │
+     │     ├── Alimentação          ├── Versão
+     │     ├── Hidratação           ├── Aceite
+     │     ├── Sono                 └── Assinatura
      │     ├── Higiene
      │     ├── Atividades
      │     ├── Humor
@@ -1202,12 +1213,11 @@ Isso reduzirá muito o trabalho manual.
 
 # 46. Visão futura
 
-A arquitetura deverá permitir futuramente adicionar:
+Contratos digitais e assinatura eletrônica já foram implementados — ver seção 48. A arquitetura
+deverá permitir futuramente adicionar:
 
 * PIX
 * Pagamento online
-* Assinatura digital
-* Contratos digitais
 * Chat entre escola e responsáveis
 * Agenda pedagógica
 * Avaliações de desenvolvimento
@@ -1233,6 +1243,44 @@ A Turminha da Tata deverá oferecer uma experiência em que:
 **A criança recebe um acompanhamento mais completo.**
 
 O sistema deverá transformar a rotina da escolinha em uma experiência digital integrada, simples e acolhedora.
+
+---
+
+# 48. Contrato digital e assinatura (implementado)
+
+Quando o administrador vincula um responsável a uma criança, o sistema gera automaticamente um
+contrato pendente para aquele par. Antes de aceitar, o responsável **não** consegue usar o Portal
+dos Pais normalmente — só visualizar o contrato, assinar, aceitar ou sair.
+
+## Fluxo do responsável
+
+1. Login → o sistema detecta contrato pendente e leva direto para a tela de aceite.
+2. Lê o contrato (cláusulas de prestação de serviço, rotina, alimentação, saúde, fotos, pagamentos
+   etc.) numa experiência de leitura confortável no celular — sem precisar baixar arquivo nenhum.
+3. Marca "Li e compreendi o conteúdo deste contrato".
+4. Assina com o dedo, caneta digital ou mouse, numa área de assinatura dedicada — pode limpar e
+   assinar de novo quantas vezes quiser antes de confirmar.
+5. Revê um resumo (criança, responsável, versão, confirmação da assinatura) antes de finalizar.
+6. Confirma o aceite → "Contrato aceito com sucesso!" → segue para o Portal dos Pais, liberado.
+
+O contrato assinado fica disponível depois, a qualquer momento, em Perfil → Documentos.
+
+## O que fica registrado
+
+Cada aceite guarda, permanentemente: a criança, o responsável, a versão do contrato, o texto exato
+apresentado naquela versão, a imagem da assinatura, data e hora do aceite, e um código de
+verificação de integridade (garante que a assinatura corresponde exatamente àquele contrato e
+àquela versão — não é possível reaproveitá-la em outro documento). Nada disso é sobrescrito: se a
+administração publicar uma nova versão do contrato no futuro, a versão anterior e todos os aceites
+já feitos continuam preservados, e só quem ainda não aceitou a versão nova é levado de volta à tela
+de aceite.
+
+## Administração
+
+A administração acompanha, numa área própria: todos os contratos por criança e responsável, o
+status de cada um (aceito, pendente, cancelado), busca e filtro por período, e pode reenviar um
+lembrete para quem ainda não aceitou. Publicar uma nova versão do contrato nunca apaga nem altera
+o histórico das anteriores.
 
 ---
 
