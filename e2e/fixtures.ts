@@ -16,6 +16,9 @@ export const E2E_GUARDIAN_B = { id: "e2e-guardian-b", name: "E2E Pai do João" }
 export const E2E_CHILD_A = { id: "e2e-child-maria", fullName: "E2E Maria Teste", preferredName: "Maria" };
 export const E2E_CHILD_B = { id: "e2e-child-joao", fullName: "E2E João Teste", preferredName: "João" };
 
+export const E2E_CONTRACT_ACCEPTANCE_A = "e2e-contract-acceptance-a";
+export const E2E_CONTRACT_ACCEPTANCE_B = "e2e-contract-acceptance-b";
+
 export const ALL_E2E_USER_IDS = [E2E_ADMIN.id, E2E_CAREGIVER.id, E2E_GUARDIAN_A_USER.id, E2E_GUARDIAN_B_USER.id];
 export const ALL_E2E_GUARDIAN_IDS = [E2E_GUARDIAN_A.id, E2E_GUARDIAN_B.id];
 export const ALL_E2E_CHILD_IDS = [E2E_CHILD_A.id, E2E_CHILD_B.id];

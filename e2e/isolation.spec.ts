@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { E2E_CHILD_A, E2E_CHILD_B, E2E_GUARDIAN_A_USER, E2E_PASSWORD } from "./fixtures";
+import { E2E_CHILD_A, E2E_CHILD_B, E2E_CONTRACT_ACCEPTANCE_B, E2E_GUARDIAN_A_USER, E2E_PASSWORD } from "./fixtures";
 
 /**
  * Um dos testes mais importantes do sistema: um responsável nunca deve ver dados de uma criança que não é
@@ -37,6 +37,11 @@ test.describe("isolamento de dados entre famílias", () => {
     await page.goto(`/pais/atividades?childId=${E2E_CHILD_B.id}`);
     const body = await page.locator("body").innerText();
     expect(body).not.toContain(E2E_CHILD_B.preferredName);
+  });
+
+  test("responsável não vê o documento do contrato assinado de outra família via URL", async ({ page }) => {
+    await page.goto(`/pais/documentos/${E2E_CONTRACT_ACCEPTANCE_B}`);
+    await expect(page.getByText("Não encontramos esta página")).toBeVisible();
   });
 
   test("responsável continua vendo a própria criança normalmente", async ({ page }) => {

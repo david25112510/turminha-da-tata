@@ -851,6 +851,9 @@ model ContractAcceptance {
   acceptedByUserId String?
   ip               String?
   userAgent        String?
+  signatureUrl     String?
+  signedAt         DateTime?
+  documentHash     String?
   createdAt        DateTime                  @default(now())
 
   child          Child           @relation(fields: [childId], references: [id], onDelete: Cascade)

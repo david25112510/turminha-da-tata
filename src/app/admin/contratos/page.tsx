@@ -17,14 +17,22 @@ const STATUS_TONE: Record<string, string> = {
 export default async function AdminContractsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; from?: string; to?: string }>;
 }) {
-  const { q, status } = await searchParams;
+  const { q, status, from, to } = await searchParams;
 
   const [acceptances, currentVersion] = await Promise.all([
     prisma.contractAcceptance.findMany({
       where: {
         ...(status ? { status: status as never } : {}),
+        ...(from || to
+          ? {
+              createdAt: {
+                ...(from ? { gte: new Date(`${from}T00:00:00`) } : {}),
+                ...(to ? { lte: new Date(`${to}T23:59:59`) } : {}),
+              },
+            }
+          : {}),
         ...(q
           ? {
               OR: [
@@ -59,6 +67,14 @@ export default async function AdminContractsPage({
             <option value="CANCELLED">🔴 Cancelado</option>
           </select>
         </label>
+        <label className="flex flex-col gap-1 text-xs text-tata-ink-soft">
+          De
+          <input type="date" name="from" defaultValue={from} className={inputClass} />
+        </label>
+        <label className="flex flex-col gap-1 text-xs text-tata-ink-soft">
+          Até
+          <input type="date" name="to" defaultValue={to} className={inputClass} />
+        </label>
         <button type="submit" className="min-h-11 bg-tata-green text-white rounded-xl px-4 py-2 text-sm font-semibold font-[family-name:var(--font-baloo)]">
           Filtrar
         </button>
@@ -74,7 +90,7 @@ export default async function AdminContractsPage({
             {acceptances.map((a) => (
               <Link
                 key={a.id}
-                href={`/admin/criancas/${a.childId}`}
+                href={`/admin/contratos/${a.id}`}
                 className="bg-tata-surface rounded-tata-lg shadow-tata-card p-4 flex flex-col gap-1 min-h-11 hover:shadow-tata-card-hover active:scale-[0.99] transition-all"
               >
                 <div className="flex items-center justify-between gap-2">
@@ -89,6 +105,7 @@ export default async function AdminContractsPage({
                 <span className="text-xs text-tata-ink-muted">
                   Versão {a.version.version}
                   {a.acceptedAt && ` — aceito em ${formatDateTime(a.acceptedAt)}`}
+                  {a.signatureUrl && " · ✍️ assinado"}
                 </span>
               </Link>
             ))}

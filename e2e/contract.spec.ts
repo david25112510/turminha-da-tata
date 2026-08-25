@@ -13,18 +13,36 @@ async function loginAsAdmin(page: Page) {
   await page.waitForURL("**/admin", { timeout: 10_000 });
 }
 
+/** Desenha um traço simples no canvas de assinatura via mouse — o suficiente para sair do estado "vazio". */
+async function drawSignature(page: Page) {
+  const canvas = page.locator('canvas[aria-label*="assinatura"]');
+  const box = await canvas.boundingBox();
+  if (!box) throw new Error("Canvas de assinatura não encontrado.");
+  const y = box.y + box.height / 2;
+  await page.mouse.move(box.x + 15, y);
+  await page.mouse.down();
+  for (let i = 1; i <= 10; i++) {
+    const x = box.x + 15 + (box.width - 30) * (i / 10);
+    const offset = i % 2 === 0 ? -30 : 30;
+    await page.mouse.move(x, y + offset);
+  }
+  await page.mouse.up();
+}
+
 /**
  * Fluxo completo do contrato digital pela UI real (seção "TESTES" do pedido): cadastrar criança e
  * responsável gera o contrato automaticamente; o responsável cai em /pais/contrato em vez do portal
- * normal; só depois de aceitar é que o portal abre. Cria sua própria criança/responsável (não reaproveita
- * E2E_CHILD_A/B) e não publica nenhuma nova versão de contrato — a regra "nova versão gera pendência só
- * para vínculos ativos" já é coberta por src/app/admin/contratos/actions.test.ts a nível de unidade, de
- * propósito: publicar uma versão nova aqui afetaria TODOS os vínculos ativos do banco (inclusive os
- * guardians fixos A/B usados por outros specs), o que quebraria a suíte inteira dependendo da ordem de
- * execução dos arquivos.
+ * normal; lê, assina com o mouse (simula dedo/caneta — mesma API de Pointer Events), confirma e só
+ * depois disso é que o portal abre; o contrato assinado fica visível tanto para o responsável
+ * (/pais/documentos) quanto para o admin (/admin/contratos/[id]). Cria sua própria criança/responsável
+ * (não reaproveita E2E_CHILD_A/B) e não publica nenhuma nova versão de contrato — a regra "nova versão
+ * gera pendência só para vínculos ativos" já é coberta por src/app/admin/contratos/actions.test.ts a
+ * nível de unidade, de propósito: publicar uma versão nova aqui afetaria TODOS os vínculos ativos do
+ * banco (inclusive os guardians fixos A/B usados por outros specs), o que quebraria a suíte inteira
+ * dependendo da ordem de execução dos arquivos.
  */
-test("cadastro de criança e responsável gera contrato pendente; portal só abre após o aceite", async ({ page }) => {
-  test.setTimeout(60_000);
+test("cadastro de criança e responsável gera contrato pendente; assinatura + aceite liberam o portal", async ({ page }) => {
+  test.setTimeout(90_000);
 
   await loginAsAdmin(page);
 
@@ -58,12 +76,22 @@ test("cadastro de criança e responsável gera contrato pendente; portal só abr
 
   await expect(page.getByText(CHILD_PREFERRED_NAME)).toBeVisible();
 
-  const acceptButton = page.getByRole("button", { name: "ACEITAR CONTRATO" });
-  await expect(acceptButton).toBeDisabled();
+  // Passo 1 — ler e marcar ciência.
+  const continueButton = page.locator('button:has-text("Continuar"):visible');
+  await expect(continueButton).toBeDisabled();
+  await page.getByLabel("Li e compreendi o conteúdo deste contrato.").check();
+  await expect(continueButton).toBeEnabled();
+  await continueButton.click();
 
-  await page.check('input[name="agreed"]');
-  await expect(acceptButton).toBeEnabled();
-  await acceptButton.click();
+  // Passo 2 — assinar. Botão "Continuar" começa desabilitado (canvas vazio) e libera após o traço.
+  await expect(page.locator('button:has-text("Continuar"):visible')).toBeDisabled();
+  await drawSignature(page);
+  await expect(page.locator('button:has-text("Continuar"):visible')).toBeEnabled();
+  await page.locator('button:has-text("Continuar"):visible').click();
+
+  // Passo 3 — confirmar e finalizar.
+  await expect(page.getByText("Você está prestes a aceitar o contrato")).toBeVisible();
+  await page.click('button:has-text("FINALIZAR E ACEITAR CONTRATO")');
 
   await expect(page.getByText("Contrato aceito com sucesso!")).toBeVisible({ timeout: 10_000 });
 
@@ -71,4 +99,18 @@ test("cadastro de criança e responsável gera contrato pendente; portal só abr
   await page.waitForURL("**/pais", { timeout: 10_000 });
   // Confirma que o portal realmente abriu (não foi bloqueado de novo por engano).
   await expect(page).toHaveURL(/\/pais$/);
+
+  // O contrato assinado fica disponível em Perfil → Documentos, para este responsável.
+  await page.goto("/pais/documentos");
+  await page.locator("a", { hasText: `Contrato — ${CHILD_PREFERRED_NAME}` }).click();
+  await page.waitForURL(/\/pais\/documentos\/.+/, { timeout: 10_000 });
+  await expect(page.getByRole("img", { name: /Assinatura/ })).toBeVisible({ timeout: 10_000 });
+
+  // E o admin consegue ver a mesma assinatura na ficha do contrato.
+  await loginAsAdmin(page);
+  await page.goto(`/admin/contratos?q=${encodeURIComponent(CHILD_PREFERRED_NAME)}`);
+  await page.locator("a", { hasText: CHILD_PREFERRED_NAME }).click();
+  await page.waitForURL(/\/admin\/contratos\/.+/, { timeout: 10_000 });
+  await expect(page.getByText("Assinado:")).toContainText("✓ Sim", { timeout: 10_000 });
+  await expect(page.getByRole("img", { name: /Assinatura/ })).toBeVisible({ timeout: 10_000 });
 });

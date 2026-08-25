@@ -1,9 +1,11 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/authz";
 import { recordAuditLog } from "@/lib/audit-log";
+import { isPushConfigured, sendPushToGuardian } from "@/lib/push";
 
 function nextVersionLabel(current: string) {
   const major = parseInt(current, 10);
@@ -62,4 +64,41 @@ export async function publishNewVersionAction(formData: FormData) {
   });
 
   redirect("/admin/contratos");
+}
+
+/**
+ * Lembrete para o responsável com ESTE contrato pendente — não usa notifyGuardians() de propósito:
+ * aquele helper avisa todos os responsáveis vinculados à criança, mas aqui o alvo é só quem ainda
+ * não aceitou (um irmão pode ter mais de um responsável, só um pode estar pendente).
+ */
+export async function resendPendingContractNotificationAction(formData: FormData) {
+  const admin = await requireAdmin();
+  const acceptanceId = String(formData.get("acceptanceId") ?? "");
+
+  const acceptance = await prisma.contractAcceptance.findUnique({
+    where: { id: acceptanceId },
+    include: { child: true },
+  });
+  if (!acceptance) throw new Error("Contrato não encontrado.");
+  if (acceptance.status !== "PENDING") throw new Error("Este contrato não está pendente.");
+
+  const childName = acceptance.child.preferredName || acceptance.child.fullName;
+  const title = "Contrato pendente";
+  const body = `Existe um contrato aguardando sua confirmação no Portal dos Pais para ${childName}.`;
+
+  await prisma.notification.create({
+    data: { guardianId: acceptance.guardianId, childId: acceptance.childId, type: "ANNOUNCEMENT", title, body },
+  });
+  if (isPushConfigured()) {
+    await sendPushToGuardian(acceptance.guardianId, { title, body, url: "/pais/contrato" });
+  }
+
+  await recordAuditLog({
+    actorUserId: admin.id,
+    action: "CONTRATO_LEMBRETE_ENVIADO",
+    entity: "ContractAcceptance",
+    entityId: acceptance.id,
+  });
+
+  revalidatePath(`/admin/contratos/${acceptance.id}`);
 }

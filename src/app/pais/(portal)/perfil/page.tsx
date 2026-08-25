@@ -18,6 +18,7 @@ const SECTION_LINKS = [
   { href: "/pais/atividades", icon: "🎨", label: "Atividades" },
   { href: "/pais/comunicados", icon: "📣", label: "Comunicados" },
   { href: "/pais/agenda", icon: "📅", label: "Agenda" },
+  { href: "/pais/documentos", icon: "📄", label: "Documentos" },
 ];
 
 export default async function GuardianProfilePage() {
@@ -91,7 +92,7 @@ export default async function GuardianProfilePage() {
         <span className="font-[family-name:var(--font-baloo)] font-semibold text-sm text-tata-ink">
           Mais seções
         </span>
-        <div className="grid grid-cols-3 gap-2.5">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
           {SECTION_LINKS.map((s) => (
             <Link
               key={s.href}

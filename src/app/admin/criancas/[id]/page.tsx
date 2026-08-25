@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { RELATIONSHIP_LABELS, CHILD_STATUS_LABELS } from "@/lib/labels";
@@ -104,7 +105,12 @@ export default async function ChildDetailPage({ params }: { params: Promise<{ id
                   </span>
                   <span className="text-tata-ink-soft ml-2">v{c.version.version} — {c.guardian.name}</span>
                 </div>
-                {c.acceptedAt && <span className="text-xs text-tata-ink-muted shrink-0">{formatDateTime(c.acceptedAt)}</span>}
+                <div className="flex items-center gap-3 shrink-0">
+                  {c.acceptedAt && <span className="text-xs text-tata-ink-muted">{formatDateTime(c.acceptedAt)}</span>}
+                  <Link href={`/admin/contratos/${c.id}`} className="text-xs font-semibold text-tata-green hover:underline">
+                    Visualizar
+                  </Link>
+                </div>
               </li>
             ))}
           </ul>

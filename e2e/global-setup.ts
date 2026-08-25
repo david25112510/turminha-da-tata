@@ -6,6 +6,8 @@ import {
   E2E_CAREGIVER,
   E2E_CHILD_A,
   E2E_CHILD_B,
+  E2E_CONTRACT_ACCEPTANCE_A,
+  E2E_CONTRACT_ACCEPTANCE_B,
   E2E_GUARDIAN_A,
   E2E_GUARDIAN_A_USER,
   E2E_GUARDIAN_B,
@@ -86,8 +88,8 @@ export default async function globalSetup() {
   });
   await prisma.contractAcceptance.createMany({
     data: [
-      { childId: childA.id, guardianId: guardianA.id, versionId: contractVersion.id, status: "ACCEPTED", acceptedAt: new Date(), acceptedByUserId: guardianUserA.id },
-      { childId: childB.id, guardianId: guardianB.id, versionId: contractVersion.id, status: "ACCEPTED", acceptedAt: new Date(), acceptedByUserId: guardianUserB.id },
+      { id: E2E_CONTRACT_ACCEPTANCE_A, childId: childA.id, guardianId: guardianA.id, versionId: contractVersion.id, status: "ACCEPTED", acceptedAt: new Date(), acceptedByUserId: guardianUserA.id },
+      { id: E2E_CONTRACT_ACCEPTANCE_B, childId: childB.id, guardianId: guardianB.id, versionId: contractVersion.id, status: "ACCEPTED", acceptedAt: new Date(), acceptedByUserId: guardianUserB.id },
     ],
   });
 
