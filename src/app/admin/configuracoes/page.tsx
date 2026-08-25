@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { ROLE_LABELS } from "@/lib/labels";
 import { ChangePasswordForm } from "@/components/tata/ChangePasswordForm";
+import { TotpSettings } from "@/components/tata/TotpSettings";
 import { toggleUserActiveAction } from "./actions";
 
 export default async function SettingsPage() {
@@ -9,7 +10,7 @@ export default async function SettingsPage() {
   const me = session?.user?.id
     ? await prisma.user.findUnique({
         where: { id: session.user.id },
-        select: { name: true, email: true, role: true, lastLoginAt: true },
+        select: { name: true, email: true, role: true, lastLoginAt: true, totpEnabled: true },
       })
     : null;
   const users = await prisma.user.findMany({
@@ -48,6 +49,16 @@ export default async function SettingsPage() {
           Alterar senha
         </span>
         <ChangePasswordForm />
+
+        {me?.role === "ADMIN" && (
+          <>
+            <div className="h-px bg-tata-border" />
+            <span className="font-[family-name:var(--font-baloo)] font-semibold text-sm text-tata-ink">
+              Autenticação em duas etapas
+            </span>
+            <TotpSettings enabled={me.totpEnabled} />
+          </>
+        )}
       </div>
 
       <div className="bg-tata-surface rounded-2xl shadow-sm p-5">

@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { verifyCredentials } from "@/lib/verify-credentials";
 import { isRateLimited, recordFailedAttempt, resetAttempts } from "@/lib/rate-limit";
+import { checkMfaRequirement } from "@/lib/mfa";
 import { prisma } from "@/lib/prisma";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -14,16 +15,26 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       credentials: {
         email: { label: "E-mail", type: "email" },
         password: { label: "Senha", type: "password" },
+        totpCode: { label: "Código de autenticação", type: "text" },
       },
       async authorize(credentials) {
         const email = credentials?.email as string | undefined;
         const password = credentials?.password as string | undefined;
+        const totpCode = credentials?.totpCode as string | undefined;
 
         if (email && (await isRateLimited(email))) return null;
 
         const user = await verifyCredentials(email, password);
         if (!user) {
           if (email) await recordFailedAttempt(email);
+          return null;
+        }
+
+        // MFA só para ADMIN, e só quando a conta tiver o TOTP habilitado (ver /admin/configuracoes).
+        // Nunca confia no pré-check de src/app/login/actions.ts — esta é a barreira real, alcançada
+        // por qualquer caminho de login, não só pelo formulário.
+        if (!(await checkMfaRequirement(user.id, user.role, totpCode))) {
+          await recordFailedAttempt(email!);
           return null;
         }
 

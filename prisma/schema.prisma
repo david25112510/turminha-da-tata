@@ -28,6 +28,13 @@ model User {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
+  // MFA (TOTP) — hoje só oferecido/exigido para role ADMIN (ver src/auth.ts). totpSecret fica em
+  // texto plano por natureza do algoritmo (precisa ser lido de volta para calcular o código
+  // corrente, não dá para só hashear como a senha) — risco aceito e documentado em
+  // docs/architecture.md; considerar cifrar em repouso se o modelo de ameaça exigir.
+  totpSecret  String?
+  totpEnabled Boolean @default(false)
+
   guardian            Guardian?
   passwordResetTokens PasswordResetToken[]
 

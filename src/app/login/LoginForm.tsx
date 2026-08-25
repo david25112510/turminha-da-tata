@@ -59,9 +59,11 @@ export function LoginForm() {
           <form action={formAction} className="w-full max-w-sm mx-auto flex flex-col gap-5">
             <div className="flex flex-col gap-1">
               <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-2xl text-tata-ink">
-                Bem-vinda de volta
+                {state?.mfaRequired ? "Verificação em duas etapas" : "Bem-vinda de volta"}
               </h1>
-              <p className="text-sm text-tata-ink-soft">Entre para acessar o sistema.</p>
+              <p className="text-sm text-tata-ink-soft">
+                {state?.mfaRequired ? "Sua conta tem autenticação em duas etapas ativada." : "Entre para acessar o sistema."}
+              </p>
             </div>
 
             <label className="flex flex-col gap-1.5 text-sm">
@@ -84,12 +86,34 @@ export function LoginForm() {
                 required
                 autoComplete="current-password"
                 placeholder="••••••••••"
-                className="min-h-11 border border-tata-border rounded-xl px-4 py-3 text-sm outline-none focus:border-tata-green transition-colors"
+                readOnly={state?.mfaRequired}
+                className="min-h-11 border border-tata-border rounded-xl px-4 py-3 text-sm outline-none focus:border-tata-green transition-colors read-only:bg-tata-surface-hover"
               />
-              <Link href="/esqueci-senha" className="self-end text-xs font-semibold text-tata-ink-soft hover:underline">
-                Esqueci minha senha
-              </Link>
+              {!state?.mfaRequired && (
+                <Link href="/esqueci-senha" className="self-end text-xs font-semibold text-tata-ink-soft hover:underline">
+                  Esqueci minha senha
+                </Link>
+              )}
             </label>
+
+            {state?.mfaRequired && (
+              <label className="flex flex-col gap-1.5 text-sm">
+                <span className="font-semibold text-tata-ink-strong">Código de autenticação</span>
+                <input
+                  type="text"
+                  name="totpCode"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  pattern="\d{6}"
+                  maxLength={6}
+                  required
+                  autoFocus
+                  placeholder="000000"
+                  className="min-h-11 border border-tata-border rounded-xl px-4 py-3 text-sm tracking-[0.3em] text-center outline-none focus:border-tata-green transition-colors"
+                />
+                <p className="text-xs text-tata-ink-muted">Digite o código de 6 dígitos do seu app autenticador.</p>
+              </label>
+            )}
 
             {state?.error && (
               <p role="alert" className="text-sm text-tata-coral-dark font-medium">
@@ -102,7 +126,7 @@ export function LoginForm() {
               disabled={pending}
               className="min-h-11 bg-tata-coral text-white rounded-xl py-3 font-[family-name:var(--font-baloo)] font-semibold text-sm disabled:opacity-60 transition-opacity"
             >
-              {pending ? "Entrando..." : "Entrar"}
+              {pending ? "Entrando..." : state?.mfaRequired ? "Confirmar código" : "Entrar"}
             </button>
 
             <p className="text-center text-xs text-tata-ink-muted">
