@@ -48,3 +48,8 @@ um sozinho. `npm run test:e2e:ui` abre o modo interativo do Playwright para depu
 `.github/workflows/ci.yml` roda `npm ci`, `npm run lint`, `npm run test` e `npm run build` a cada
 push/PR, com um Postgres de serviço. Os testes E2E não rodam no CI ainda — ver o comentário no
 próprio workflow para o motivo e como rodá-los localmente.
+
+## Licença
+
+Software proprietário — ver [LICENSE](LICENSE). O repositório é público para fins de consulta e
+portfólio; isso não concede permissão de uso, cópia ou redistribuição.
