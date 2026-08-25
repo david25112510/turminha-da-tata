@@ -65,6 +65,96 @@ describe("calculateOvertimeForAttendance (composição de calculateOvertimeMinut
   });
 });
 
+describe("getMonthlyOvertimeBreakdown — lê do snapshot quando a fatura já existe, ao vivo só quando ainda não existe", () => {
+  const findUniqueInvoice = vi.fn();
+  const findUniqueOrThrowChild = vi.fn();
+  const findManyAttendance = vi.fn();
+
+  beforeEach(() => {
+    vi.resetModules();
+    vi.doMock("@/lib/prisma", () => ({
+      prisma: {
+        monthlyInvoice: { findUnique: (...args: unknown[]) => findUniqueInvoice(...args) },
+        child: { findUniqueOrThrow: (...args: unknown[]) => findUniqueOrThrowChild(...args) },
+        attendance: { findMany: (...args: unknown[]) => findManyAttendance(...args) },
+      },
+    }));
+    findUniqueInvoice.mockReset();
+    findUniqueOrThrowChild.mockReset().mockResolvedValue({
+      id: "child-1",
+      overtimeHourRate: 15,
+      contractedExitTime: "17:30",
+      toleranceMinutes: 15,
+    });
+    findManyAttendance.mockReset().mockResolvedValue([]);
+  });
+
+  it("CASO 11: mês corrente/aberto (sem fatura ainda) recalcula ao vivo a partir de Attendance", async () => {
+    findUniqueInvoice.mockResolvedValueOnce(null);
+    findManyAttendance.mockResolvedValueOnce([
+      { date: new Date(2026, 8, 5), checkOutTime: new Date(2026, 8, 5, 18, 0) }, // 30min bruto - 15 tolerância = 15min
+    ]);
+
+    const { getMonthlyOvertimeBreakdown } = await import("./financial");
+    const { entries, total } = await getMonthlyOvertimeBreakdown("child-1", 9, 2026);
+
+    expect(findManyAttendance).toHaveBeenCalledOnce();
+    expect(entries).toEqual([{ date: new Date(2026, 8, 5), minutesLate: 15, amount: 3.75 }]);
+    expect(total).toBe(3.75);
+  });
+
+  it("CASO 12: mês já fechado (fatura existe) lê do snapshot de InvoiceItem, sem consultar Attendance", async () => {
+    findUniqueInvoice.mockResolvedValueOnce({
+      createdAt: new Date(2026, 9, 1),
+      items: [
+        { quantity: 15, amount: 3.75, metadata: { date: "2026-09-05T00:00:00.000Z" } },
+        { quantity: 5, amount: 1.25, metadata: { date: "2026-09-12T00:00:00.000Z" } },
+      ],
+    });
+
+    const { getMonthlyOvertimeBreakdown } = await import("./financial");
+    const { entries, total } = await getMonthlyOvertimeBreakdown("child-1", 9, 2026);
+
+    expect(findManyAttendance).not.toHaveBeenCalled();
+    expect(findUniqueOrThrowChild).not.toHaveBeenCalled();
+    expect(entries).toEqual([
+      { date: new Date("2026-09-05T00:00:00.000Z"), minutesLate: 15, amount: 3.75 },
+      { date: new Date("2026-09-12T00:00:00.000Z"), minutesLate: 5, amount: 1.25 },
+    ]);
+    expect(total).toBe(5);
+  });
+
+  it("CASO 13: item de snapshot sem metadata.date (fatura antiga, anterior a esta mudança) cai para invoice.createdAt em vez de quebrar", async () => {
+    const createdAt = new Date(2026, 9, 1);
+    findUniqueInvoice.mockResolvedValueOnce({
+      createdAt,
+      items: [{ quantity: 10, amount: 2.5, metadata: null }],
+    });
+
+    const { getMonthlyOvertimeBreakdown } = await import("./financial");
+    const { entries } = await getMonthlyOvertimeBreakdown("child-1", 9, 2026);
+
+    expect(entries).toEqual([{ date: createdAt, minutesLate: 10, amount: 2.5 }]);
+  });
+
+  it("CASO 14: Attendance mudar depois do fechamento não afeta o resultado — o snapshot já congelado é a fonte da verdade", async () => {
+    findUniqueInvoice.mockResolvedValueOnce({
+      createdAt: new Date(2026, 9, 1),
+      items: [{ quantity: 15, amount: 3.75, metadata: { date: "2026-09-05T00:00:00.000Z" } }],
+    });
+    // Se getMonthlyOvertimeBreakdown recalculasse ao vivo por engano, pegaria isto (60min → 45min
+    // cobrados) em vez do snapshot (15min) — a asserção abaixo prova que isso não acontece.
+    findManyAttendance.mockResolvedValueOnce([
+      { date: new Date(2026, 8, 5), checkOutTime: new Date(2026, 8, 5, 18, 30) },
+    ]);
+
+    const { getMonthlyOvertimeBreakdown } = await import("./financial");
+    const { total } = await getMonthlyOvertimeBreakdown("child-1", 9, 2026);
+
+    expect(total).toBe(3.75);
+  });
+});
+
 describe("closeMonth", () => {
   const findUniqueInvoice = vi.fn();
   const findUniqueOrThrowChild = vi.fn();
@@ -144,6 +234,10 @@ describe("closeMonth", () => {
       expect.objectContaining({ type: "MONTHLY_FEE", amount: 900 }),
       expect.objectContaining({ type: "OVERTIME", quantity: 15, amount: 3.75 }),
     ]);
+    // metadata.date é o que getMonthlyOvertimeBreakdown lê para reconstruir o snapshot depois do
+    // fechamento — sem isso, o detalhamento congelado perderia a data de cada excedente.
+    const overtimeItem = items.find((i: { type: string }) => i.type === "OVERTIME");
+    expect(overtimeItem.metadata).toEqual({ date: new Date(2026, 8, 5).toISOString() });
   });
 
   it("creates a fresh invoice when none exists yet for the period", async () => {

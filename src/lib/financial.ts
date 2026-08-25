@@ -45,7 +45,31 @@ export function calculateOvertimeForAttendance(
 
 export type OvertimeEntry = { date: Date; minutesLate: number; amount: number };
 
+/**
+ * Detalhamento de excedente do mês. Se já existe uma MonthlyInvoice para o período, os dados vêm do
+ * snapshot congelado em closeMonth (InvoiceItem tipo OVERTIME) — não recalcula ao vivo a partir de
+ * Attendance, para nunca divergir do que está na fatura (ver closeMonth). Só recalcula ao vivo
+ * quando ainda não existe fatura para o período (mês corrente/aberto).
+ */
 export async function getMonthlyOvertimeBreakdown(childId: string, month: number, year: number) {
+  const invoice = await prisma.monthlyInvoice.findUnique({
+    where: { childId_referenceMonth_referenceYear: { childId, referenceMonth: month, referenceYear: year } },
+    include: { items: { where: { type: "OVERTIME" } } },
+  });
+
+  if (invoice) {
+    const entries: OvertimeEntry[] = invoice.items.map((item) => {
+      const metadata = item.metadata as { date?: string } | null;
+      return {
+        date: metadata?.date ? new Date(metadata.date) : invoice.createdAt,
+        minutesLate: Number(item.quantity ?? 0),
+        amount: Number(item.amount),
+      };
+    });
+    const total = Math.round(entries.reduce((sum, e) => sum + e.amount, 0) * 100) / 100;
+    return { entries, total };
+  }
+
   const child = await prisma.child.findUniqueOrThrow({ where: { id: childId } });
   const start = new Date(year, month - 1, 1);
   const end = new Date(year, month, 1);
@@ -81,6 +105,7 @@ type InvoiceItemInput = {
   quantity?: number;
   unitPrice?: number;
   amount: number;
+  metadata?: { date: string };
 };
 
 /**
@@ -153,6 +178,9 @@ export async function closeMonth(
         quantity: e.minutesLate,
         unitPrice: overtimeRate,
         amount: e.amount,
+        // Data original do excedente, para getMonthlyOvertimeBreakdown reconstruir o detalhamento a
+        // partir do snapshot sem precisar re-parsear a description formatada em pt-BR.
+        metadata: { date: e.date.toISOString() },
       })),
     ];
     if (discounts > 0) {
