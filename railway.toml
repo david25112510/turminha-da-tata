@@ -1,0 +1,10 @@
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+# `prisma migrate deploy` (não `migrate dev`) — só aplica migrations já commitadas, nunca cria uma
+# nova nem faz pergunta interativa; seguro para rodar a cada deploy, inclusive quando não há
+# migration pendente (é um no-op nesse caso).
+startCommand = "npx prisma migrate deploy && npm run start"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3

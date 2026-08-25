@@ -1,5 +1,39 @@
 # Preparação para produção
 
+## Deploy no Railway
+
+Passo a passo específico (o restante deste documento vale para qualquer hospedagem):
+
+1. **Criar o projeto**: no painel do Railway, "New Project" → "Deploy from GitHub repo" → selecione
+   `david25112510/turminha-da-tata`. O Railway detecta Next.js via Nixpacks automaticamente
+   (`railway.toml`, já no repo, define o comando de start: `npx prisma migrate deploy && npm run
+   start` — aplica as migrations pendentes antes de cada subida, sem gerar nada novo nem perguntar
+   nada, seguro mesmo quando não há migration pendente).
+2. **Adicionar o Postgres**: no mesmo projeto, "New" → "Database" → "Add PostgreSQL". O Railway cria
+   a variável `DATABASE_URL` automaticamente nesse serviço — no serviço do app (o Next.js), adicione
+   a variável `DATABASE_URL` referenciando a do Postgres (`${{Postgres.DATABASE_URL}}` no seletor de
+   referência do próprio painel).
+3. **Variáveis de ambiente do serviço do app** (aba "Variables"): `AUTH_SECRET` (gere um valor novo,
+   nunca reaproveite o de desenvolvimento: `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`),
+   `APP_URL` (o domínio que o Railway gerar, ex. `https://turminha-da-tata-production.up.railway.app`,
+   ou seu domínio customizado depois de configurado), e as de storage (`STORAGE_S3_BUCKET` e as
+   demais — ver seção "Uploads de imagem" abaixo). `RESEND_API_KEY`/`EMAIL_FROM` e as `VAPID_*` são
+   opcionais, mas sem elas recuperação de senha por e-mail e notificações push ficam desativadas
+   (o app funciona normalmente sem isso, só sem esses dois recursos).
+4. **Primeiro deploy**: o Railway builda e sobe automaticamente após o push. Acompanhe os logs —
+   a primeira execução do `startCommand` já aplica as migrations no banco novo.
+5. **Seed inicial** (uma única vez): pela aba "Settings" → "Deploy" do serviço, ou via Railway CLI
+   (`railway run npm run db:seed` depois de `railway link` ao projeto), rode o seed para criar o
+   usuário administrador. **Troque a senha padrão imediatamente** no primeiro login — ver pendência
+   de segurança sobre essa credencial fixa em `prisma/seed.ts`.
+6. **Domínio customizado** (opcional): aba "Settings" → "Networking" → "Custom Domain" no serviço do
+   app; depois de configurar o DNS, atualize `APP_URL` para o domínio definitivo (usado nos links de
+   e-mail de recuperação de senha).
+
+O Railway recria o container a cada deploy — sem volume ou storage externo, qualquer arquivo gravado
+em disco (fotos em `public/uploads/`, se `STORAGE_S3_BUCKET` não estiver configurado) some no deploy
+seguinte. Configure o S3/R2 (seção "Uploads de imagem" abaixo) antes do primeiro uso real em produção.
+
 ## Variáveis de ambiente obrigatórias
 
 | Variável       | Descrição                                                                 |
@@ -85,12 +119,14 @@ Isso **não** significa que o app funciona totalmente offline — como o sistema
 - Permissões granulares por criança/responsável (`GuardianChild`)
 - Entrada/saída de crianças exige selecionar um responsável ou pessoa autorizada já cadastrada — não aceita nome digitado livremente
 - Rate limiting no login: 5 tentativas falhas por e-mail a cada 15 minutos (em memória — ver limitação abaixo)
-- Contas podem ser desativadas (bloqueia login imediatamente)
+- Contas podem ser desativadas (bloqueia **login novo** imediatamente — ver ressalva sobre sessão já aberta abaixo)
 - Fotos só ficam disponíveis para crianças com autorização de imagem explícita
 - Auditoria: toda ação operacional relevante é registrada com autor e horário
 
 ## Segurança — pontos a revisar antes de produção
 
+- **Troque a senha do admin padrão imediatamente**: `prisma/seed.ts` sempre cria `admin@turminhadatata.com.br` com a mesma senha fixa (`TrocarSenha123!`), visível a qualquer pessoa com acesso ao repositório. Rode o seed, faça o primeiro login e troque a senha antes de qualquer uso real.
+- **Desativar um usuário não revoga sessões já abertas**: a sessão é JWT stateless — desativar uma conta impede um **login novo**, mas não invalida um token já emitido, que continua válido até expirar sozinho (padrão do Auth.js: até 30 dias, renovado a cada uso). Se precisar revogar acesso de alguém com urgência (ex.: demissão), troque também o `AUTH_SECRET` — isso invalida todas as sessões de uma vez (inclusive as de outras contas, então é um recurso de emergência, não rotina).
 - **HTTPS obrigatório**: cookies de sessão do Auth.js dependem de conexão segura em produção (`NODE_ENV=production` já ativa `secure` nos cookies automaticamente — garanta que a hospedagem sirva HTTPS)
 - **Rate limiting em memória**: o limitador de tentativas de login (`src/lib/rate-limit.ts`) guarda o estado no processo Node — não sobrevive a um restart e não é compartilhado entre múltiplas instâncias. Para hospedagem com mais de uma instância, migre para um store compartilhado (Redis, por exemplo)
 - **Backups automatizados**: os scripts existem, mas precisam ser agendados na infraestrutura escolhida
