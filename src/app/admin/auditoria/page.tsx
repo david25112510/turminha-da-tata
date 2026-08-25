@@ -2,7 +2,7 @@ import { getAuditLogEntries, getOperationalTimeline, type AuditEntry } from "@/l
 import { formatTime } from "@/lib/date";
 
 const inputClass =
-  "border border-tata-border rounded-xl px-3 py-2 text-sm outline-none focus:border-tata-green transition-colors bg-tata-surface";
+  "min-h-11 border border-tata-border rounded-xl px-3 py-2 text-sm outline-none focus:border-tata-green transition-colors bg-tata-surface";
 
 function toDateInput(d: Date) {
   return d.toISOString().slice(0, 10);
@@ -58,7 +58,7 @@ export default async function AuditPage({
           Até
           <input type="date" name="to" defaultValue={toDateInput(end)} className={inputClass} />
         </label>
-        <button type="submit" className="bg-tata-green text-white rounded-xl px-4 py-2 text-sm font-semibold font-[family-name:var(--font-baloo)]">
+        <button type="submit" className="min-h-11 bg-tata-green text-white rounded-xl px-4 py-2 text-sm font-semibold font-[family-name:var(--font-baloo)]">
           Filtrar
         </button>
       </form>

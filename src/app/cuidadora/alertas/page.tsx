@@ -44,11 +44,12 @@ export default async function CaregiverAlertsPage() {
           <p className="text-sm text-tata-ink-muted-alt">Nenhum medicamento previsto.</p>
         ) : (
           <div className="flex flex-col gap-2">
-            {medicationsPending.map((m) => (
+            {medicationsPending.map((m, i) => (
               <Link
                 key={m.id}
                 href={`/cuidadora/criancas/${m.childId}`}
-                className="bg-tata-surface rounded-2xl shadow-sm p-4 flex flex-col gap-0.5 min-h-11"
+                className="bg-tata-surface rounded-tata-lg shadow-tata-card p-4 flex flex-col gap-0.5 min-h-11 tata-animate-in hover:shadow-tata-card-hover active:scale-[0.99] transition-all"
+                style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
               >
                 <span className="font-semibold text-tata-ink text-sm">
                   {m.child.preferredName || m.child.fullName} — {m.medication}
@@ -71,11 +72,12 @@ export default async function CaregiverAlertsPage() {
           <p className="text-sm text-tata-ink-muted-alt">Nenhuma ocorrência registrada hoje.</p>
         ) : (
           <div className="flex flex-col gap-2">
-            {openIncidents.map((inc) => (
+            {openIncidents.map((inc, i) => (
               <Link
                 key={inc.id}
                 href={`/cuidadora/criancas/${inc.childId}`}
-                className="bg-tata-surface rounded-2xl shadow-sm p-4 flex flex-col gap-0.5 min-h-11"
+                className="bg-tata-surface rounded-tata-lg shadow-tata-card p-4 flex flex-col gap-0.5 min-h-11 tata-animate-in hover:shadow-tata-card-hover active:scale-[0.99] transition-all"
+                style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
               >
                 <span className="font-semibold text-tata-ink text-sm">
                   {inc.child.preferredName || inc.child.fullName} — {formatTime(inc.time)}

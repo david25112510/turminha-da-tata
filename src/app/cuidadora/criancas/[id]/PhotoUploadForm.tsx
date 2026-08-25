@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { useDialogClose } from "../../DialogContext";
+import { toUserMessage } from "@/lib/user-error-message";
 
 type ActionState = { success?: string; error?: string } | null;
 
@@ -26,7 +27,7 @@ export function PhotoUploadForm({
       setPreviewUrl(null);
       return { success: "Foto enviada" };
     } catch (error) {
-      return { error: error instanceof Error ? error.message : "Não foi possível enviar a foto. Tente novamente." };
+      return { error: toUserMessage(error, "Não foi possível enviar a foto. Tente novamente.") };
     }
   }, null);
 

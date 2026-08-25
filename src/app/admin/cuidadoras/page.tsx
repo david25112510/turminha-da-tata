@@ -35,7 +35,7 @@ export default async function CaregiversListPage() {
               <Link
                 key={c.id}
                 href={`/admin/cuidadoras/${c.id}`}
-                className="bg-tata-surface rounded-2xl shadow-sm p-4 flex flex-col gap-1 min-h-11"
+                className="bg-tata-surface rounded-2xl shadow-sm p-4 flex flex-col gap-1 min-h-11 hover:shadow-tata-card-hover active:scale-[0.99] transition-all"
               >
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-tata-ink text-sm">{c.name}</span>
@@ -66,9 +66,9 @@ export default async function CaregiversListPage() {
               </thead>
               <tbody>
                 {caregivers.map((c) => (
-                  <tr key={c.id} className="border-b border-tata-surface-hover last:border-0">
+                  <tr key={c.id} className="border-b border-tata-surface-hover last:border-0 hover:bg-tata-surface-warm transition-colors">
                     <td className="p-4 font-medium text-tata-ink">
-                      <Link href={`/admin/cuidadoras/${c.id}`} className="hover:underline">
+                      <Link href={`/admin/cuidadoras/${c.id}`} className="hover:text-tata-green">
                         {c.name}
                       </Link>
                     </td>

@@ -28,7 +28,7 @@ export default async function GuardianProfilePage() {
     <div className="p-4 sm:p-6 flex flex-col gap-5 max-w-2xl mx-auto">
       <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-tata-ink">👤 Perfil</h1>
 
-      <div className="bg-tata-surface rounded-2xl shadow-sm p-5 flex flex-col gap-2">
+      <div className="bg-tata-surface rounded-tata-lg shadow-tata-card p-5 flex flex-col gap-2">
         <span className="font-[family-name:var(--font-baloo)] font-semibold text-sm text-tata-ink">Meus dados</span>
         <div className="text-sm text-tata-ink-soft flex flex-col gap-1">
           <p><span className="text-tata-ink-muted">Nome:</span> {guardian.name}</p>
@@ -40,14 +40,14 @@ export default async function GuardianProfilePage() {
         </p>
       </div>
 
-      <div className="bg-tata-surface rounded-2xl shadow-sm p-5 flex flex-col gap-3">
+      <div className="bg-tata-surface rounded-tata-lg shadow-tata-card p-5 flex flex-col gap-3">
         <span className="font-[family-name:var(--font-baloo)] font-semibold text-sm text-tata-ink">
           🔔 Notificações push
         </span>
         <PushNotificationToggle />
       </div>
 
-      <div className="bg-tata-surface rounded-2xl shadow-sm p-5 flex flex-col gap-3">
+      <div className="bg-tata-surface rounded-tata-lg shadow-tata-card p-5 flex flex-col gap-3">
         <span className="font-[family-name:var(--font-baloo)] font-semibold text-sm text-tata-ink">
           🔒 Alterar senha
         </span>
@@ -59,7 +59,7 @@ export default async function GuardianProfilePage() {
           Crianças vinculadas
         </span>
         {guardian.children.map((link) => (
-          <div key={link.childId} className="bg-tata-surface rounded-2xl shadow-sm p-4 flex flex-col gap-2.5">
+          <div key={link.childId} className="bg-tata-surface rounded-tata-lg shadow-tata-card p-4 flex flex-col gap-2.5">
             <div className="flex items-center justify-between">
               <span className="font-semibold text-tata-ink text-sm">
                 {link.child.preferredName || link.child.fullName}
@@ -96,7 +96,7 @@ export default async function GuardianProfilePage() {
             <Link
               key={s.href}
               href={s.href}
-              className="min-h-16 flex flex-col items-center justify-center gap-1 bg-tata-surface rounded-2xl shadow-sm py-3"
+              className="min-h-16 flex flex-col items-center justify-center gap-1 bg-tata-surface rounded-tata-lg shadow-tata-card py-3"
             >
               <span className="text-xl" aria-hidden="true">{s.icon}</span>
               <span className="text-xs font-semibold text-tata-ink">{s.label}</span>

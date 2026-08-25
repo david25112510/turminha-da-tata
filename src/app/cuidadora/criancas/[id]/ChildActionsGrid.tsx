@@ -9,6 +9,7 @@ import {
   INCIDENT_TYPE_LABELS,
 } from "@/lib/labels";
 import { formatTime } from "@/lib/date";
+import { toUserMessage } from "@/lib/user-error-message";
 import { ActionDialogButton } from "./ActionDialogButton";
 import { QuickActionForm } from "../../QuickActionForm";
 import { MoodSelector } from "./MoodSelector";
@@ -40,7 +41,7 @@ function SleepButton({
       await (openSleep ? endSleepAction : startSleepAction)(formData);
       return null;
     } catch (error) {
-      return { error: error instanceof Error ? error.message : "Não foi possível registrar. Tente novamente." };
+      return { error: toUserMessage(error, "Não foi possível registrar. Tente novamente.") };
     }
   }, null);
 

@@ -49,7 +49,7 @@ export default async function GuardianJourneyPage({
     <div className="p-4 sm:p-6 flex flex-col gap-5 max-w-2xl mx-auto">
       <ChildSwitcher basePath="/pais/jornada" activeChildId={link.childId} guardianChildren={guardian.children} />
 
-      <div className="bg-tata-surface rounded-2xl shadow-sm p-5 flex flex-col gap-2">
+      <div className="bg-tata-surface rounded-tata-lg shadow-tata-card p-5 flex flex-col gap-2">
         <div className="flex items-start justify-between gap-2">
           <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-tata-ink">
             {link.child.preferredName || link.child.fullName}

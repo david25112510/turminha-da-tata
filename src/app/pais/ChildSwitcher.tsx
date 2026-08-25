@@ -15,7 +15,8 @@ export function ChildSwitcher({ basePath, activeChildId, guardianChildren }: Pro
         <Link
           key={link.childId}
           href={`${basePath}?childId=${link.childId}`}
-          className={`text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${
+          aria-current={link.childId === activeChildId ? "page" : undefined}
+          className={`min-h-11 inline-flex items-center text-xs font-semibold px-4 rounded-full transition-colors ${
             link.childId === activeChildId
               ? "bg-tata-green text-white"
               : "bg-tata-surface text-tata-ink-soft border border-tata-border"

@@ -33,10 +33,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <span className="text-tata-coral">Tata</span>
         </Link>
         <div className="flex items-center gap-3">
-          <Link href="/admin/notificacoes" aria-label="Notificações" className="relative min-h-11 min-w-11 flex items-center justify-center text-lg">
-            🔔
+          <Link
+            href="/admin/notificacoes"
+            aria-label={unreadNotifications > 0 ? `Notificações — ${unreadNotifications} não lidas` : "Notificações"}
+            className="relative min-h-11 min-w-11 flex items-center justify-center text-lg"
+          >
+            <span aria-hidden="true">🔔</span>
             {unreadNotifications > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-tata-coral" />
+              <span aria-hidden="true" className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-tata-coral" />
             )}
           </Link>
           <form

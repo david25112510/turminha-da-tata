@@ -53,11 +53,12 @@ export function ChildrenSearch({
         <p className="text-sm text-tata-ink-muted-alt px-1">Nenhuma criança encontrada para &quot;{query}&quot;.</p>
       ) : (
         <div className="flex flex-col gap-2.5">
-          {filtered.map((child) => (
+          {filtered.map((child, i) => (
             <div
               key={child.id}
               data-testid={`child-card-${child.id}`}
-              className="bg-tata-surface rounded-2xl shadow-sm p-4 flex flex-col gap-2.5"
+              className="bg-tata-surface rounded-tata-lg shadow-tata-card p-4 flex flex-col gap-2.5 tata-animate-in hover:shadow-tata-card-hover transition-all"
+              style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
             >
               <div className="flex items-center justify-between gap-2">
                 <Link

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { CHILD_STATUS_LABELS } from "@/lib/labels";
+import { EmptyState } from "@/components/tata/EmptyState";
 
 const currency = (n: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
 
@@ -24,8 +25,8 @@ export default async function ChildrenListPage() {
       </div>
 
       {children.length === 0 ? (
-        <div className="bg-tata-surface rounded-2xl shadow-sm p-8 text-center text-sm text-tata-ink-muted-alt">
-          Nenhuma criança cadastrada ainda.
+        <div className="bg-tata-surface rounded-2xl shadow-sm">
+          <EmptyState message="Nenhuma criança cadastrada ainda." withMascot />
         </div>
       ) : (
         <>
@@ -35,7 +36,7 @@ export default async function ChildrenListPage() {
               <Link
                 key={child.id}
                 href={`/admin/criancas/${child.id}`}
-                className="bg-tata-surface rounded-2xl shadow-sm p-4 flex flex-col gap-1 min-h-11"
+                className="bg-tata-surface rounded-2xl shadow-sm p-4 flex flex-col gap-1 min-h-11 hover:shadow-tata-card-hover active:scale-[0.99] transition-all"
               >
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-tata-ink text-sm">{child.preferredName || child.fullName}</span>

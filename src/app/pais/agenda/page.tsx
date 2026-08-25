@@ -38,7 +38,7 @@ export default async function GuardianAgendaPage() {
           <EmptyState message="Nenhum evento agendado por enquanto 💛" withMascot />
         ) : (
           upcoming.map((e) => (
-            <div key={e.id} className="bg-tata-surface rounded-2xl shadow-sm p-4 flex items-center justify-between">
+            <div key={e.id} className="bg-tata-surface rounded-tata-lg shadow-tata-card p-4 flex items-center justify-between">
               <div>
                 <span className="font-semibold text-sm text-tata-ink">{e.title}</span>
                 <p className="text-sm text-tata-ink-soft">{e.body}</p>

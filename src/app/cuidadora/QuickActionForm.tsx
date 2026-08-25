@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect } from "react";
 import { useDialogClose } from "./DialogContext";
+import { toUserMessage } from "@/lib/user-error-message";
 
 type ActionState = { success?: string; error?: string } | null;
 
@@ -37,7 +38,7 @@ export function QuickActionForm({
       await action(formData);
       return { success: successMessage };
     } catch (error) {
-      return { error: error instanceof Error ? error.message : "Não foi possível registrar. Tente novamente." };
+      return { error: toUserMessage(error, "Não foi possível registrar. Tente novamente.") };
     }
   }, null);
 

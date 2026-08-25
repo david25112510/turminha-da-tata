@@ -26,7 +26,8 @@ export function PhotoGallery({ photos }: { photos: GalleryPhoto[] }) {
             key={photo.id}
             type="button"
             onClick={() => setActive(photo)}
-            className="relative aspect-square rounded-2xl overflow-hidden bg-tata-surface-hover min-h-11"
+            aria-label={photo.caption ?? `Foto de ${formatTime(photo.takenAt)}`}
+            className="relative aspect-square rounded-2xl overflow-hidden bg-tata-surface-hover min-h-11 hover:brightness-95 active:scale-[0.98] transition-all"
           >
             <Image src={photo.url} alt={photo.caption ?? ""} fill sizes="200px" className="object-cover" />
           </button>
@@ -35,6 +36,7 @@ export function PhotoGallery({ photos }: { photos: GalleryPhoto[] }) {
 
       <dialog
         ref={dialogRef}
+        aria-label="Foto ampliada"
         className="rounded-2xl p-0 backdrop:bg-black/70 w-[calc(100%-2rem)] max-w-lg m-auto"
         onClose={() => setActive(null)}
         onClick={(e) => {

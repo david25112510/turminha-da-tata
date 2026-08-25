@@ -18,7 +18,7 @@ export default async function CaregiverProfilePage() {
     <div className="p-4 sm:p-6 flex flex-col gap-5 max-w-2xl mx-auto">
       <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-tata-ink">👤 Meu perfil</h1>
 
-      <div className="bg-tata-surface rounded-2xl shadow-sm p-5 flex flex-col gap-2">
+      <div className="bg-tata-surface rounded-tata-lg shadow-tata-card p-5 flex flex-col gap-2">
         <span className="font-[family-name:var(--font-baloo)] font-semibold text-sm text-tata-ink">Meus dados</span>
         <div className="text-sm text-tata-ink-soft flex flex-col gap-1">
           <p><span className="text-tata-ink-muted">Nome:</span> {me?.name}</p>
@@ -30,7 +30,7 @@ export default async function CaregiverProfilePage() {
         </p>
       </div>
 
-      <div className="bg-tata-surface rounded-2xl shadow-sm p-5 flex flex-col gap-3">
+      <div className="bg-tata-surface rounded-tata-lg shadow-tata-card p-5 flex flex-col gap-3">
         <span className="font-[family-name:var(--font-baloo)] font-semibold text-sm text-tata-ink">
           🔒 Alterar senha
         </span>

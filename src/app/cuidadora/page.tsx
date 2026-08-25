@@ -3,6 +3,7 @@ import { todayDateOnly, todayRange } from "@/lib/date";
 import { checkInAction, checkOutAction } from "./actions";
 import { ChildrenSearch, type ChildRow } from "./ChildrenSearch";
 import type { PresenceStatus } from "./ChildStatusBadge";
+import { EmptyState } from "@/components/tata/EmptyState";
 
 function greeting(hour: number) {
   if (hour < 12) return "Bom dia";
@@ -73,17 +74,17 @@ export default async function CaregiverHomePage() {
       </div>
 
       <div className="grid grid-cols-3 gap-2.5">
-        <div className="bg-tata-surface rounded-2xl shadow-sm p-3 flex flex-col items-center gap-0.5">
+        <div className="bg-tata-surface rounded-tata-lg shadow-tata-card p-3 flex flex-col items-center gap-0.5">
           <span className="text-lg" aria-hidden="true">🟢</span>
           <span className="font-[family-name:var(--font-baloo)] font-semibold text-lg text-tata-ink">{present}</span>
           <span className="text-[10px] text-tata-ink-muted text-center leading-tight">Presentes</span>
         </div>
-        <div className="bg-tata-surface rounded-2xl shadow-sm p-3 flex flex-col items-center gap-0.5">
+        <div className="bg-tata-surface rounded-tata-lg shadow-tata-card p-3 flex flex-col items-center gap-0.5">
           <span className="text-lg" aria-hidden="true">🟡</span>
           <span className="font-[family-name:var(--font-baloo)] font-semibold text-lg text-tata-ink">{waiting}</span>
           <span className="text-[10px] text-tata-ink-muted text-center leading-tight">Aguardando</span>
         </div>
-        <div className="bg-tata-surface rounded-2xl shadow-sm p-3 flex flex-col items-center gap-0.5">
+        <div className="bg-tata-surface rounded-tata-lg shadow-tata-card p-3 flex flex-col items-center gap-0.5">
           <span className="text-lg" aria-hidden="true">🔵</span>
           <span className="font-[family-name:var(--font-baloo)] font-semibold text-lg text-tata-ink">{left}</span>
           <span className="text-[10px] text-tata-ink-muted text-center leading-tight">Saíram</span>
@@ -93,7 +94,7 @@ export default async function CaregiverHomePage() {
       <div id="buscar">
         <h2 className="font-[family-name:var(--font-baloo)] font-semibold text-sm text-tata-ink mb-2.5">Crianças</h2>
         {rows.length === 0 ? (
-          <p className="text-sm text-tata-ink-muted-alt">Nenhuma criança cadastrada ainda.</p>
+          <EmptyState message="Nenhuma criança cadastrada ainda." withMascot />
         ) : (
           <ChildrenSearch rows={rows} checkInAction={checkInAction} checkOutAction={checkOutAction} />
         )}

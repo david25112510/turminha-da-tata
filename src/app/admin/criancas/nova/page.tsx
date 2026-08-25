@@ -2,7 +2,7 @@ import { createChildAction } from "../actions";
 import { WEEKDAYS, WEEKDAY_LABELS } from "@/lib/labels";
 
 const inputClass =
-  "border border-tata-border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-tata-green transition-colors bg-tata-surface";
+  "min-h-11 border border-tata-border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-tata-green transition-colors bg-tata-surface";
 const labelClass = "text-sm font-semibold text-tata-ink-strong";
 
 export default function NewChildPage() {
@@ -13,8 +13,8 @@ export default function NewChildPage() {
       </h1>
 
       <form action={createChildAction} className="bg-tata-surface rounded-2xl shadow-sm p-6 flex flex-col gap-5">
-        <div className="grid grid-cols-2 gap-4">
-          <label className="flex flex-col gap-1.5 col-span-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <label className="flex flex-col gap-1.5 sm:col-span-2">
             <span className={labelClass}>Nome completo</span>
             <input name="fullName" required className={inputClass} />
           </label>
@@ -37,7 +37,7 @@ export default function NewChildPage() {
             <span className={labelClass}>CPF</span>
             <input name="cpf" className={inputClass} />
           </label>
-          <label className="flex flex-col gap-1.5 col-span-2">
+          <label className="flex flex-col gap-1.5 sm:col-span-2">
             <span className={labelClass}>Certidão de nascimento</span>
             <input name="birthCertificate" className={inputClass} />
           </label>
@@ -45,7 +45,7 @@ export default function NewChildPage() {
 
         <div className="h-px bg-tata-border" />
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <label className="flex flex-col gap-1.5">
             <span className={labelClass}>Horário de entrada</span>
             <input type="time" name="contractedEntryTime" defaultValue="07:30" className={inputClass} />

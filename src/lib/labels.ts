@@ -97,6 +97,15 @@ export const ANNOUNCEMENT_TYPE_LABELS: Record<string, string> = {
   INFO: "Informação",
 };
 
+/** Classe de cor do selo por tipo de comunicado — evita que todo comunicado pareça igual (sempre verde). */
+export const ANNOUNCEMENT_TYPE_TONE: Record<string, string> = {
+  ANNOUNCEMENT: "bg-tata-green/10 text-tata-green-dark",
+  NOTICE: "bg-tata-coral/10 text-tata-coral-dark",
+  REMINDER: "bg-tata-yellow/10 text-tata-yellow-dark",
+  EVENT: "bg-tata-blue/10 text-tata-blue-dark",
+  INFO: "bg-tata-green/10 text-tata-green-dark",
+};
+
 export const ANNOUNCEMENT_TARGET_LABELS: Record<string, string> = {
   ALL: "Todos",
   GUARDIAN: "Responsável específico",
@@ -109,6 +118,15 @@ export const INVOICE_STATUS_LABELS: Record<string, string> = {
   OVERDUE: "Vencido",
   CANCELLED: "Cancelado",
   PARTIALLY_PAID: "Parcialmente pago",
+};
+
+/** Classe de cor do selo por status de cobrança — vencida/cancelada não pode ler visualmente como paga. */
+export const INVOICE_STATUS_TONE: Record<string, string> = {
+  PENDING: "bg-tata-yellow/10 text-tata-yellow-dark",
+  PAID: "bg-tata-green/10 text-tata-green-dark",
+  OVERDUE: "bg-tata-coral/10 text-tata-coral-dark",
+  CANCELLED: "bg-tata-ink-muted/10 text-tata-ink-muted",
+  PARTIALLY_PAID: "bg-tata-yellow/10 text-tata-yellow-dark",
 };
 
 export const INVOICE_ITEM_TYPE_LABELS: Record<string, string> = {

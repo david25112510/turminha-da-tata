@@ -2,6 +2,7 @@
 
 import { useActionState, useId, useRef } from "react";
 import { RELATIONSHIP_LABELS } from "@/lib/labels";
+import { toUserMessage } from "@/lib/user-error-message";
 
 export type PersonOption = { value: string; name: string; relationship: string };
 
@@ -36,7 +37,7 @@ export function PersonPickerDialog({
       dialogRef.current?.close();
       return null;
     } catch (error) {
-      return { error: error instanceof Error ? error.message : "Não foi possível registrar. Tente novamente." };
+      return { error: toUserMessage(error, "Não foi possível registrar. Tente novamente.") };
     }
   }, null);
 

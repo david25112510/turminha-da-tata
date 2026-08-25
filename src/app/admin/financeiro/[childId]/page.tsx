@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getMonthlyOvertimeBreakdown, effectiveStatus } from "@/lib/financial";
-import { INVOICE_ITEM_TYPE_LABELS, INVOICE_STATUS_LABELS, MONTH_LABELS } from "@/lib/labels";
+import { INVOICE_ITEM_TYPE_LABELS, INVOICE_STATUS_LABELS, INVOICE_STATUS_TONE, MONTH_LABELS } from "@/lib/labels";
 import { applyInvoiceAdjustmentAction, cancelInvoiceAction, closeMonthAction, registerPaymentAction } from "../actions";
 
 const currency = (n: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
 const inputClass =
-  "border border-tata-border rounded-xl px-3 py-2 text-sm outline-none focus:border-tata-green transition-colors bg-tata-surface";
+  "min-h-11 border border-tata-border rounded-xl px-3 py-2 text-sm outline-none focus:border-tata-green transition-colors bg-tata-surface";
 const cardClass = "bg-tata-surface rounded-2xl shadow-sm p-5 flex flex-col gap-4";
 const cardTitle = "font-[family-name:var(--font-baloo)] font-semibold text-base text-tata-ink";
 
@@ -103,7 +103,7 @@ export default async function ChildFinancialDetailPage({
               </label>
               <button
                 type="submit"
-                className="bg-tata-coral text-white rounded-xl px-5 py-2 font-[family-name:var(--font-baloo)] font-semibold text-sm"
+                className="min-h-11 bg-tata-coral text-white rounded-xl px-5 py-2 font-[family-name:var(--font-baloo)] font-semibold text-sm"
               >
                 Fechar mês
               </button>
@@ -146,7 +146,7 @@ export default async function ChildFinancialDetailPage({
                   </div>
                   <div>
                     <span className="text-xs text-tata-ink-muted block">Status</span>
-                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-tata-green/10 text-tata-green-dark inline-block w-fit">
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full inline-block w-fit ${INVOICE_STATUS_TONE[effectiveStatus(currentInvoice)]}`}>
                       {INVOICE_STATUS_LABELS[effectiveStatus(currentInvoice)]}
                     </span>
                   </div>
@@ -199,7 +199,7 @@ export default async function ChildFinancialDetailPage({
                 </label>
                 <button
                   type="submit"
-                  className="bg-tata-green text-white rounded-xl px-5 py-2 font-[family-name:var(--font-baloo)] font-semibold text-sm"
+                  className="min-h-11 bg-tata-green text-white rounded-xl px-5 py-2 font-[family-name:var(--font-baloo)] font-semibold text-sm"
                 >
                   Registrar pagamento
                 </button>
@@ -228,7 +228,7 @@ export default async function ChildFinancialDetailPage({
                 </label>
                 <button
                   type="submit"
-                  className="bg-tata-surface border border-tata-border text-tata-ink-soft rounded-xl px-5 py-2 font-[family-name:var(--font-baloo)] font-semibold text-sm"
+                  className="min-h-11 bg-tata-surface border border-tata-border text-tata-ink-soft rounded-xl px-5 py-2 font-[family-name:var(--font-baloo)] font-semibold text-sm"
                 >
                   Lançar ajuste
                 </button>
@@ -260,7 +260,7 @@ export default async function ChildFinancialDetailPage({
                   {MONTH_LABELS[inv.referenceMonth - 1]} de {inv.referenceYear}
                 </span>
                 <span className="text-tata-ink-soft">{currency(Number(inv.totalAmount))}</span>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-tata-green/10 text-tata-green-dark">
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${INVOICE_STATUS_TONE[effectiveStatus(inv)]}`}>
                   {INVOICE_STATUS_LABELS[effectiveStatus(inv)]}
                 </span>
               </li>

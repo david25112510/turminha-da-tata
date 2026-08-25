@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/prisma";
-import { ANNOUNCEMENT_TYPE_LABELS, ANNOUNCEMENT_TARGET_LABELS } from "@/lib/labels";
+import { ANNOUNCEMENT_TYPE_LABELS, ANNOUNCEMENT_TYPE_TONE, ANNOUNCEMENT_TARGET_LABELS } from "@/lib/labels";
 import { createAnnouncementAction } from "./actions";
+import { EmptyState } from "@/components/tata/EmptyState";
 
 const inputClass =
-  "border border-tata-border rounded-xl px-3 py-2 text-sm outline-none focus:border-tata-green transition-colors bg-tata-surface";
+  "min-h-11 border border-tata-border rounded-xl px-3 py-2 text-sm outline-none focus:border-tata-green transition-colors bg-tata-surface";
 
 export default async function AnnouncementsPage() {
   const [announcements, guardians, children] = await Promise.all([
@@ -66,27 +67,33 @@ export default async function AnnouncementsPage() {
         </button>
       </form>
 
-      <div className="flex flex-col gap-3">
-        {announcements.map((a) => (
-          <div key={a.id} className="bg-tata-surface rounded-2xl shadow-sm p-4">
-            <div className="flex items-center justify-between mb-1">
-              <span className="font-[family-name:var(--font-baloo)] font-semibold text-sm text-tata-ink">
-                {a.title}
-              </span>
-              <span className="text-xs font-semibold text-tata-green-dark bg-tata-green/10 px-2 py-0.5 rounded-full">
-                {ANNOUNCEMENT_TYPE_LABELS[a.type]}
-              </span>
+      {announcements.length === 0 ? (
+        <div className="bg-tata-surface rounded-tata-lg shadow-tata-card">
+          <EmptyState message="Nenhum comunicado publicado ainda." withMascot />
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {announcements.map((a) => (
+            <div key={a.id} className="bg-tata-surface rounded-tata-lg shadow-tata-card p-4">
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-[family-name:var(--font-baloo)] font-semibold text-sm text-tata-ink">
+                  {a.title}
+                </span>
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${ANNOUNCEMENT_TYPE_TONE[a.type]}`}>
+                  {ANNOUNCEMENT_TYPE_LABELS[a.type]}
+                </span>
+              </div>
+              <p className="text-sm text-tata-ink-soft">{a.body}</p>
+              <p className="text-xs text-tata-ink-muted mt-2">
+                {ANNOUNCEMENT_TARGET_LABELS[a.target]}
+                {a.targetGuardian ? ` — ${a.targetGuardian.name}` : ""}
+                {a.targetChild ? ` — ${a.targetChild.preferredName || a.targetChild.fullName}` : ""}
+                {a.eventDate ? ` — ${new Intl.DateTimeFormat("pt-BR").format(a.eventDate)}` : ""}
+              </p>
             </div>
-            <p className="text-sm text-tata-ink-soft">{a.body}</p>
-            <p className="text-xs text-tata-ink-muted mt-2">
-              {ANNOUNCEMENT_TARGET_LABELS[a.target]}
-              {a.targetGuardian ? ` — ${a.targetGuardian.name}` : ""}
-              {a.targetChild ? ` — ${a.targetChild.preferredName || a.targetChild.fullName}` : ""}
-              {a.eventDate ? ` — ${new Intl.DateTimeFormat("pt-BR").format(a.eventDate)}` : ""}
-            </p>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

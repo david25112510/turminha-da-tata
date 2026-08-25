@@ -9,6 +9,12 @@ import { E2E_CAREGIVER, E2E_CHILD_B, E2E_GUARDIAN_B, E2E_GUARDIAN_B_USER, E2E_PA
  * entrada duas vezes no mesmo dia é bloqueado pela própria regra de negócio.
  */
 test("cuidadora registra a rotina e o responsável vê refletido no portal dos pais", async ({ browser }) => {
+  // Dois contextos de navegador, cada um com seu próprio login + navegação real (cuidadora: login → check-in →
+  // alimentação; responsável: login → dashboard → jornada) — mais passos sequenciais que os outros specs, e
+  // cada navegação real soma alguns segundos neste ambiente de dev (filesystem lento, ver aviso "Slow
+  // filesystem detected" do Next). Mesmo motivo do test.setTimeout em admin-caregivers.spec.ts.
+  test.setTimeout(60_000);
+
   const caregiverContext = await browser.newContext();
   const guardianContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const caregiverPage = await caregiverContext.newPage();

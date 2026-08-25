@@ -45,7 +45,8 @@ export function TimelineFilter({ entries }: { entries: TimelineEntry[] }) {
             key={f.value}
             type="button"
             onClick={() => setActive(f.value)}
-            className={`min-h-9 px-3.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
+            aria-pressed={active === f.value}
+            className={`min-h-11 px-3.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
               active === f.value ? "bg-tata-green text-white" : "bg-tata-surface text-tata-ink-soft border border-tata-border"
             }`}
           >

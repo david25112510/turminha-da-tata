@@ -3,6 +3,7 @@
 import { useActionState, useEffect } from "react";
 import { MOOD_LABELS } from "@/lib/labels";
 import { useDialogClose } from "../../DialogContext";
+import { toUserMessage } from "@/lib/user-error-message";
 
 const AUTO_CLOSE_DELAY_MS = 900;
 
@@ -28,7 +29,7 @@ export function MoodSelector({ childId, action }: { childId: string; action: (fo
       await action(formData);
       return { success: "Humor registrado" };
     } catch (error) {
-      return { error: error instanceof Error ? error.message : "Não foi possível registrar. Tente novamente." };
+      return { error: toUserMessage(error, "Não foi possível registrar. Tente novamente.") };
     }
   }, null);
 

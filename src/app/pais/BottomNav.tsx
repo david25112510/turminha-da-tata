@@ -30,12 +30,18 @@ export function BottomNav({ unreadCount }: { unreadCount: number }) {
               active ? "text-tata-green" : "text-tata-ink-muted"
             }`}
           >
-            <span className="relative text-xl" aria-hidden="true">
-              {item.icon}
+            <span className="relative text-xl">
+              <span aria-hidden="true">{item.icon}</span>
               {item.href === "/pais" && unreadCount > 0 && (
-                <span className="absolute -top-1 -right-2 bg-tata-coral-dark text-white text-[9px] font-bold min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center">
+                <span
+                  aria-hidden="true"
+                  className="absolute -top-1 -right-2 bg-tata-coral-dark text-white text-[9px] font-bold min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center"
+                >
                   {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
+              )}
+              {item.href === "/pais" && unreadCount > 0 && (
+                <span className="sr-only">{unreadCount} notificações não lidas</span>
               )}
             </span>
             {item.label}

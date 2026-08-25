@@ -3,7 +3,7 @@ import { createGuardianAction } from "../actions";
 import { RELATIONSHIP_LABELS } from "@/lib/labels";
 
 const inputClass =
-  "border border-tata-border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-tata-green transition-colors bg-tata-surface";
+  "min-h-11 border border-tata-border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-tata-green transition-colors bg-tata-surface";
 const labelClass = "text-sm font-semibold text-tata-ink-strong";
 const checkClass = "flex items-center gap-2 text-sm text-tata-ink-strong";
 
@@ -20,8 +20,8 @@ export default async function NewGuardianPage() {
       </h1>
 
       <form action={createGuardianAction} className="bg-tata-surface rounded-2xl shadow-sm p-6 flex flex-col gap-5">
-        <div className="grid grid-cols-2 gap-4">
-          <label className="flex flex-col gap-1.5 col-span-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <label className="flex flex-col gap-1.5 sm:col-span-2">
             <span className={labelClass}>Nome completo</span>
             <input name="name" required className={inputClass} />
           </label>
@@ -41,7 +41,7 @@ export default async function NewGuardianPage() {
             <span className={labelClass}>E-mail</span>
             <input type="email" name="email" className={inputClass} />
           </label>
-          <label className="flex flex-col gap-1.5 col-span-2">
+          <label className="flex flex-col gap-1.5 sm:col-span-2">
             <span className={labelClass}>Endereço</span>
             <input name="address" className={inputClass} />
           </label>
@@ -49,7 +49,7 @@ export default async function NewGuardianPage() {
 
         <div className="h-px bg-tata-border" />
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <label className="flex flex-col gap-1.5">
             <span className={labelClass}>Criança vinculada</span>
             <select name="childId" required className={inputClass} defaultValue="">
@@ -90,7 +90,7 @@ export default async function NewGuardianPage() {
 
         <div className="flex flex-col gap-2.5">
           <span className={labelClass}>Permissões</span>
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <label className={checkClass}>
               <input type="checkbox" name="receiveNotifications" defaultChecked />
               Receber notificações

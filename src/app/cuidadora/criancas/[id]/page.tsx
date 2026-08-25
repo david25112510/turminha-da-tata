@@ -48,7 +48,7 @@ export default async function ChildProfilePage({ params }: { params: Promise<{ i
         ← Voltar
       </Link>
 
-      <div className="bg-tata-surface rounded-2xl shadow-sm p-5 flex flex-col gap-2">
+      <div className="bg-tata-surface rounded-tata-lg shadow-tata-card p-5 flex flex-col gap-2">
         <div className="flex items-start justify-between gap-2">
           <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-xl text-tata-ink">{name}</h1>
           <div className="flex flex-wrap gap-1.5 justify-end">
@@ -127,7 +127,7 @@ export default async function ChildProfilePage({ params }: { params: Promise<{ i
 
       <div>
         <h2 className="font-[family-name:var(--font-baloo)] font-semibold text-sm text-tata-ink mb-2.5">Rotina de hoje</h2>
-        <div className="bg-tata-surface rounded-2xl shadow-sm p-5">
+        <div className="bg-tata-surface rounded-tata-lg shadow-tata-card p-5">
           <RoutineTimeline entries={timeline} />
         </div>
       </div>

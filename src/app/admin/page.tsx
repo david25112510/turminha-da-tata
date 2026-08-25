@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getDashboardData } from "@/lib/dashboard";
+import { EmptyState } from "@/components/tata/EmptyState";
 
 const currency = (n: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
 
@@ -7,18 +8,29 @@ export default async function AdminHome() {
   const { indicators, routine, alerts } = await getDashboardData();
 
   const indicatorCards = [
-    { label: "Total de crianças", value: indicators.totalChildren },
-    { label: "Presentes hoje", value: indicators.present },
-    { label: "Ainda não chegaram", value: indicators.notArrived },
-    { label: "Ainda na escola", value: indicators.stillAtSchool },
-    { label: "Cuidadoras ativas", value: indicators.caregiversActive, href: "/admin/cuidadoras" },
-    { label: "Entradas hoje", value: indicators.entriesToday },
-    { label: "Saídas hoje", value: indicators.exitsToday },
-    { label: "Ocorrências hoje", value: indicators.occurrencesToday },
-    { label: "Medicamentos hoje", value: indicators.medicationsToday },
-    { label: "Horas excedentes (mês)", value: currency(indicators.overtimeAccumulated) },
-    { label: "Mensalidades pendentes", value: `${indicators.pendingInvoicesCount} — ${currency(indicators.pendingInvoicesTotal)}` },
-    { label: "Recebido no mês", value: currency(indicators.receivedThisMonth) },
+    { label: "Total de crianças", value: indicators.totalChildren, icon: "👧" },
+    { label: "Presentes hoje", value: indicators.present, icon: "🟢", accent: "border-l-tata-green" },
+    { label: "Ainda não chegaram", value: indicators.notArrived, icon: "🟡", accent: "border-l-tata-yellow" },
+    { label: "Ainda na escola", value: indicators.stillAtSchool, icon: "🏫" },
+    { label: "Cuidadoras ativas", value: indicators.caregiversActive, icon: "👩🏾‍🏫", href: "/admin/cuidadoras" },
+    { label: "Entradas hoje", value: indicators.entriesToday, icon: "↘️" },
+    { label: "Saídas hoje", value: indicators.exitsToday, icon: "↗️" },
+    {
+      label: "Ocorrências hoje",
+      value: indicators.occurrencesToday,
+      icon: "⚠️",
+      accent: indicators.occurrencesToday > 0 ? "border-l-tata-coral" : undefined,
+    },
+    { label: "Medicamentos hoje", value: indicators.medicationsToday, icon: "💊" },
+    { label: "Horas excedentes (mês)", value: currency(indicators.overtimeAccumulated), icon: "⏱️" },
+    {
+      label: "Mensalidades pendentes",
+      value: `${indicators.pendingInvoicesCount} — ${currency(indicators.pendingInvoicesTotal)}`,
+      icon: "💰",
+      accent: indicators.pendingInvoicesCount > 0 ? "border-l-tata-coral" : undefined,
+      href: "/admin/financeiro",
+    },
+    { label: "Recebido no mês", value: currency(indicators.receivedThisMonth), icon: "✅", accent: "border-l-tata-green" },
   ];
 
   const routineCards = [
@@ -38,17 +50,27 @@ export default async function AdminHome() {
         </h1>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {indicatorCards.map((card) => {
-            const cardClass = "bg-tata-surface rounded-2xl p-4 shadow-sm flex flex-col gap-1";
+            const accent = "accent" in card ? card.accent : undefined;
+            const cardClass = `bg-tata-surface rounded-2xl p-4 shadow-sm flex flex-col gap-1 ${
+              accent ? `border-l-4 ${accent}` : ""
+            }`;
             const content = (
               <>
-                <div className="font-[family-name:var(--font-baloo)] font-bold text-lg text-tata-ink">
-                  {card.value}
+                <div className="flex items-center gap-1.5">
+                  <span aria-hidden="true">{card.icon}</span>
+                  <span className="font-[family-name:var(--font-baloo)] font-bold text-lg text-tata-ink">
+                    {card.value}
+                  </span>
                 </div>
                 <div className="text-xs text-tata-ink-muted-alt">{card.label}</div>
               </>
             );
             return "href" in card && card.href ? (
-              <Link key={card.label} href={card.href} className={`${cardClass} hover:bg-tata-surface-hover transition-colors`}>
+              <Link
+                key={card.label}
+                href={card.href}
+                className={`${cardClass} hover:shadow-tata-card-hover active:scale-[0.99] transition-all`}
+              >
                 {content}
               </Link>
             ) : (
@@ -87,7 +109,7 @@ export default async function AdminHome() {
         alerts.openIncidents.length === 0 &&
         alerts.overdueInvoices.length === 0 &&
         alerts.childrenWithOvertime.length === 0 ? (
-          <p className="text-sm text-tata-ink-muted-alt">Nenhum alerta no momento.</p>
+          <EmptyState message="Nenhum alerta no momento." withMascot />
         ) : (
           <div className="flex flex-col gap-2">
             {alerts.notArrivedChildren.map((c) => (

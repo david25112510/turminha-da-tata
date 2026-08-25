@@ -1,4 +1,4 @@
-const CACHE_NAME = "turminha-da-tata-v2";
+const CACHE_NAME = "turminha-da-tata-v3";
 const OFFLINE_URL = "/offline";
 const PRECACHE_URLS = [OFFLINE_URL, "/icons/icon-192.png", "/icons/icon-512.png"];
 

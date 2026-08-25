@@ -8,7 +8,7 @@ import { todayRange, formatTime } from "@/lib/date";
 import { addAuthorizedPersonAction, toggleAuthorizedPersonStatusAction } from "./actions";
 
 const inputClass =
-  "border border-tata-border rounded-xl px-3 py-2 text-sm outline-none focus:border-tata-green transition-colors bg-tata-surface";
+  "min-h-11 border border-tata-border rounded-xl px-3 py-2 text-sm outline-none focus:border-tata-green transition-colors bg-tata-surface";
 const cardClass = "bg-tata-surface rounded-2xl shadow-sm p-5 flex flex-col gap-4";
 const cardTitle = "font-[family-name:var(--font-baloo)] font-semibold text-base text-tata-ink";
 
@@ -125,7 +125,7 @@ export default async function ChildDetailPage({ params }: { params: Promise<{ id
           </ul>
         )}
 
-        <form action={addAuthorizedPersonAction} className="grid grid-cols-2 gap-3 pt-2 border-t border-tata-border">
+        <form action={addAuthorizedPersonAction} className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-tata-border">
           <input type="hidden" name="childId" value={childId} />
           <input name="name" placeholder="Nome completo" required className={inputClass} />
           <input name="phone" placeholder="Telefone" required className={inputClass} />
@@ -135,16 +135,16 @@ export default async function ChildDetailPage({ params }: { params: Promise<{ id
               <option key={v} value={v}>{l}</option>
             ))}
           </select>
-          <select name="authorizedByGuardianId" required className={`${inputClass} col-span-2`} defaultValue="">
+          <select name="authorizedByGuardianId" required className={`${inputClass} sm:col-span-2`} defaultValue="">
             <option value="" disabled>Autorizado por qual responsável?</option>
             {child.guardians.map((gc) => (
               <option key={gc.guardian.id} value={gc.guardian.id}>{gc.guardian.name}</option>
             ))}
           </select>
-          <input name="notes" placeholder="Observação" className={`${inputClass} col-span-2`} />
+          <input name="notes" placeholder="Observação" className={`${inputClass} sm:col-span-2`} />
           <button
             type="submit"
-            className="col-span-2 bg-tata-coral text-white rounded-xl py-2.5 font-[family-name:var(--font-baloo)] font-semibold text-sm"
+            className="sm:col-span-2 min-h-11 bg-tata-coral text-white rounded-xl py-2.5 font-[family-name:var(--font-baloo)] font-semibold text-sm"
           >
             Adicionar pessoa autorizada
           </button>

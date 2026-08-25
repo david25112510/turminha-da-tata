@@ -70,20 +70,20 @@ export default async function AdminRoutinePage() {
               <Link
                 key={child.id}
                 href={`/admin/criancas/${child.id}`}
-                className="bg-tata-surface rounded-2xl shadow-sm p-4 flex flex-col gap-2"
+                className="bg-tata-surface rounded-2xl shadow-sm p-4 flex flex-col gap-2 hover:shadow-tata-card-hover active:scale-[0.99] transition-all"
               >
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-tata-ink text-sm">{child.preferredName || child.fullName}</span>
                   <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusClass}`}>{status}</span>
                 </div>
                 <div className="flex flex-col gap-1 text-xs text-tata-ink-soft">
-                  {attendance?.checkInTime && <p>Chegada: {formatTime(attendance.checkInTime)}</p>}
-                  {meal && <p>Última refeição: {MEAL_TYPE_LABELS[meal.mealType]} — {formatTime(meal.time)}</p>}
+                  {attendance?.checkInTime && <p>💛 Chegada: {formatTime(attendance.checkInTime)}</p>}
+                  {meal && <p>🍽️ Última refeição: {MEAL_TYPE_LABELS[meal.mealType]} — {formatTime(meal.time)}</p>}
                   {sleep && (
-                    <p>Soneca: {sleep.endTime ? `até ${formatTime(sleep.endTime)}` : "em andamento"}</p>
+                    <p>😴 Soneca: {sleep.endTime ? `até ${formatTime(sleep.endTime)}` : "em andamento"}</p>
                   )}
-                  {mood && <p>Humor: {MOOD_LABELS[mood.mood]}</p>}
-                  {activity && <p>Última atividade: {formatTime(activity.activity.time)}</p>}
+                  {mood && <p>🙂 Humor: {MOOD_LABELS[mood.mood]}</p>}
+                  {activity && <p>🎨 Última atividade: {formatTime(activity.activity.time)}</p>}
                   {!meal && !sleep && !mood && !activity && (
                     <p className="text-tata-ink-muted">Nenhum registro de rotina ainda hoje.</p>
                   )}
