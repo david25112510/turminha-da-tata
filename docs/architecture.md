@@ -60,7 +60,9 @@ para a lista completa e atualizada). Agrupado por domínio:
 - **AuthorizedPickupPerson** — pessoa autorizada a retirar a criança, sempre vinculada ao `Guardian` que autorizou.
 
 ### Operação (registros diários — a "jornada")
-`Attendance`, `HomeDeparture`, `MealRecord`, `SleepRecord`, `HygieneRecord`, `WaterRecord`, `Activity`/`ActivityChild` (N:N, uma atividade pode ter várias crianças), `MoodRecord`, `HealthProfile` (ficha fixa por criança), `HealthLog` (registros de temperatura/observação ao longo do tempo), `MedicationAuthorization`/`MedicationAdministration`, `Incident`, `Photo`.
+`Attendance`, `HomeDeparture`, `MealRecord`, `SleepRecord`, `HygieneRecord` (com `diaperType` opcional — granularidade molhada/suja/ambas/seca/outro, só preenchida quando `type == DIAPER_CHANGE`), `WaterRecord`, `Activity`/`ActivityChild` (N:N, uma atividade pode ter várias crianças), `MoodRecord`, `HealthProfile` (ficha fixa por criança), `HealthLog` (registros de temperatura/observação ao longo do tempo), `MedicationAuthorization`/`MedicationAdministration`, `Incident`, `Photo`, `ChildNote`.
+
+**`ChildNote`** cobre duas direções com o mesmo formato (`authorRole: CAREGIVER | GUARDIAN`): uma nota solta da cuidadora sobre o dia (botão "📝 Observação" na grade de ações, sem fluxo de status) e uma observação que a família envia à escola (`/pais/observacoes`, com `status: NEW → READ → ANSWERED → ARCHIVED` gerenciado em `/admin/observacoes`). Ambas entram na timeline unificada (`buildTimeline`).
 
 Todos esses models guardam **quem registrou** (`recordedById`/`administeredById`/etc., FK para `User`) e **quando**, o que sustenta tanto a jornada quanto a parte operacional da auditoria (ver "Auditoria" abaixo) sem precisar de uma tabela de log dedicada para esses eventos. `Attendance` também guarda `checkInGuardianId`/`checkInAuthorizedPickupPersonId` (e os equivalentes de saída) — FK opcional para o `Guardian`/`AuthorizedPickupPerson` resolvido pelo servidor no check-in/check-out, além do snapshot de nome/parentesco já existente (mantido para preservar o histórico mesmo se o cadastro da pessoa mudar depois).
 
@@ -101,7 +103,10 @@ O detalhamento diário das horas excedentes é **congelado em `InvoiceItem` no m
 ## Lógica de negócio central
 
 ### Jornada (`src/lib/journey.ts`)
-`buildTimeline(childId, start, end)` consulta em paralelo todos os models de registro diário do período, normaliza cada um para `{ time, label, detail }` e ordena por horário. É consumida tanto pelo portal das cuidadoras (`/cuidadora/criancas/[id]`, com formulários de registro rápido ao lado) quanto pelo portal dos pais (`/pais/jornada`, somente leitura).
+`buildTimeline(childId, start, end)` consulta em paralelo todos os models de registro diário do período, normaliza cada um para `{ time, label, detail }` e ordena por horário. É consumida tanto pelo portal das cuidadoras (`/cuidadora/criancas/[id]`, com formulários de registro rápido ao lado) quanto pelo portal dos pais (`/pais/jornada`, somente leitura). Cada tipo novo de evento só precisa de uma consulta a mais no `Promise.all` e um `push` no array plano — sem discriminador de tipo estruturado, o rótulo (`label`) também é a chave de categorização usada pelo filtro client-side (`TimelineFilter.tsx`, portal dos pais).
+
+### Fluxo de aprovação de medicamento
+`MedicationAuthorization.status` (`PENDING → ACTIVE | REFUSED`, `ACTIVE ↔ PAUSED`, `ACTIVE | PAUSED → ENDED`) é uma máquina de estados independente do booleano `active` (que continua significando "vigente agora", já usado por `src/lib/dashboard.ts` e pela validação de `addMedicationAdministrationAction`) — só existe `active: true` quando `status === "ACTIVE"`. O responsável cadastra em `/pais/medicamentos` (`requestMedicationAuthorizationAction`, gated pela permissão `authorizeMedication` do `GuardianChild`), sempre nascendo `PENDING`/`active: false`; a escola confirma ou recusa em `/admin/medicamentos` (`src/app/admin/medicamentos/actions.ts`), com auditoria e notificação ao responsável em cada transição. A cuidadora só enxerga e administra medicamentos `ACTIVE` — reforçado tanto na query de `/cuidadora/criancas/[id]` quanto na própria `addMedicationAdministrationAction`, que recusa administrar um medicamento cujo `status` não seja `ACTIVE` mesmo que `active` esteja `true` por engano.
 
 ### Pipeline de notificações (`src/lib/notifications.ts`)
 `notifyGuardians(childId, type, title, body, requirePermission?)` busca todos os `GuardianChild` daquela criança com `receiveNotifications: true` (e, opcionalmente, uma permissão adicional como `viewFinancial`) e cria uma `Notification` para cada um. É chamada a partir das Server Actions que registram eventos importantes: check-in/check-out (`src/app/cuidadora/actions.ts`), alimentação, fim de soneca, ocorrência (`src/app/cuidadora/criancas/[id]/actions.ts`), upload de foto (`src/lib/photo-actions.ts`) e fechamento de mês (`src/app/admin/financeiro/actions.ts`).
@@ -155,12 +160,16 @@ O dashboard (`getDashboardData`) calcula indicadores e alertas em tempo real a c
 | Admin | `/admin/auditoria` | Histórico unificado de ações |
 | Admin | `/admin/configuracoes` | Gestão de usuários (ativar/desativar) |
 | Admin | `/admin/contratos`, `/admin/contratos/[id]` | Lista com busca/filtro (status, período), detalhe com conteúdo + assinatura, publicação de nova versão |
+| Admin | `/admin/medicamentos` | Fila de aprovação (`PENDING`/`ACTIVE`/`PAUSED`/`ENDED`/`REFUSED`) das solicitações do portal dos pais |
+| Admin | `/admin/observacoes` | Observações enviadas pelas famílias (`NEW`/`READ`/`ANSWERED`/`ARCHIVED`) |
+| Admin | `/admin/fotos` | Mural com filtro por criança; remoção sempre com motivo, auditada |
+| Admin | `/admin/sobre` | Identificação do desenvolvedor + versão do sistema |
 | Cuidadora | `/cuidadora` | Painel do dia (check-in/check-out por criança) |
 | Cuidadora | `/cuidadora/criancas/[id]` | Jornada + registro rápido de todos os tipos de evento |
 | Pais | `/pais/contrato` | Fora do route group `(portal)` — tela de aceite (ler, assinar, confirmar), sempre acessível independente de pendência |
 | Pais | `/pais/consentimento` | Fora do route group `(portal)` — mesmo wizard, para o termo LGPD; checada depois do contrato no layout |
 | Pais | `/pais` | Início — status do dia e notificações recentes |
-| Pais | `/pais/jornada`, `/pais/fotos`, `/pais/atividades`, `/pais/comunicados`, `/pais/agenda`, `/pais/financeiro`, `/pais/documentos`, `/pais/documentos/[acceptanceId]` | Cada seção do menu (todas respeitam a permissão correspondente em `GuardianChild`; `documentos` lista os contratos já aceitos) |
+| Pais | `/pais/jornada`, `/pais/fotos`, `/pais/atividades`, `/pais/comunicados`, `/pais/agenda`, `/pais/financeiro`, `/pais/documentos`, `/pais/documentos/[acceptanceId]`, `/pais/medicamentos`, `/pais/observacoes` | Cada seção do menu (todas respeitam a permissão correspondente em `GuardianChild`; `documentos` lista os contratos já aceitos; `medicamentos`/`observacoes` acessíveis via atalho em `/pais/perfil`, não entraram na bottom nav de 5 itens — ver comentário em `BottomNav.tsx`) |
 
 Rotas com `[id]`/`[childId]`/`[acceptanceId]` são dinâmicas; todas as demais listadas como "Admin"/"Cuidadora"/"Pais" são protegidas pelo `src/proxy.ts`. As rotas de `/pais/*` (exceto `/pais/contrato`) vivem em `src/app/pais/(portal)/` — ver "Bloqueio por contrato pendente" acima.
 
@@ -191,3 +200,5 @@ Rotas com `[id]`/`[childId]`/`[acceptanceId]` são dinâmicas; todas as demais l
 - **Notificações são in-app + push + e-mail de fallback** (tabela `Notification`, Web Push via `PushSubscription`/`src/lib/push.ts`, e-mail via `src/lib/email.ts` quando não há assinatura de push); não há SMS.
 - **`getDashboardData`/relatórios recalculam tudo a cada request** — não há cache. Para o volume de uma creche isso não é um problema hoje, mas não escala indefinidamente sem revisão.
 - **Alertas de "horas excedentes acumuladas"** no dashboard não têm um limiar configurável — qualquer valor acima de zero aparece como alerta.
+- **URLs de foto são públicas e permanentes** (ver "Uploads" acima — mesma limitação de `storage.ts`): não há signed URL com expiração. A proteção de quem *vê o link* na página é 100% de camada de aplicação (`Child.imageAuthorized` + `GuardianChild.viewPhotos`, checados tanto no upload quanto em toda leitura), mas quem descobrir/adivinhar a URL direta de uma foto acessa sem autenticação. Ficou fora de escopo da rodada que trouxe "Registrar Momento" (risco de regressão em `storage.ts`, usado também por fotos de perfil e documentos) — considerar antes de expor fotos sensíveis publicamente.
+- **Fotos removidas em `/admin/fotos` apagam só o registro no banco**, não o objeto no storage (S3 ou disco) — `src/lib/storage.ts` não expõe `delete` hoje. O arquivo físico continua ocupando espaço/acessível pela URL direta mesmo depois da remoção auditada.
