@@ -13,6 +13,8 @@ const NAV_ITEMS = [
   { href: "/admin/cuidadoras", label: "Cuidadoras" },
   { href: "/admin/responsaveis", label: "Responsáveis" },
   { href: "/admin/rotina", label: "Rotina" },
+  { href: "/admin/medicamentos", label: "Medicamentos" },
+  { href: "/admin/observacoes", label: "Observações" },
   { href: "/admin/comunicados", label: "Comunicados" },
   { href: "/admin/financeiro", label: "Financeiro" },
   { href: "/admin/contratos", label: "Contratos" },

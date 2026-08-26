@@ -15,6 +15,8 @@ const ICONS: Record<string, string> = {
   Ocorrência: "⚠️",
   Medicamento: "💊",
   Foto: "📷",
+  Observação: "📝",
+  "Observação da família": "📝",
 };
 
 function iconFor(label: string) {

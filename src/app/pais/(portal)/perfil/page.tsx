@@ -20,6 +20,8 @@ const SECTION_LINKS = [
   { href: "/pais/comunicados", icon: "📣", label: "Comunicados" },
   { href: "/pais/agenda", icon: "📅", label: "Agenda" },
   { href: "/pais/documentos", icon: "📄", label: "Documentos" },
+  { href: "/pais/medicamentos", icon: "💊", label: "Medicamentos" },
+  { href: "/pais/observacoes", icon: "📝", label: "Observações" },
 ];
 
 export default async function GuardianProfilePage() {

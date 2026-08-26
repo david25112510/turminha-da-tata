@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { MEAL_TYPE_LABELS } from "@/lib/labels";
 import { GuardianRoutineTimeline, type TimelineEntry } from "./GuardianRoutineTimeline";
 
-type Category = "todos" | "alimentacao" | "sono" | "higiene" | "atividades" | "saude" | "fotos";
+type Category = "todos" | "alimentacao" | "sono" | "higiene" | "atividades" | "saude" | "fotos" | "observacoes";
 
 const MEAL_LABELS = new Set<string>(Object.values(MEAL_TYPE_LABELS));
 
@@ -16,6 +16,7 @@ const FILTERS: { value: Category; label: string }[] = [
   { value: "atividades", label: "Atividades" },
   { value: "saude", label: "Saúde" },
   { value: "fotos", label: "Fotos" },
+  { value: "observacoes", label: "Observações" },
 ];
 
 function categorize(entry: TimelineEntry): Category {
@@ -23,6 +24,7 @@ function categorize(entry: TimelineEntry): Category {
   if (entry.label === "Higiene") return "higiene";
   if (entry.label === "Atividade") return "atividades";
   if (entry.label === "Foto") return "fotos";
+  if (entry.label === "Observação" || entry.label === "Observação da família") return "observacoes";
   if (entry.label === "Humor" || entry.label === "Saúde" || entry.label === "Ocorrência" || entry.label === "Medicamento") return "saude";
   if (MEAL_LABELS.has(entry.label)) return "alimentacao";
   return "todos"; // Chegada/Saída — informação de contexto, não é "tipo de registro" para filtrar

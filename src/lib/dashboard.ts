@@ -80,7 +80,7 @@ export async function getDashboardData() {
       take: 10,
     }),
     prisma.medicationAuthorization.findMany({
-      where: { active: true },
+      where: { active: true, status: "ACTIVE" },
       include: { child: true },
     }),
     prisma.medicationAdministration.findMany({

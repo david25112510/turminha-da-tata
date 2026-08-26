@@ -15,6 +15,8 @@ const PRIMARY_ITEMS = [
 const MORE_ITEMS = [
   { href: "/admin/responsaveis", icon: "👨‍👩‍👧", label: "Responsáveis" },
   { href: "/admin/rotina", icon: "📅", label: "Rotina" },
+  { href: "/admin/medicamentos", icon: "💊", label: "Medicamentos" },
+  { href: "/admin/observacoes", icon: "📝", label: "Observações" },
   { href: "/admin/comunicados", icon: "📣", label: "Comunicados" },
   { href: "/admin/relatorios", icon: "📊", label: "Relatórios" },
   { href: "/admin/notificacoes", icon: "🔔", label: "Notificações" },
