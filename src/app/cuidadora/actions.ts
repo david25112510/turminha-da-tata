@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { todayDateOnly, formatTime } from "@/lib/date";
 import { notifyGuardians } from "@/lib/notifications";
 import { requireAuthorizedPickupPerson } from "@/lib/authz";
+import { recordAuditLog } from "@/lib/audit-log";
 
 function parsePersonRef(formData: FormData) {
   const value = String(formData.get("personRef") ?? "");
@@ -55,6 +56,21 @@ export async function checkInAction(formData: FormData) {
         include: { child: true },
       });
 
+  await recordAuditLog({
+    actorUserId: caregiver.id,
+    action: "CHILD_CHECK_IN",
+    entity: "Attendance",
+    entityId: attendance.id,
+    oldData: existing ? { checkInTime: existing.checkInTime, checkInPersonName: existing.checkInPersonName } : undefined,
+    newData: {
+      childId,
+      checkInTime: attendance.checkInTime,
+      personName: person.name,
+      personType,
+      receivedById: caregiver.id,
+    },
+  });
+
   await notifyGuardians(
     childId,
     "ARRIVAL",
@@ -88,6 +104,24 @@ export async function checkOutAction(formData: FormData) {
       checkOutAuthorizedPickupPersonId: personType === "AUTHORIZED" ? person.id : null,
     },
     include: { child: true },
+  });
+
+  await recordAuditLog({
+    actorUserId: caregiver.id,
+    action: "CHILD_CHECK_OUT",
+    entity: "Attendance",
+    entityId: attendance.id,
+    oldData: {
+      checkOutTime: existing.checkOutTime,
+      checkOutPersonName: existing.checkOutPersonName,
+    },
+    newData: {
+      childId,
+      checkOutTime: attendance.checkOutTime,
+      personName: person.name,
+      personType,
+      receivedById: caregiver.id,
+    },
   });
 
   await notifyGuardians(
