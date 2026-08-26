@@ -2,6 +2,7 @@ import { auth, signOut } from "@/auth";
 import { requireCaregiver } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { ChangePasswordForm } from "@/components/tata/ChangePasswordForm";
+import { DevFooter } from "@/components/tata/DevFooter";
 
 export default async function CaregiverProfilePage() {
   await requireCaregiver();
@@ -50,6 +51,8 @@ export default async function CaregiverProfilePage() {
           Sair
         </button>
       </form>
+
+      <DevFooter className="py-2" />
     </div>
   );
 }

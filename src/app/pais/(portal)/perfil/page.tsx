@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { requireGuardian } from "@/lib/guardian";
 import { RELATIONSHIP_LABELS } from "@/lib/labels";
 import { ChangePasswordForm } from "@/components/tata/ChangePasswordForm";
+import { DevFooter } from "@/components/tata/DevFooter";
 import { PushNotificationToggle } from "../PushNotificationToggle";
 
 const PERMISSION_LABELS: { key: "viewRoutine" | "viewPhotos" | "viewFinancial" | "authorizeMedication" | "authorizePickup" | "receiveNotifications"; label: string }[] = [
@@ -19,6 +20,8 @@ const SECTION_LINKS = [
   { href: "/pais/comunicados", icon: "📣", label: "Comunicados" },
   { href: "/pais/agenda", icon: "📅", label: "Agenda" },
   { href: "/pais/documentos", icon: "📄", label: "Documentos" },
+  { href: "/pais/medicamentos", icon: "💊", label: "Medicamentos" },
+  { href: "/pais/observacoes", icon: "📝", label: "Observações" },
 ];
 
 export default async function GuardianProfilePage() {
@@ -105,6 +108,8 @@ export default async function GuardianProfilePage() {
           ))}
         </div>
       </div>
+
+      <DevFooter className="py-2" />
     </div>
   );
 }

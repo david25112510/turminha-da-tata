@@ -207,12 +207,29 @@ describe("medicamento inválido é bloqueado (addMedicationAdministrationAction)
     expect(createAdministration).not.toHaveBeenCalled();
   });
 
+  it("recusa quando o status ainda não é ACTIVE (ex.: PENDING), mesmo com active=true", async () => {
+    findUniqueAuthorization.mockResolvedValueOnce({
+      id: "auth-1",
+      childId: "child-1",
+      active: true,
+      status: "PENDING",
+      validFrom: new Date(2020, 0, 1),
+      validUntil: null,
+    });
+    const { addMedicationAdministrationAction } = await import("@/app/cuidadora/criancas/[id]/actions");
+    await expect(addMedicationAdministrationAction(formData("auth-1"))).rejects.toThrow(
+      "A autorização deste medicamento não está vigente."
+    );
+    expect(createAdministration).not.toHaveBeenCalled();
+  });
+
   it("permite quando a autorização é válida, ativa e da mesma criança", async () => {
     findUniqueAuthorization.mockResolvedValueOnce({
       id: "auth-1",
       childId: "child-1",
       medication: "Paracetamol",
       active: true,
+      status: "ACTIVE",
       validFrom: new Date(2020, 0, 1),
       validUntil: null,
     });
@@ -656,6 +673,7 @@ describe("administração de medicamento gera AuditLog (addMedicationAdministrat
       childId: "child-1",
       medication: "Paracetamol",
       active: true,
+      status: "ACTIVE",
       validFrom: new Date(2020, 0, 1),
       validUntil: null,
     });

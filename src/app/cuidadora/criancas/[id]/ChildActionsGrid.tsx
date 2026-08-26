@@ -5,6 +5,7 @@ import {
   MEAL_TYPE_LABELS,
   CONSUMPTION_LABELS,
   HYGIENE_TYPE_LABELS,
+  DIAPER_TYPE_LABELS,
   WATER_AMOUNT_LABELS,
   ACTIVITY_CATEGORY_LABELS,
   INCIDENT_TYPE_LABELS,
@@ -111,6 +112,7 @@ export function ChildActionsGrid({
   addMoodAction,
   addIncidentAction,
   addMedicationAdministrationAction,
+  addObservationAction,
   uploadChildPhotoAction,
 }: {
   childId: string;
@@ -127,6 +129,7 @@ export function ChildActionsGrid({
   addMoodAction: ActionFn;
   addIncidentAction: ActionFn;
   addMedicationAdministrationAction: ActionFn;
+  addObservationAction: ActionFn;
   uploadChildPhotoAction: ActionFn;
 }) {
   return (
@@ -149,12 +152,25 @@ export function ChildActionsGrid({
 
       <SleepButton childId={childId} openSleep={openSleep} startSleepAction={startSleepAction} endSleepAction={endSleepAction} />
 
-      <ActionDialogButton icon="🧼" label="Higiene" dialogTitle="Higiene" accent="blue">
-        <QuickActionForm action={addHygieneAction} hiddenFields={{ childId }} successMessage="Higiene registrada" submitLabel="Registrar">
-          <select name="type" className={selectClass} defaultValue="DIAPER_CHANGE">
-            {Object.entries(HYGIENE_TYPE_LABELS).map(([v, l]) => (
+      <ActionDialogButton icon="🧷" label="Fralda" dialogTitle="Troca de fralda" accent="yellow">
+        <QuickActionForm action={addHygieneAction} hiddenFields={{ childId, type: "DIAPER_CHANGE" }} successMessage="Fralda registrada" submitLabel="Registrar">
+          <select name="diaperType" className={selectClass} defaultValue="WET">
+            {Object.entries(DIAPER_TYPE_LABELS).map(([v, l]) => (
               <option key={v} value={v}>{l}</option>
             ))}
+          </select>
+          <input name="notes" placeholder="Observação (opcional)" className={inputClass} />
+        </QuickActionForm>
+      </ActionDialogButton>
+
+      <ActionDialogButton icon="🧼" label="Higiene" dialogTitle="Higiene" accent="blue">
+        <QuickActionForm action={addHygieneAction} hiddenFields={{ childId }} successMessage="Higiene registrada" submitLabel="Registrar">
+          <select name="type" className={selectClass} defaultValue="BATHROOM">
+            {Object.entries(HYGIENE_TYPE_LABELS)
+              .filter(([v]) => v !== "DIAPER_CHANGE")
+              .map(([v, l]) => (
+                <option key={v} value={v}>{l}</option>
+              ))}
           </select>
           <input name="notes" placeholder="Observação (opcional)" className={inputClass} />
         </QuickActionForm>
@@ -224,7 +240,13 @@ export function ChildActionsGrid({
         </QuickActionForm>
       </ActionDialogButton>
 
-      <ActionDialogButton icon="📷" label="Foto" dialogTitle="Adicionar foto" accent="blue">
+      <ActionDialogButton icon="📝" label="Observação" dialogTitle="Registrar observação" accent="lilac">
+        <QuickActionForm action={addObservationAction} hiddenFields={{ childId }} successMessage="Observação registrada" submitLabel="Registrar">
+          <textarea name="text" required rows={3} placeholder="Ex: Maria ficou mais sonolenta depois do almoço." className={`${inputClass} resize-none`} />
+        </QuickActionForm>
+      </ActionDialogButton>
+
+      <ActionDialogButton icon="📸" label="Registrar Momento" dialogTitle="Registrar momento" accent="blue">
         {!imageAuthorized ? (
           <p className="text-sm text-tata-coral-dark">Sem autorização de imagem — envio bloqueado.</p>
         ) : (

@@ -20,7 +20,7 @@ export default async function CaregiverAlertsPage() {
       orderBy: { time: "desc" },
     }),
     prisma.medicationAuthorization.findMany({
-      where: { active: true },
+      where: { active: true, status: "ACTIVE" },
       include: { child: true },
     }),
     prisma.medicationAdministration.findMany({

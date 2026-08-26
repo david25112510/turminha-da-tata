@@ -19,6 +19,7 @@ import {
   addIncidentAction,
   addMedicationAdministrationAction,
   addActivityAction,
+  addObservationAction,
 } from "./actions";
 
 export default async function ChildProfilePage({ params }: { params: Promise<{ id: string }> }) {
@@ -33,7 +34,7 @@ export default async function ChildProfilePage({ params }: { params: Promise<{ i
     prisma.attendance.findUnique({ where: { childId_date: { childId, date } } }),
     buildTimeline(childId, start, end),
     prisma.sleepRecord.findMany({ where: { childId, startTime: { gte: start, lt: end } } }),
-    prisma.medicationAuthorization.findMany({ where: { childId, active: true } }),
+    prisma.medicationAuthorization.findMany({ where: { childId, active: true, status: "ACTIVE" } }),
     prisma.photo.findMany({ where: { childId, takenAt: { gte: start, lt: end } }, orderBy: { takenAt: "desc" } }),
     prisma.incident.count({ where: { childId, time: { gte: start, lt: end }, guardianNotifiedId: null } }),
   ]);
@@ -110,6 +111,7 @@ export default async function ChildProfilePage({ params }: { params: Promise<{ i
           addMoodAction={addMoodAction}
           addIncidentAction={addIncidentAction}
           addMedicationAdministrationAction={addMedicationAdministrationAction}
+          addObservationAction={addObservationAction}
           uploadChildPhotoAction={uploadChildPhotoAction}
         />
       </div>

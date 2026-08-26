@@ -519,6 +519,10 @@ O sistema registra:
 * Criança
 * Observação
 
+Implementado com fluxo de aprovação: o responsável cadastra (`/pais/medicamentos`), nasce pendente
+de confirmação da escola, e só depois de confirmado (`/admin/medicamentos`) fica visível/administrável
+pela cuidadora — ver `docs/architecture.md` § "Fluxo de aprovação de medicamento".
+
 ---
 
 # 22. Ocorrências

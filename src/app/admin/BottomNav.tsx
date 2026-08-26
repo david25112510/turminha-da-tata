@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useId, useRef } from "react";
+import { DevFooter } from "@/components/tata/DevFooter";
 
 const PRIMARY_ITEMS = [
   { href: "/admin", icon: "🏠", label: "Início" },
@@ -14,11 +15,15 @@ const PRIMARY_ITEMS = [
 const MORE_ITEMS = [
   { href: "/admin/responsaveis", icon: "👨‍👩‍👧", label: "Responsáveis" },
   { href: "/admin/rotina", icon: "📅", label: "Rotina" },
+  { href: "/admin/fotos", icon: "📷", label: "Fotos" },
+  { href: "/admin/medicamentos", icon: "💊", label: "Medicamentos" },
+  { href: "/admin/observacoes", icon: "📝", label: "Observações" },
   { href: "/admin/comunicados", icon: "📣", label: "Comunicados" },
   { href: "/admin/relatorios", icon: "📊", label: "Relatórios" },
   { href: "/admin/notificacoes", icon: "🔔", label: "Notificações" },
   { href: "/admin/auditoria", icon: "📋", label: "Auditoria" },
   { href: "/admin/configuracoes", icon: "⚙️", label: "Configurações" },
+  { href: "/admin/sobre", icon: "ℹ️", label: "Sobre" },
 ];
 
 /** Navegação inferior do admin no mobile — 4 destinos diretos + "Mais" para o resto, espelhando o BottomNav da cuidadora. */
@@ -94,6 +99,7 @@ export function AdminBottomNav() {
           >
             Fechar
           </button>
+          <DevFooter />
         </div>
       </dialog>
     </>

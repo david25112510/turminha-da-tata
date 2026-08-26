@@ -56,9 +56,24 @@ export async function addHygieneAction(formData: FormData) {
   const childId = String(formData.get("childId") ?? "");
   const { user } = await requireCaregiverChild(childId);
   const type = String(formData.get("type") ?? "OTHER");
+  const diaperType = String(formData.get("diaperType") ?? "").trim();
   const notes = String(formData.get("notes") ?? "").trim();
-  const record = await prisma.hygieneRecord.create({ data: { childId, type: type as never, notes: notes || null, recordedById: user.id } });
-  await recordAuditLog({ actorUserId: user.id, action: "ROUTINE_HYGIENE_CREATED", entity: "HygieneRecord", entityId: record.id, newData: { childId, type, notes: notes || null } });
+  const record = await prisma.hygieneRecord.create({
+    data: {
+      childId,
+      type: type as never,
+      diaperType: type === "DIAPER_CHANGE" && diaperType ? (diaperType as never) : null,
+      notes: notes || null,
+      recordedById: user.id,
+    },
+  });
+  await recordAuditLog({
+    actorUserId: user.id,
+    action: "ROUTINE_HYGIENE_CREATED",
+    entity: "HygieneRecord",
+    entityId: record.id,
+    newData: { childId, type, diaperType: record.diaperType, notes: notes || null },
+  });
   revalidate(childId);
 }
 
@@ -115,7 +130,7 @@ export async function addMedicationAdministrationAction(formData: FormData) {
   const authorization = await prisma.medicationAuthorization.findUnique({ where: { id: authorizationId } });
   if (!authorization || authorization.childId !== childId) throw new Error("Autorização de medicamento inválida.");
   const now = new Date();
-  if (!authorization.active || authorization.validFrom > now || (authorization.validUntil && authorization.validUntil < now)) throw new Error("A autorização deste medicamento não está vigente.");
+  if (!authorization.active || authorization.status !== "ACTIVE" || authorization.validFrom > now || (authorization.validUntil && authorization.validUntil < now)) throw new Error("A autorização deste medicamento não está vigente.");
   const administration = await prisma.medicationAdministration.create({ data: { childId, authorizationId, administeredById: user.id, notes: notes || null }, include: { child: true } });
   await recordAuditLog({ actorUserId: user.id, action: "ROUTINE_MEDICATION_CREATED", entity: "MedicationAdministration", entityId: administration.id, newData: { childId, authorizationId, notes: notes || null } });
   await notifyGuardians(childId, "MEDICATION", "Medicamento administrado", `Há uma atualização sobre a medicação de ${administration.child.preferredName || administration.child.fullName}.`);
@@ -130,5 +145,24 @@ export async function addActivityAction(formData: FormData) {
   const description = String(formData.get("description") ?? "").trim();
   const activity = await prisma.activity.create({ data: { date: new Date(new Date().setHours(0, 0, 0, 0)), category: category as never, description: description || null, recordedById: user.id, children: { create: { childId } } } });
   await recordAuditLog({ actorUserId: user.id, action: "ROUTINE_ACTIVITY_CREATED", entity: "Activity", entityId: activity.id, newData: { childId, category, description: description || null } });
+  revalidate(childId);
+}
+
+export async function addObservationAction(formData: FormData) {
+  const childId = String(formData.get("childId") ?? "");
+  const { user } = await requireCaregiverChild(childId);
+  const text = String(formData.get("text") ?? "").trim();
+  if (!text) throw new Error("Escreva a observação antes de registrar.");
+  const note = await prisma.childNote.create({
+    data: { childId, authorRole: "CAREGIVER", authorUserId: user.id, text },
+  });
+  await recordAuditLog({
+    actorUserId: user.id,
+    action: "ROUTINE_OBSERVATION_CREATED",
+    entity: "ChildNote",
+    entityId: note.id,
+    newData: { childId, text },
+  });
+  await notifyGuardians(childId, "OBSERVATION", "Nova observação da escola", text, "viewRoutine");
   revalidate(childId);
 }

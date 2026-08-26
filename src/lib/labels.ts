@@ -160,3 +160,35 @@ export const INCIDENT_TYPE_LABELS: Record<string, string> = {
   INJURY: "Ferimento",
   OTHER: "Outro",
 };
+
+export const DIAPER_TYPE_LABELS: Record<string, string> = {
+  WET: "Molhada",
+  DIRTY: "Suja",
+  BOTH: "Molhada e suja",
+  DRY: "Seca",
+  OTHER: "Outro",
+};
+
+export const MEDICATION_AUTHORIZATION_STATUS_LABELS: Record<string, string> = {
+  PENDING: "Pendente de confirmação",
+  ACTIVE: "Ativo",
+  PAUSED: "Pausado",
+  ENDED: "Encerrado",
+  REFUSED: "Recusado",
+};
+
+/** Classe de cor do selo por status da autorização — pendente/recusado não pode ler visualmente como ativo. */
+export const MEDICATION_AUTHORIZATION_STATUS_TONE: Record<string, string> = {
+  PENDING: "bg-tata-yellow/10 text-tata-yellow-dark",
+  ACTIVE: "bg-tata-green/10 text-tata-green-dark",
+  PAUSED: "bg-tata-blue/10 text-tata-blue-dark",
+  ENDED: "bg-tata-ink-muted/10 text-tata-ink-muted",
+  REFUSED: "bg-tata-coral/10 text-tata-coral-dark",
+};
+
+export const CHILD_NOTE_STATUS_LABELS: Record<string, string> = {
+  NEW: "Nova",
+  READ: "Lida",
+  ANSWERED: "Respondida",
+  ARCHIVED: "Arquivada",
+};
