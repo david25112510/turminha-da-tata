@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { DevFooter } from "@/components/tata/DevFooter";
 import { loginAction } from "./actions";
 
 export function LoginForm() {
@@ -135,6 +136,8 @@ export function LoginForm() {
           </form>
         </div>
       </div>
+
+      <DevFooter className="py-4" />
     </main>
   );
 }

@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { auth, signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { DevFooter } from "@/components/tata/DevFooter";
 import { AdminBottomNav } from "./BottomNav";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +20,7 @@ const NAV_ITEMS = [
   { href: "/admin/notificacoes", label: "Notificações" },
   { href: "/admin/auditoria", label: "Auditoria" },
   { href: "/admin/configuracoes", label: "Configurações" },
+  { href: "/admin/sobre", label: "Sobre" },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -105,6 +107,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             </button>
           </form>
         </div>
+
+        <DevFooter className="px-2" />
       </aside>
 
       <main className="flex-1 min-w-0 pb-20 md:pb-0">{children}</main>
