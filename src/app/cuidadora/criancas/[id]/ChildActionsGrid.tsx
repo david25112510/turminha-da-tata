@@ -246,7 +246,7 @@ export function ChildActionsGrid({
         </QuickActionForm>
       </ActionDialogButton>
 
-      <ActionDialogButton icon="📷" label="Foto" dialogTitle="Adicionar foto" accent="blue">
+      <ActionDialogButton icon="📸" label="Registrar Momento" dialogTitle="Registrar momento" accent="blue">
         {!imageAuthorized ? (
           <p className="text-sm text-tata-coral-dark">Sem autorização de imagem — envio bloqueado.</p>
         ) : (
