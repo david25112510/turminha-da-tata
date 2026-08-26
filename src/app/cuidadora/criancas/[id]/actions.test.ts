@@ -22,6 +22,7 @@ const createMood = vi.fn();
 const createHealthLog = vi.fn();
 const createActivity = vi.fn();
 const createIncident = vi.fn();
+const createNote = vi.fn();
 
 beforeEach(() => {
   vi.resetModules();
@@ -49,6 +50,7 @@ beforeEach(() => {
       healthLog: { create: (...args: unknown[]) => createHealthLog(...args) },
       activity: { create: (...args: unknown[]) => createActivity(...args) },
       incident: { create: (...args: unknown[]) => createIncident(...args) },
+      childNote: { create: (...args: unknown[]) => createNote(...args) },
     },
   }));
 
@@ -72,6 +74,7 @@ beforeEach(() => {
   createHealthLog.mockReset().mockResolvedValue({ id: "health-1" });
   createActivity.mockReset().mockResolvedValue({ id: "activity-1" });
   createIncident.mockReset().mockResolvedValue({ id: "incident-1", child: { preferredName: "Maria", fullName: "Maria Silva" } });
+  createNote.mockReset().mockResolvedValue({ id: "note-1" });
 });
 
 function formData(fields: Record<string, string>) {
@@ -163,13 +166,65 @@ describe("cuidadora registra sono (startSleepAction / endSleepAction)", () => {
 describe("cuidadora registra higiene (addHygieneAction)", () => {
   it("grava o registro de higiene", async () => {
     const { addHygieneAction } = await import("./actions");
-    await addHygieneAction(formData({ childId: "child-1", type: "DIAPER_CHANGE" }));
+    await addHygieneAction(formData({ childId: "child-1", type: "BATHROOM" }));
 
     expect(createHygiene).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ childId: "child-1", type: "DIAPER_CHANGE", recordedById: "caregiver-1" }) })
+      expect.objectContaining({ data: expect.objectContaining({ childId: "child-1", type: "BATHROOM", diaperType: null, recordedById: "caregiver-1" }) })
     );
     expect(recordAuditLog).toHaveBeenCalledWith(
       expect.objectContaining({ actorUserId: "caregiver-1", action: "ROUTINE_HYGIENE_CREATED", entity: "HygieneRecord", entityId: "hygiene-1" })
+    );
+  });
+
+  it("CASO 1: grava a troca de fralda com o tipo granular (molhada/suja/ambas/seca/outro)", async () => {
+    createHygiene.mockResolvedValueOnce({ id: "hygiene-2", diaperType: "WET" });
+    const { addHygieneAction } = await import("./actions");
+    await addHygieneAction(formData({ childId: "child-1", type: "DIAPER_CHANGE", diaperType: "WET" }));
+
+    expect(createHygiene).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ childId: "child-1", type: "DIAPER_CHANGE", diaperType: "WET" }),
+      })
+    );
+  });
+
+  it("CASO 2: diaperType é ignorado quando o tipo não é DIAPER_CHANGE (evita dado inconsistente)", async () => {
+    const { addHygieneAction } = await import("./actions");
+    await addHygieneAction(formData({ childId: "child-1", type: "HANDWASHING", diaperType: "WET" }));
+
+    expect(createHygiene).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ type: "HANDWASHING", diaperType: null }) })
+    );
+  });
+});
+
+describe("cuidadora registra observação solta (addObservationAction)", () => {
+  it("CASO 1: exige o texto da observação", async () => {
+    const { addObservationAction } = await import("./actions");
+    await expect(addObservationAction(formData({ childId: "child-1", text: "  " }))).rejects.toThrow(
+      "Escreva a observação antes de registrar."
+    );
+    expect(createNote).not.toHaveBeenCalled();
+  });
+
+  it("CASO 2: grava a observação como CAREGIVER, audita e notifica os responsáveis", async () => {
+    const { addObservationAction } = await import("./actions");
+    await addObservationAction(formData({ childId: "child-1", text: "Ficou mais sonolenta após o almoço." }));
+
+    expect(createNote).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ childId: "child-1", authorRole: "CAREGIVER", authorUserId: "caregiver-1", text: "Ficou mais sonolenta após o almoço." }),
+      })
+    );
+    expect(recordAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({ actorUserId: "caregiver-1", action: "ROUTINE_OBSERVATION_CREATED", entity: "ChildNote", entityId: "note-1" })
+    );
+    expect(notifyGuardians).toHaveBeenCalledWith(
+      "child-1",
+      "OBSERVATION",
+      expect.any(String),
+      "Ficou mais sonolenta após o almoço.",
+      "viewRoutine"
     );
   });
 });
