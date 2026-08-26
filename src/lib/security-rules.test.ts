@@ -409,6 +409,7 @@ describe("check-in preserva ID relacional e snapshot de nome/parentesco (checkIn
   const findUniqueAttendance = vi.fn();
   const createAttendance = vi.fn();
   const notifyGuardians = vi.fn();
+  const recordAuditLog = vi.fn();
 
   beforeEach(() => {
     vi.resetModules();
@@ -417,6 +418,7 @@ describe("check-in preserva ID relacional e snapshot de nome/parentesco (checkIn
     vi.doMock("@/lib/authz", () => ({
       requireAuthorizedPickupPerson: (...args: unknown[]) => requireAuthorizedPickupPerson(...args),
     }));
+    vi.doMock("@/lib/audit-log", () => ({ recordAuditLog: (...args: unknown[]) => recordAuditLog(...args) }));
     vi.doMock("@/lib/prisma", () => ({
       prisma: {
         attendance: {
@@ -432,9 +434,11 @@ describe("check-in preserva ID relacional e snapshot de nome/parentesco (checkIn
     findUniqueAttendance.mockReset().mockResolvedValue(null);
     createAttendance.mockReset().mockResolvedValue({
       id: "att-1",
+      checkInTime: new Date(2026, 7, 26, 8, 0),
       child: { preferredName: null, fullName: "Criança" },
     });
     notifyGuardians.mockReset().mockResolvedValue(undefined);
+    recordAuditLog.mockReset().mockResolvedValue(undefined);
   });
 
   it("grava checkInGuardianId (relacional) junto do snapshot checkInPersonName/checkInPersonRelation", async () => {
@@ -455,6 +459,100 @@ describe("check-in preserva ID relacional e snapshot de nome/parentesco (checkIn
         }),
       })
     );
+  });
+
+  it("grava AuditLog CHILD_CHECK_IN com o autor e a pessoa que buscou a criança", async () => {
+    const fd = new FormData();
+    fd.set("childId", "child-1");
+    fd.set("personRef", "GUARDIAN:guardian-1");
+
+    const { checkInAction } = await import("@/app/cuidadora/actions");
+    await checkInAction(fd);
+
+    expect(recordAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorUserId: "caregiver-1",
+        action: "CHILD_CHECK_IN",
+        entity: "Attendance",
+        entityId: "att-1",
+        newData: expect.objectContaining({ childId: "child-1", personName: "Maria Silva", personType: "GUARDIAN" }),
+      })
+    );
+  });
+});
+
+describe("saída de criança gera AuditLog (checkOutAction)", () => {
+  const requireAuthorizedPickupPerson = vi.fn();
+  const findUniqueAttendance = vi.fn();
+  const updateAttendance = vi.fn();
+  const notifyGuardians = vi.fn();
+  const recordAuditLog = vi.fn();
+
+  beforeEach(() => {
+    vi.resetModules();
+    vi.doMock("next/cache", () => ({ revalidatePath: () => {} }));
+    vi.doMock("@/lib/notifications", () => ({ notifyGuardians: (...args: unknown[]) => notifyGuardians(...args) }));
+    vi.doMock("@/lib/authz", () => ({
+      requireAuthorizedPickupPerson: (...args: unknown[]) => requireAuthorizedPickupPerson(...args),
+    }));
+    vi.doMock("@/lib/audit-log", () => ({ recordAuditLog: (...args: unknown[]) => recordAuditLog(...args) }));
+    vi.doMock("@/lib/prisma", () => ({
+      prisma: {
+        attendance: {
+          findUnique: (...args: unknown[]) => findUniqueAttendance(...args),
+          update: (...args: unknown[]) => updateAttendance(...args),
+        },
+      },
+    }));
+    requireAuthorizedPickupPerson.mockReset().mockResolvedValue({
+      user: { id: "caregiver-1" },
+      person: { id: "guardian-1", name: "Maria Silva", relationship: "MOTHER" },
+    });
+    findUniqueAttendance.mockReset().mockResolvedValue({
+      id: "att-1",
+      checkInTime: new Date(2026, 7, 26, 8, 0),
+      checkOutTime: null,
+      checkOutPersonName: null,
+    });
+    updateAttendance.mockReset().mockResolvedValue({
+      id: "att-1",
+      checkOutTime: new Date(2026, 7, 26, 18, 0),
+      child: { preferredName: null, fullName: "Criança" },
+    });
+    notifyGuardians.mockReset().mockResolvedValue(undefined);
+    recordAuditLog.mockReset().mockResolvedValue(undefined);
+  });
+
+  it("grava AuditLog CHILD_CHECK_OUT com o autor e a pessoa que retirou a criança", async () => {
+    const fd = new FormData();
+    fd.set("childId", "child-1");
+    fd.set("personRef", "GUARDIAN:guardian-1");
+
+    const { checkOutAction } = await import("@/app/cuidadora/actions");
+    await checkOutAction(fd);
+
+    expect(recordAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorUserId: "caregiver-1",
+        action: "CHILD_CHECK_OUT",
+        entity: "Attendance",
+        entityId: "att-1",
+        newData: expect.objectContaining({ childId: "child-1", personName: "Maria Silva", personType: "GUARDIAN" }),
+      })
+    );
+  });
+
+  it("recusa registrar saída antes da chegada, sem gravar AuditLog", async () => {
+    findUniqueAttendance.mockResolvedValueOnce({ id: "att-1", checkInTime: null, checkOutTime: null });
+    const fd = new FormData();
+    fd.set("childId", "child-1");
+    fd.set("personRef", "GUARDIAN:guardian-1");
+
+    const { checkOutAction } = await import("@/app/cuidadora/actions");
+    await expect(checkOutAction(fd)).rejects.toThrow("Não é possível registrar a saída antes da chegada da criança.");
+
+    expect(updateAttendance).not.toHaveBeenCalled();
+    expect(recordAuditLog).not.toHaveBeenCalled();
   });
 });
 
@@ -524,7 +622,7 @@ describe("criação de pessoa autorizada gera AuditLog (addAuthorizedPersonActio
   });
 });
 
-describe("eventos de rotina não geram AuditLog administrativo (addMedicationAdministrationAction)", () => {
+describe("administração de medicamento gera AuditLog (addMedicationAdministrationAction)", () => {
   const requireCaregiverChild = vi.fn();
   const findUniqueAuthorization = vi.fn();
   const createAdministration = vi.fn();
@@ -542,8 +640,9 @@ describe("eventos de rotina não geram AuditLog administrativo (addMedicationAdm
       notifyGuardians: (...args: unknown[]) => notifyGuardians(...args),
       notifyAdmins: (...args: unknown[]) => notifyAdmins(...args),
     }));
-    // Espiona recordAuditLog só para provar que uma Server Action puramente operacional nunca a chama —
-    // cuidadora/criancas/[id]/actions.ts nem importa "@/lib/audit-log" hoje; este teste é uma trava de regressão.
+    // Medicação é dado de saúde sensível — diferente das demais Server Actions de rotina (alimentação,
+    // sono, higiene...), que não geram AuditLog administrativo (só a própria timeline do dia já serve de
+    // registro). Ver src/app/cuidadora/criancas/[id]/actions.test.ts para as demais.
     vi.doMock("@/lib/audit-log", () => ({ recordAuditLog: (...args: unknown[]) => recordAuditLog(...args) }));
     vi.doMock("@/lib/prisma", () => ({
       prisma: {
@@ -566,16 +665,25 @@ describe("eventos de rotina não geram AuditLog administrativo (addMedicationAdm
     notifyAdmins.mockReset().mockResolvedValue(undefined);
   });
 
-  it("registrar administração de medicamento não gera entrada de AuditLog", async () => {
+  it("registrar administração de medicamento grava AuditLog com actor, criança e autorização usadas", async () => {
     const fd = new FormData();
     fd.set("childId", "child-1");
     fd.set("authorizationId", "auth-1");
+    fd.set("notes", "Febre 38.2");
 
     const { addMedicationAdministrationAction } = await import("@/app/cuidadora/criancas/[id]/actions");
     await addMedicationAdministrationAction(fd);
 
     expect(createAdministration).toHaveBeenCalledOnce();
-    expect(recordAuditLog).not.toHaveBeenCalled();
+    expect(recordAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorUserId: "caregiver-1",
+        action: "ROUTINE_MEDICATION_CREATED",
+        entity: "MedicationAdministration",
+        entityId: "adm-1",
+        newData: expect.objectContaining({ childId: "child-1", authorizationId: "auth-1", notes: "Febre 38.2" }),
+      })
+    );
   });
 });
 

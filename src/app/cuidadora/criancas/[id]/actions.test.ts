@@ -10,13 +10,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const requireCaregiverChild = vi.fn();
 const notifyGuardians = vi.fn();
 const notifyAdmins = vi.fn();
+const recordAuditLog = vi.fn();
 const createMeal = vi.fn();
 const createSleep = vi.fn();
 const findUniqueSleep = vi.fn();
 const findFirstSleep = vi.fn();
 const updateSleep = vi.fn();
 const createHygiene = vi.fn();
+const createWater = vi.fn();
 const createMood = vi.fn();
+const createHealthLog = vi.fn();
 const createActivity = vi.fn();
 const createIncident = vi.fn();
 
@@ -30,6 +33,7 @@ beforeEach(() => {
     notifyGuardians: (...args: unknown[]) => notifyGuardians(...args),
     notifyAdmins: (...args: unknown[]) => notifyAdmins(...args),
   }));
+  vi.doMock("@/lib/audit-log", () => ({ recordAuditLog: (...args: unknown[]) => recordAuditLog(...args) }));
   vi.doMock("@/lib/prisma", () => ({
     prisma: {
       mealRecord: { create: (...args: unknown[]) => createMeal(...args) },
@@ -40,7 +44,9 @@ beforeEach(() => {
         update: (...args: unknown[]) => updateSleep(...args),
       },
       hygieneRecord: { create: (...args: unknown[]) => createHygiene(...args) },
+      waterRecord: { create: (...args: unknown[]) => createWater(...args) },
       moodRecord: { create: (...args: unknown[]) => createMood(...args) },
+      healthLog: { create: (...args: unknown[]) => createHealthLog(...args) },
       activity: { create: (...args: unknown[]) => createActivity(...args) },
       incident: { create: (...args: unknown[]) => createIncident(...args) },
     },
@@ -49,8 +55,9 @@ beforeEach(() => {
   requireCaregiverChild.mockReset().mockResolvedValue({ user: { id: "caregiver-1" }, child: { id: "child-1" } });
   notifyGuardians.mockReset().mockResolvedValue(undefined);
   notifyAdmins.mockReset().mockResolvedValue(undefined);
-  createMeal.mockReset().mockResolvedValue({ child: { preferredName: "Maria", fullName: "Maria Silva" } });
-  createSleep.mockReset().mockResolvedValue({ id: "sleep-1", child: { preferredName: "Maria", fullName: "Maria Silva" } });
+  recordAuditLog.mockReset().mockResolvedValue(undefined);
+  createMeal.mockReset().mockResolvedValue({ id: "meal-1", child: { preferredName: "Maria", fullName: "Maria Silva" } });
+  createSleep.mockReset().mockResolvedValue({ id: "sleep-1", startTime: new Date(2026, 7, 21, 13, 0), child: { preferredName: "Maria", fullName: "Maria Silva" } });
   findUniqueSleep.mockReset();
   findFirstSleep.mockReset().mockResolvedValue(null);
   updateSleep.mockReset().mockResolvedValue({
@@ -60,7 +67,9 @@ beforeEach(() => {
     child: { preferredName: "Maria", fullName: "Maria Silva" },
   });
   createHygiene.mockReset().mockResolvedValue({ id: "hygiene-1" });
+  createWater.mockReset().mockResolvedValue({ id: "water-1" });
   createMood.mockReset().mockResolvedValue({ id: "mood-1" });
+  createHealthLog.mockReset().mockResolvedValue({ id: "health-1" });
   createActivity.mockReset().mockResolvedValue({ id: "activity-1" });
   createIncident.mockReset().mockResolvedValue({ id: "incident-1", child: { preferredName: "Maria", fullName: "Maria Silva" } });
 });
@@ -82,6 +91,15 @@ describe("cuidadora registra alimentação (addMealAction)", () => {
         data: expect.objectContaining({ childId: "child-1", mealType: "LUNCH", consumption: "WELL", recordedById: "caregiver-1" }),
       })
     );
+    expect(recordAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorUserId: "caregiver-1",
+        action: "ROUTINE_MEAL_CREATED",
+        entity: "MealRecord",
+        entityId: "meal-1",
+        newData: expect.objectContaining({ childId: "child-1", mealType: "LUNCH", consumption: "WELL" }),
+      })
+    );
   });
 });
 
@@ -96,6 +114,9 @@ describe("cuidadora registra sono (startSleepAction / endSleepAction)", () => {
       include: { child: true },
     });
     expect(notifyGuardians).toHaveBeenCalledWith("child-1", "SLEEP", "Soneca", "Maria começou a dormir.");
+    expect(recordAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({ actorUserId: "caregiver-1", action: "ROUTINE_SLEEP_STARTED", entity: "SleepRecord", entityId: "sleep-1" })
+    );
   });
 
   it("finaliza a soneca e calcula a duração", async () => {
@@ -105,6 +126,9 @@ describe("cuidadora registra sono (startSleepAction / endSleepAction)", () => {
 
     expect(updateSleep).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: "sleep-1" }, data: expect.objectContaining({ endedById: "caregiver-1" }) })
+    );
+    expect(recordAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({ actorUserId: "caregiver-1", action: "ROUTINE_SLEEP_ENDED", entity: "SleepRecord", entityId: "sleep-1" })
     );
   });
 
@@ -144,6 +168,23 @@ describe("cuidadora registra higiene (addHygieneAction)", () => {
     expect(createHygiene).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ childId: "child-1", type: "DIAPER_CHANGE", recordedById: "caregiver-1" }) })
     );
+    expect(recordAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({ actorUserId: "caregiver-1", action: "ROUTINE_HYGIENE_CREATED", entity: "HygieneRecord", entityId: "hygiene-1" })
+    );
+  });
+});
+
+describe("cuidadora registra água (addWaterAction)", () => {
+  it("grava o registro de consumo de água", async () => {
+    const { addWaterAction } = await import("./actions");
+    await addWaterAction(formData({ childId: "child-1", amount: "LARGE" }));
+
+    expect(createWater).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ childId: "child-1", amount: "LARGE", recordedById: "caregiver-1" }) })
+    );
+    expect(recordAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({ actorUserId: "caregiver-1", action: "ROUTINE_WATER_CREATED", entity: "WaterRecord", entityId: "water-1" })
+    );
   });
 });
 
@@ -154,6 +195,23 @@ describe("cuidadora registra humor (addMoodAction)", () => {
 
     expect(createMood).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ childId: "child-1", mood: "HAPPY", recordedById: "caregiver-1" }) })
+    );
+    expect(recordAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({ actorUserId: "caregiver-1", action: "ROUTINE_MOOD_CREATED", entity: "MoodRecord", entityId: "mood-1" })
+    );
+  });
+});
+
+describe("cuidadora registra saúde (addHealthLogAction)", () => {
+  it("grava o registro de saúde", async () => {
+    const { addHealthLogAction } = await import("./actions");
+    await addHealthLogAction(formData({ childId: "child-1", temperature: "38,2", symptoms: "Febre" }));
+
+    expect(createHealthLog).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ childId: "child-1", temperature: "38.2", symptoms: "Febre", recordedById: "caregiver-1" }) })
+    );
+    expect(recordAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({ actorUserId: "caregiver-1", action: "ROUTINE_HEALTH_CREATED", entity: "HealthLog", entityId: "health-1" })
     );
   });
 });
@@ -168,6 +226,9 @@ describe("cuidadora registra atividade (addActivityAction)", () => {
         data: expect.objectContaining({ category: "MUSIC", description: "Roda de música", recordedById: "caregiver-1" }),
       })
     );
+    expect(recordAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({ actorUserId: "caregiver-1", action: "ROUTINE_ACTIVITY_CREATED", entity: "Activity", entityId: "activity-1" })
+    );
   });
 });
 
@@ -176,6 +237,7 @@ describe("cuidadora registra ocorrência (addIncidentAction)", () => {
     const { addIncidentAction } = await import("./actions");
     await expect(addIncidentAction(formData({ childId: "child-1", type: "FALL" }))).rejects.toThrow("Descrição é obrigatória.");
     expect(createIncident).not.toHaveBeenCalled();
+    expect(recordAuditLog).not.toHaveBeenCalled();
   });
 
   it("grava a ocorrência quando a descrição está presente", async () => {
@@ -188,5 +250,8 @@ describe("cuidadora registra ocorrência (addIncidentAction)", () => {
       })
     );
     expect(notifyGuardians).toHaveBeenCalled();
+    expect(recordAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({ actorUserId: "caregiver-1", action: "ROUTINE_INCIDENT_CREATED", entity: "Incident", entityId: "incident-1" })
+    );
   });
 });
