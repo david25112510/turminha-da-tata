@@ -1,7 +1,8 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { updateCaregiverAction, toggleCaregiverActiveAction, uploadCaregiverPhotoAction } from "../actions";
+import { DeleteConfirmDialog } from "@/components/tata/DeleteConfirmDialog";
+import { updateCaregiverAction, toggleCaregiverActiveAction, uploadCaregiverPhotoAction, deleteCaregiverAction } from "../actions";
 
 const inputClass =
   "min-h-11 border border-tata-border rounded-xl px-3 py-2 text-sm outline-none focus:border-tata-green transition-colors bg-tata-surface";
@@ -110,6 +111,22 @@ export default async function CaregiverDetailPage({ params }: { params: Promise<
             {caregiver.active ? "Desativar cuidadora" : "Reativar cuidadora"}
           </button>
         </form>
+      </div>
+
+      <div className={cardClass}>
+        <span className={cardTitle}>Zona de risco</span>
+        <p className="text-sm text-tata-ink-soft">
+          Diferente de desativar, excluir apaga a conta permanentemente. Os registros que ela já fez
+          (rotina, medicamentos administrados, fotos) são mantidos, só perdem a autoria.
+        </p>
+        <DeleteConfirmDialog
+          action={deleteCaregiverAction}
+          hiddenFields={{ id }}
+          entityLabel="cuidadora"
+          entityName={caregiver.name}
+          triggerLabel="Excluir cuidadora"
+          triggerClassName="self-start min-h-11 bg-tata-coral-dark/10 text-tata-coral-dark rounded-xl px-6 font-[family-name:var(--font-baloo)] font-semibold text-sm"
+        />
       </div>
     </div>
   );

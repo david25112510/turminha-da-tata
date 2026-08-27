@@ -6,7 +6,9 @@ import { RELATIONSHIP_LABELS, CHILD_STATUS_LABELS } from "@/lib/labels";
 import { uploadChildPhotoAction } from "@/lib/photo-actions";
 import { buildTimeline } from "@/lib/journey";
 import { todayRange, formatTime, formatDateTime } from "@/lib/date";
+import { DeleteConfirmDialog } from "@/components/tata/DeleteConfirmDialog";
 import { addAuthorizedPersonAction, toggleAuthorizedPersonStatusAction } from "./actions";
+import { deleteChildAction } from "../actions";
 
 const inputClass =
   "min-h-11 border border-tata-border rounded-xl px-3 py-2 text-sm outline-none focus:border-tata-green transition-colors bg-tata-surface";
@@ -59,6 +61,13 @@ export default async function ChildDetailPage({ params }: { params: Promise<{ id
           >
             {CHILD_STATUS_LABELS[child.status]}
           </span>
+          <DeleteConfirmDialog
+            action={deleteChildAction}
+            hiddenFields={{ id: childId }}
+            entityLabel="criança"
+            entityName={child.fullName}
+            warning="Todo o histórico dela (presença, rotina, medicamentos, fotos, financeiro, contratos) será apagado."
+          />
         </div>
       </div>
 

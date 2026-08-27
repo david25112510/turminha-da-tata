@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/authz";
@@ -98,4 +99,36 @@ export async function createGuardianAction(formData: FormData) {
   });
 
   redirect("/admin/responsaveis");
+}
+
+/**
+ * Exclusão permanente — remove o Guardian e, se ele tiver conta de acesso ao portal, também o User
+ * vinculado. Em cascata (ver prisma/schema.prisma): vínculos com crianças (GuardianChild), pessoas
+ * autorizadas cadastradas por ele, aceites de contrato/consentimento, notificações, push. Dados que
+ * pertencem à CRIANÇA (presença, autorização de medicamento) nunca são apagados — só perdem a
+ * referência a este responsável (SetNull), preservando o histórico dela.
+ */
+export async function deleteGuardianAction(formData: FormData) {
+  const admin = await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  const confirmName = String(formData.get("confirmName") ?? "").trim();
+
+  const guardian = await prisma.guardian.findUnique({ where: { id } });
+  if (!guardian) throw new Error("Responsável não encontrado.");
+  if (confirmName !== guardian.name) throw new Error("O nome digitado não confere. Exclusão cancelada.");
+
+  await recordAuditLog({
+    actorUserId: admin.id,
+    action: "DELETE",
+    entity: "Guardian",
+    entityId: id,
+    oldData: { name: guardian.name, cpf: guardian.cpf, phone: guardian.phone, email: guardian.email, hadPortalAccess: !!guardian.userId },
+  });
+
+  await prisma.$transaction(async (tx) => {
+    await tx.guardian.delete({ where: { id } });
+    if (guardian.userId) await tx.user.delete({ where: { id: guardian.userId } });
+  });
+
+  revalidatePath("/admin/responsaveis");
 }

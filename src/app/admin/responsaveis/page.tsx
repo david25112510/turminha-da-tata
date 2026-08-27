@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { RELATIONSHIP_LABELS } from "@/lib/labels";
+import { DeleteConfirmDialog } from "@/components/tata/DeleteConfirmDialog";
+import { deleteGuardianAction } from "./actions";
 
 export default async function GuardiansListPage() {
   const guardians = await prisma.guardian.findMany({
@@ -64,6 +66,19 @@ export default async function GuardiansListPage() {
                     .map((gc) => `${gc.child.preferredName || gc.child.fullName} (${RELATIONSHIP_LABELS[gc.relationship]})`)
                     .join(", ") || "—"}
                 </span>
+                <div className="flex justify-end mt-1">
+                  <DeleteConfirmDialog
+                    action={deleteGuardianAction}
+                    hiddenFields={{ id: guardian.id }}
+                    entityLabel="responsável"
+                    entityName={guardian.name}
+                    warning={
+                      guardian.children.length > 0
+                        ? "Os vínculos com as crianças serão removidos, mas o histórico delas (presença, medicamentos etc.) é preservado."
+                        : undefined
+                    }
+                  />
+                </div>
               </div>
             ))}
           </div>
@@ -78,6 +93,7 @@ export default async function GuardiansListPage() {
                   <th className="p-4 font-semibold">Vinculado a</th>
                   <th className="p-4 font-semibold">Acesso ao portal</th>
                   <th className="p-4 font-semibold">Consentimento LGPD</th>
+                  <th className="p-4 font-semibold"></th>
                 </tr>
               </thead>
               <tbody>
@@ -114,6 +130,19 @@ export default async function GuardiansListPage() {
                       >
                         {guardian.consentAcceptances[0]?.status === "ACCEPTED" ? "🟢 Aceito" : "🟡 Pendente"}
                       </span>
+                    </td>
+                    <td className="p-4">
+                      <DeleteConfirmDialog
+                        action={deleteGuardianAction}
+                        hiddenFields={{ id: guardian.id }}
+                        entityLabel="responsável"
+                        entityName={guardian.name}
+                        warning={
+                          guardian.children.length > 0
+                            ? "Os vínculos com as crianças serão removidos, mas o histórico delas (presença, medicamentos etc.) é preservado."
+                            : undefined
+                        }
+                      />
                     </td>
                   </tr>
                 ))}

@@ -12,6 +12,7 @@ const findUniqueUser = vi.fn();
 const findFirstUser = vi.fn();
 const createUser = vi.fn();
 const updateUser = vi.fn();
+const deleteUser = vi.fn();
 const recordAuditLog = vi.fn();
 const notifyAdmins = vi.fn();
 const toggleUserActive = vi.fn();
@@ -31,6 +32,7 @@ beforeEach(() => {
         findFirst: (...args: unknown[]) => findFirstUser(...args),
         create: (...args: unknown[]) => createUser(...args),
         update: (...args: unknown[]) => updateUser(...args),
+        delete: (...args: unknown[]) => deleteUser(...args),
       },
     },
   }));
@@ -40,6 +42,7 @@ beforeEach(() => {
   findFirstUser.mockReset();
   createUser.mockReset().mockResolvedValue({ id: "caregiver-1", name: "Ana Souza" });
   updateUser.mockReset().mockResolvedValue(undefined);
+  deleteUser.mockReset().mockResolvedValue(undefined);
   recordAuditLog.mockReset().mockResolvedValue(undefined);
   notifyAdmins.mockReset().mockResolvedValue(undefined);
   toggleUserActive.mockReset().mockResolvedValue(true);
@@ -148,5 +151,47 @@ describe("toggleCaregiverActiveAction", () => {
 
     await expect(toggleCaregiverActiveAction(formData({ id: "guardian-1" }))).rejects.toThrow("Cuidadora não encontrada.");
     expect(toggleUserActive).not.toHaveBeenCalled();
+  });
+});
+
+describe("deleteCaregiverAction", () => {
+  it("recusa excluir um usuário que não é cuidadora", async () => {
+    findFirstUser.mockResolvedValueOnce(null);
+    const { deleteCaregiverAction } = await import("./actions");
+
+    await expect(deleteCaregiverAction(formData({ id: "guardian-1", confirmName: "Ana Souza" }))).rejects.toThrow(
+      "Cuidadora não encontrada."
+    );
+    expect(deleteUser).not.toHaveBeenCalled();
+  });
+
+  it("recusa quando o nome digitado não confere exatamente", async () => {
+    findFirstUser.mockResolvedValueOnce({ id: "caregiver-1", role: "CAREGIVER", name: "Ana Souza" });
+    const { deleteCaregiverAction } = await import("./actions");
+
+    await expect(deleteCaregiverAction(formData({ id: "caregiver-1", confirmName: "ana souza" }))).rejects.toThrow(
+      "O nome digitado não confere. Exclusão cancelada."
+    );
+    expect(deleteUser).not.toHaveBeenCalled();
+  });
+
+  it("CASO 1: audita antes de apagar e remove só a conta — os registros que ela fez continuam no banco (SetNull, ver schema)", async () => {
+    findFirstUser.mockResolvedValueOnce({ id: "caregiver-1", role: "CAREGIVER", name: "Ana Souza", email: "ana@turminhadatata.com.br" });
+    const callOrder: string[] = [];
+    recordAuditLog.mockImplementationOnce(async () => {
+      callOrder.push("audit");
+    });
+    deleteUser.mockImplementationOnce(async () => {
+      callOrder.push("delete");
+    });
+
+    const { deleteCaregiverAction } = await import("./actions");
+    await deleteCaregiverAction(formData({ id: "caregiver-1", confirmName: "Ana Souza" }));
+
+    expect(recordAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({ actorUserId: "admin-1", action: "DELETE", entity: "User", entityId: "caregiver-1" })
+    );
+    expect(deleteUser).toHaveBeenCalledWith({ where: { id: "caregiver-1" } });
+    expect(callOrder).toEqual(["audit", "delete"]);
   });
 });

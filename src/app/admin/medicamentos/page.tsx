@@ -71,7 +71,7 @@ export default async function AdminMedicationsPage({
                   </p>
                   <p className="text-xs text-tata-ink-soft">
                     {auth.dosage}
-                    {auth.scheduleTime ? ` — ${auth.scheduleTime}` : ""} · solicitado por {auth.authorizedBy.name}
+                    {auth.scheduleTime ? ` — ${auth.scheduleTime}` : ""} · solicitado por {auth.authorizedBy?.name ?? "—"}
                   </p>
                   <p className="text-xs text-tata-ink-muted">
                     {dateFmt.format(auth.validFrom)} {auth.validUntil ? `→ ${dateFmt.format(auth.validUntil)}` : "(sem data de término)"}

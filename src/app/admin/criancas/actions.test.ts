@@ -10,6 +10,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const requireAdmin = vi.fn();
 const findUniqueChild = vi.fn();
 const updateChild = vi.fn();
+const deleteChild = vi.fn();
 const recordAuditLog = vi.fn();
 const redirect = vi.fn();
 
@@ -25,6 +26,7 @@ beforeEach(() => {
       child: {
         findUnique: (...args: unknown[]) => findUniqueChild(...args),
         update: (...args: unknown[]) => updateChild(...args),
+        delete: (...args: unknown[]) => deleteChild(...args),
       },
     },
   }));
@@ -32,6 +34,7 @@ beforeEach(() => {
   requireAdmin.mockReset().mockResolvedValue({ id: "admin-1" });
   findUniqueChild.mockReset();
   updateChild.mockReset().mockResolvedValue(undefined);
+  deleteChild.mockReset().mockResolvedValue(undefined);
   recordAuditLog.mockReset().mockResolvedValue(undefined);
   redirect.mockReset();
 });
@@ -154,5 +157,50 @@ describe("updateChildAction", () => {
 
     const data = (updateChild.mock.calls[0][0] as { data: { inactivatedAt: Date | null } }).data;
     expect(data.inactivatedAt).toBeNull();
+  });
+});
+
+describe("deleteChildAction", () => {
+  const childWithHistory = { id: "child-1", fullName: "Maria Eduarda Silva", preferredName: "Maria", birthDate: new Date(2020, 0, 1), status: "ACTIVE", monthlyFee: { toString: () => "900" } };
+
+  it("recusa quando a criança não existe", async () => {
+    findUniqueChild.mockResolvedValueOnce(null);
+    const { deleteChildAction } = await import("./actions");
+
+    await expect(deleteChildAction(formData({ id: "child-1", confirmName: "Maria Eduarda Silva" }))).rejects.toThrow(
+      "Criança não encontrada."
+    );
+    expect(deleteChild).not.toHaveBeenCalled();
+  });
+
+  it("recusa quando o nome digitado não confere exatamente", async () => {
+    findUniqueChild.mockResolvedValueOnce(childWithHistory);
+    const { deleteChildAction } = await import("./actions");
+
+    await expect(deleteChildAction(formData({ id: "child-1", confirmName: "Maria" }))).rejects.toThrow(
+      "O nome digitado não confere. Exclusão cancelada."
+    );
+    expect(deleteChild).not.toHaveBeenCalled();
+  });
+
+  it("CASO 1: audita antes de apagar (nunca silenciosamente) e depois exclui — cascata em prisma/schema.prisma cuida do resto", async () => {
+    findUniqueChild.mockResolvedValueOnce(childWithHistory);
+    const callOrder: string[] = [];
+    recordAuditLog.mockImplementationOnce(async () => {
+      callOrder.push("audit");
+    });
+    deleteChild.mockImplementationOnce(async () => {
+      callOrder.push("delete");
+    });
+
+    const { deleteChildAction } = await import("./actions");
+    await deleteChildAction(formData({ id: "child-1", confirmName: "Maria Eduarda Silva" }));
+
+    expect(recordAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({ actorUserId: "admin-1", action: "DELETE", entity: "Child", entityId: "child-1" })
+    );
+    expect(deleteChild).toHaveBeenCalledWith({ where: { id: "child-1" } });
+    expect(callOrder).toEqual(["audit", "delete"]);
+    expect(redirect).toHaveBeenCalledWith("/admin/criancas");
   });
 });

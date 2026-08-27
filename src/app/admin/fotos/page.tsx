@@ -66,7 +66,7 @@ export default async function AdminPhotosPage({
                 </p>
                 {photo.caption && <p className="text-xs text-tata-ink-soft line-clamp-2">{photo.caption}</p>}
                 <p className="text-[10px] text-tata-ink-muted">
-                  {dateTimeFmt.format(photo.takenAt)} · {photo.uploadedBy.name}
+                  {dateTimeFmt.format(photo.takenAt)} · {photo.uploadedBy?.name ?? "—"}
                 </p>
 
                 <details className="mt-1">

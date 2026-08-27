@@ -100,7 +100,7 @@ export async function getOperationalTimeline(start: Date, end: Date, limit = 200
   for (const m of meals) {
     entries.push({
       time: m.time,
-      actorName: m.recordedBy.name,
+      actorName: m.recordedBy?.name ?? "—",
       childName: childLabel(m.child),
       action: `Registrou alimentação: ${MEAL_TYPE_LABELS[m.mealType]} — ${CONSUMPTION_LABELS[m.consumption]}.`,
     });
@@ -108,7 +108,7 @@ export async function getOperationalTimeline(start: Date, end: Date, limit = 200
 
   for (const s of sleeps) {
     if (s.startTime >= start && s.startTime < end) {
-      entries.push({ time: s.startTime, actorName: s.startedBy.name, childName: childLabel(s.child), action: "Iniciou soneca." });
+      entries.push({ time: s.startTime, actorName: s.startedBy?.name ?? "—", childName: childLabel(s.child), action: "Iniciou soneca." });
     }
     if (s.endTime && s.endTime >= start && s.endTime < end) {
       entries.push({ time: s.endTime, actorName: s.endedBy?.name ?? "—", childName: childLabel(s.child), action: "Finalizou soneca." });
@@ -116,21 +116,21 @@ export async function getOperationalTimeline(start: Date, end: Date, limit = 200
   }
 
   for (const h of hygiene) {
-    entries.push({ time: h.time, actorName: h.recordedBy.name, childName: childLabel(h.child), action: `Registrou higiene: ${HYGIENE_TYPE_LABELS[h.type]}.` });
+    entries.push({ time: h.time, actorName: h.recordedBy?.name ?? "—", childName: childLabel(h.child), action: `Registrou higiene: ${HYGIENE_TYPE_LABELS[h.type]}.` });
   }
 
   for (const mo of moods) {
-    entries.push({ time: mo.time, actorName: mo.recordedBy.name, childName: childLabel(mo.child), action: `Registrou humor: ${MOOD_LABELS[mo.mood]}.` });
+    entries.push({ time: mo.time, actorName: mo.recordedBy?.name ?? "—", childName: childLabel(mo.child), action: `Registrou humor: ${MOOD_LABELS[mo.mood]}.` });
   }
 
   for (const hl of healthLogs) {
-    entries.push({ time: hl.time, actorName: hl.recordedBy.name, childName: childLabel(hl.child), action: "Registrou observação de saúde." });
+    entries.push({ time: hl.time, actorName: hl.recordedBy?.name ?? "—", childName: childLabel(hl.child), action: "Registrou observação de saúde." });
   }
 
   for (const inc of incidents) {
     entries.push({
       time: inc.time,
-      actorName: inc.recordedBy.name,
+      actorName: inc.recordedBy?.name ?? "—",
       childName: childLabel(inc.child),
       action: `Registrou ocorrência: ${INCIDENT_TYPE_LABELS[inc.type]}.`,
     });
@@ -139,21 +139,21 @@ export async function getOperationalTimeline(start: Date, end: Date, limit = 200
   for (const md of medicationAdmins) {
     entries.push({
       time: md.time,
-      actorName: md.administeredBy.name,
+      actorName: md.administeredBy?.name ?? "—",
       childName: childLabel(md.child),
       action: `Confirmou administração de ${md.authorization.medication}.`,
     });
   }
 
   for (const p of photos) {
-    entries.push({ time: p.takenAt, actorName: p.uploadedBy.name, childName: childLabel(p.child), action: "Publicou uma foto." });
+    entries.push({ time: p.takenAt, actorName: p.uploadedBy?.name ?? "—", childName: childLabel(p.child), action: "Publicou uma foto." });
   }
 
   for (const act of activities) {
     const names = act.children.map((c) => childLabel(c.child)).join(", ");
     entries.push({
       time: act.time,
-      actorName: act.recordedBy.name,
+      actorName: act.recordedBy?.name ?? "—",
       childName: names || null,
       action: `Registrou atividade: ${ACTIVITY_CATEGORY_LABELS[act.category]}.`,
     });
@@ -162,7 +162,7 @@ export async function getOperationalTimeline(start: Date, end: Date, limit = 200
   for (const pay of payments) {
     entries.push({
       time: pay.paidAt,
-      actorName: pay.recordedBy.name,
+      actorName: pay.recordedBy?.name ?? "—",
       childName: childLabel(pay.invoice.child),
       action: `Registrou pagamento de ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(pay.amount))}.`,
     });
@@ -240,7 +240,7 @@ export async function getAuditLogEntries(start: Date, end: Date): Promise<AuditE
     const childId = log.entity === "Child" ? log.entityId : typeof data.childId === "string" ? data.childId : null;
     return {
       time: log.createdAt,
-      actorName: log.actor.name,
+      actorName: log.actor?.name ?? "—",
       childName: childId ? childNameById.get(childId) ?? null : null,
       action: describeAuditLog(log),
     };

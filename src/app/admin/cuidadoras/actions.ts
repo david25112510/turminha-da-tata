@@ -128,6 +128,35 @@ export async function toggleCaregiverActiveAction(formData: FormData) {
   revalidatePath(`/admin/cuidadoras/${id}`);
 }
 
+/**
+ * Exclusão permanente — remove só a conta. Cada registro de rotina que ela já fez (refeição, sono,
+ * higiene, água, humor, atividade, medicamento administrado, foto, ocorrência) e cada AuditLog em
+ * que ela é a autora **permanecem intactos** — é dado da criança e da trilha de auditoria, não da
+ * cuidadora. Só perdem a referência de "quem fez" (SetNull, ver prisma/schema.prisma), igual a como
+ * o GitHub trata comentários de uma conta apagada.
+ */
+export async function deleteCaregiverAction(formData: FormData) {
+  const admin = await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  const confirmName = String(formData.get("confirmName") ?? "").trim();
+
+  const caregiver = await prisma.user.findFirst({ where: { id, role: "CAREGIVER" } });
+  if (!caregiver) throw new Error("Cuidadora não encontrada.");
+  if (confirmName !== caregiver.name) throw new Error("O nome digitado não confere. Exclusão cancelada.");
+
+  await recordAuditLog({
+    actorUserId: admin.id,
+    action: "DELETE",
+    entity: "User",
+    entityId: id,
+    oldData: { name: caregiver.name, email: caregiver.email, role: caregiver.role },
+  });
+
+  await prisma.user.delete({ where: { id } });
+
+  revalidatePath("/admin/cuidadoras");
+}
+
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
 const ALLOWED_PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 

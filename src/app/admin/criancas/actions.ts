@@ -199,3 +199,38 @@ export async function uploadChildProfilePhotoAction(formData: FormData) {
   revalidatePath(`/admin/criancas/${id}`);
   revalidatePath(`/admin/criancas/${id}/editar`);
 }
+
+/**
+ * Exclusão permanente — apaga a criança e, em cascata (ver prisma/schema.prisma), TODO o histórico
+ * dela: presença, refeições, sono, higiene, água, humor, atividades, saúde, medicamentos (autorização
+ * e administração), ocorrências, fotos, observações, vínculos com responsáveis, faturas e pagamentos,
+ * aceites de contrato/consentimento. Decisão explícita do proprietário do sistema — sem retenção.
+ */
+export async function deleteChildAction(formData: FormData) {
+  const admin = await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  const confirmName = String(formData.get("confirmName") ?? "").trim();
+
+  const child = await prisma.child.findUnique({ where: { id } });
+  if (!child) throw new Error("Criança não encontrada.");
+  if (confirmName !== child.fullName) throw new Error("O nome digitado não confere. Exclusão cancelada.");
+
+  await recordAuditLog({
+    actorUserId: admin.id,
+    action: "DELETE",
+    entity: "Child",
+    entityId: id,
+    oldData: {
+      fullName: child.fullName,
+      preferredName: child.preferredName,
+      birthDate: child.birthDate,
+      status: child.status,
+      monthlyFee: child.monthlyFee.toString(),
+    },
+  });
+
+  await prisma.child.delete({ where: { id } });
+
+  revalidatePath("/admin/criancas");
+  redirect("/admin/criancas");
+}

@@ -156,7 +156,7 @@ model Guardian {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  user             User?                    @relation(fields: [userId], references: [id])
+  user             User?                    @relation(fields: [userId], references: [id], onDelete: SetNull)
   children         GuardianChild[]
   authorizedPeople AuthorizedPickupPerson[]
 
@@ -223,7 +223,11 @@ model AuthorizedPickupPerson {
   createdAt DateTime @default(now())
 
   child        Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
-  authorizedBy Guardian @relation(fields: [authorizedByGuardianId], references: [id])
+  // Cascade (não SetNull): esta é uma pessoa cadastrada PELO guardian, não um dado independente da
+  // criança — se o responsável que a cadastrou for excluído, ela deixa de fazer sentido sozinha.
+  // Attendance, que referencia esta pessoa como quem buscou a criança num dia específico, usa SetNull
+  // (não Cascade) para nunca perder esse registro por causa desta cascata.
+  authorizedBy Guardian @relation(fields: [authorizedByGuardianId], references: [id], onDelete: Cascade)
 
   attendanceCheckIns  Attendance[] @relation("AttendanceCheckInAuthorizedPerson")
   attendanceCheckOuts Attendance[] @relation("AttendanceCheckOutAuthorizedPerson")
@@ -259,13 +263,16 @@ model Attendance {
   updatedAt DateTime @updatedAt
 
   child              Child @relation(fields: [childId], references: [id], onDelete: Cascade)
-  checkInReceivedBy  User? @relation("AttendanceCheckInBy", fields: [checkInReceivedById], references: [id])
-  checkOutReceivedBy User? @relation("AttendanceCheckOutBy", fields: [checkOutReceivedById], references: [id])
+  // SetNull em toda esta seção: Attendance é dado da CRIANÇA (chegada/saída daquele dia) — não pode
+  // sumir nem travar a exclusão de quem participou dela. O snapshot de nome/parentesco já gravado em
+  // checkInPersonName/checkInPersonRelation preserva a informação legível mesmo que a referência suma.
+  checkInReceivedBy  User? @relation("AttendanceCheckInBy", fields: [checkInReceivedById], references: [id], onDelete: SetNull)
+  checkOutReceivedBy User? @relation("AttendanceCheckOutBy", fields: [checkOutReceivedById], references: [id], onDelete: SetNull)
 
-  checkInGuardian                Guardian?               @relation("AttendanceCheckInGuardian", fields: [checkInGuardianId], references: [id])
-  checkInAuthorizedPickupPerson  AuthorizedPickupPerson? @relation("AttendanceCheckInAuthorizedPerson", fields: [checkInAuthorizedPickupPersonId], references: [id])
-  checkOutGuardian               Guardian?               @relation("AttendanceCheckOutGuardian", fields: [checkOutGuardianId], references: [id])
-  checkOutAuthorizedPickupPerson AuthorizedPickupPerson? @relation("AttendanceCheckOutAuthorizedPerson", fields: [checkOutAuthorizedPickupPersonId], references: [id])
+  checkInGuardian                Guardian?               @relation("AttendanceCheckInGuardian", fields: [checkInGuardianId], references: [id], onDelete: SetNull)
+  checkInAuthorizedPickupPerson  AuthorizedPickupPerson? @relation("AttendanceCheckInAuthorizedPerson", fields: [checkInAuthorizedPickupPersonId], references: [id], onDelete: SetNull)
+  checkOutGuardian               Guardian?               @relation("AttendanceCheckOutGuardian", fields: [checkOutGuardianId], references: [id], onDelete: SetNull)
+  checkOutAuthorizedPickupPerson AuthorizedPickupPerson? @relation("AttendanceCheckOutAuthorizedPerson", fields: [checkOutAuthorizedPickupPersonId], references: [id], onDelete: SetNull)
 
   @@unique([childId, date])
   @@index([date])
@@ -279,7 +286,7 @@ model HomeDeparture {
   time       DateTime @default(now())
 
   child    Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
-  guardian Guardian @relation(fields: [guardianId], references: [id])
+  guardian Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
 
   @@index([childId])
   @@index([guardianId])
@@ -309,10 +316,10 @@ model MealRecord {
   mealType     MealType
   consumption  ConsumptionLevel
   notes        String?
-  recordedById String
+  recordedById String?
 
   child      Child @relation(fields: [childId], references: [id], onDelete: Cascade)
-  recordedBy User  @relation(fields: [recordedById], references: [id])
+  recordedBy User? @relation(fields: [recordedById], references: [id], onDelete: SetNull)
 
   @@index([childId, time])
   @@index([time])
@@ -325,12 +332,12 @@ model SleepRecord {
   startTime DateTime  @default(now())
   endTime   DateTime?
 
-  startedById String
+  startedById String?
   endedById   String?
 
   child     Child @relation(fields: [childId], references: [id], onDelete: Cascade)
-  startedBy User  @relation("SleepStartedBy", fields: [startedById], references: [id])
-  endedBy   User? @relation("SleepEndedBy", fields: [endedById], references: [id])
+  startedBy User? @relation("SleepStartedBy", fields: [startedById], references: [id], onDelete: SetNull)
+  endedBy   User? @relation("SleepEndedBy", fields: [endedById], references: [id], onDelete: SetNull)
 
   @@index([childId, startTime])
   @@index([startTime])
@@ -364,10 +371,10 @@ model HygieneRecord {
   type         HygieneType
   diaperType   DiaperType?
   notes        String?
-  recordedById String
+  recordedById String?
 
   child      Child @relation(fields: [childId], references: [id], onDelete: Cascade)
-  recordedBy User  @relation(fields: [recordedById], references: [id])
+  recordedBy User? @relation(fields: [recordedById], references: [id], onDelete: SetNull)
 
   @@index([childId, time])
   @@index([time])
@@ -386,10 +393,10 @@ model WaterRecord {
   time         DateTime    @default(now())
   amount       WaterAmount
   notes        String?
-  recordedById String
+  recordedById String?
 
   child      Child @relation(fields: [childId], references: [id], onDelete: Cascade)
-  recordedBy User  @relation(fields: [recordedById], references: [id])
+  recordedBy User? @relation(fields: [recordedById], references: [id], onDelete: SetNull)
 
   @@index([childId, time])
   @@index([time])
@@ -417,9 +424,9 @@ model Activity {
   category     ActivityCategory
   description  String?
   notes        String?
-  recordedById String
+  recordedById String?
 
-  recordedBy User            @relation(fields: [recordedById], references: [id])
+  recordedBy User?           @relation(fields: [recordedById], references: [id], onDelete: SetNull)
   children   ActivityChild[]
   photos     Photo[]
 
@@ -458,10 +465,10 @@ model MoodRecord {
   time         DateTime @default(now())
   mood         Mood
   notes        String?
-  recordedById String
+  recordedById String?
 
   child      Child @relation(fields: [childId], references: [id], onDelete: Cascade)
-  recordedBy User  @relation(fields: [recordedById], references: [id])
+  recordedBy User? @relation(fields: [recordedById], references: [id], onDelete: SetNull)
 
   @@index([childId, time])
   @@index([time])
@@ -493,10 +500,10 @@ model HealthLog {
   temperature  Decimal? @db.Decimal(4, 1)
   symptoms     String?
   notes        String?
-  recordedById String
+  recordedById String?
 
   child      Child @relation(fields: [childId], references: [id], onDelete: Cascade)
-  recordedBy User  @relation(fields: [recordedById], references: [id])
+  recordedBy User? @relation(fields: [recordedById], references: [id], onDelete: SetNull)
 
   @@index([childId, time])
   @@index([time])
@@ -521,7 +528,7 @@ model MedicationAuthorization {
   dosage                 String
   scheduleTime           String?
   instructions           String?
-  authorizedByGuardianId String
+  authorizedByGuardianId String?
   documentUrl            String?
   validFrom              DateTime
   validUntil             DateTime?
@@ -534,9 +541,11 @@ model MedicationAuthorization {
 
   createdAt DateTime @default(now())
 
+  // SetNull em ambas: uma autorização de medicamento — e o histórico real de administração que ela
+  // acumula — é dado da CRIANÇA, não do responsável que solicitou nem do admin que revisou.
   child           Child                      @relation(fields: [childId], references: [id], onDelete: Cascade)
-  authorizedBy    Guardian                   @relation(fields: [authorizedByGuardianId], references: [id])
-  reviewedBy      User?                      @relation("MedicationAuthorizationReviewedBy", fields: [reviewedByUserId], references: [id])
+  authorizedBy    Guardian?                  @relation(fields: [authorizedByGuardianId], references: [id], onDelete: SetNull)
+  reviewedBy      User?                      @relation("MedicationAuthorizationReviewedBy", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
   administrations MedicationAdministration[]
 
   @@index([childId, active])
@@ -549,12 +558,12 @@ model MedicationAdministration {
   authorizationId  String
   childId          String
   time             DateTime @default(now())
-  administeredById String
+  administeredById String?
   notes            String?
 
   authorization  MedicationAuthorization @relation(fields: [authorizationId], references: [id], onDelete: Cascade)
   child          Child                   @relation(fields: [childId], references: [id], onDelete: Cascade)
-  administeredBy User                    @relation(fields: [administeredById], references: [id])
+  administeredBy User?                   @relation(fields: [administeredById], references: [id], onDelete: SetNull)
 
   @@index([childId, time])
   @@index([time])
@@ -590,8 +599,8 @@ model ChildNote {
   createdAt DateTime @default(now())
 
   child          Child     @relation(fields: [childId], references: [id], onDelete: Cascade)
-  authorUser     User?     @relation("ChildNoteAuthorUser", fields: [authorUserId], references: [id])
-  authorGuardian Guardian? @relation("ChildNoteAuthorGuardian", fields: [authorGuardianId], references: [id])
+  authorUser     User?     @relation("ChildNoteAuthorUser", fields: [authorUserId], references: [id], onDelete: SetNull)
+  authorGuardian Guardian? @relation("ChildNoteAuthorGuardian", fields: [authorGuardianId], references: [id], onDelete: SetNull)
 
   @@index([childId, time])
   @@index([childId, authorRole, status])
@@ -616,14 +625,14 @@ model Incident {
   type         IncidentType
   description  String
   actionsTaken String?
-  recordedById String
+  recordedById String?
 
   guardianNotifiedId String?
   notifiedAt         DateTime?
 
   child            Child     @relation(fields: [childId], references: [id], onDelete: Cascade)
-  recordedBy       User      @relation(fields: [recordedById], references: [id])
-  guardianNotified Guardian? @relation(fields: [guardianNotifiedId], references: [id])
+  recordedBy       User?     @relation(fields: [recordedById], references: [id], onDelete: SetNull)
+  guardianNotified Guardian? @relation(fields: [guardianNotifiedId], references: [id], onDelete: SetNull)
   photos           Photo[]
 
   @@index([childId, time])
@@ -640,12 +649,12 @@ model Photo {
   url          String
   caption      String?
   takenAt      DateTime @default(now())
-  uploadedById String
+  uploadedById String?
 
   child      Child     @relation(fields: [childId], references: [id], onDelete: Cascade)
   activity   Activity? @relation(fields: [activityId], references: [id])
   incident   Incident? @relation(fields: [incidentId], references: [id])
-  uploadedBy User      @relation(fields: [uploadedById], references: [id])
+  uploadedBy User?     @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
 
   @@index([childId, takenAt])
   @@index([takenAt])
@@ -681,12 +690,12 @@ model Announcement {
   targetGuardianId String?
   targetChildId    String?
 
-  createdById String
+  createdById String?
   createdAt   DateTime @default(now())
 
-  createdBy      User      @relation(fields: [createdById], references: [id])
-  targetGuardian Guardian? @relation(fields: [targetGuardianId], references: [id])
-  targetChild    Child?    @relation(fields: [targetChildId], references: [id])
+  createdBy      User?     @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  targetGuardian Guardian? @relation(fields: [targetGuardianId], references: [id], onDelete: SetNull)
+  targetChild    Child?    @relation(fields: [targetChildId], references: [id], onDelete: SetNull)
 
   @@index([target])
   @@index([type, eventDate])
@@ -825,10 +834,10 @@ model Payment {
   method    String?
   notes     String?
 
-  recordedById String
+  recordedById String?
 
   invoice    MonthlyInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  recordedBy User           @relation(fields: [recordedById], references: [id])
+  recordedBy User?          @relation(fields: [recordedById], references: [id], onDelete: SetNull)
 
   @@index([paidAt])
   @@index([invoiceId])
@@ -903,7 +912,7 @@ model AdminNotification {
 
 model AuditLog {
   id          String   @id @default(cuid())
-  actorUserId String
+  actorUserId String?
   action      String
   entity      String
   entityId    String
@@ -913,7 +922,9 @@ model AuditLog {
   userAgent   String?
   createdAt   DateTime @default(now())
 
-  actor User @relation(fields: [actorUserId], references: [id])
+  // SetNull, nunca Cascade nem Restrict: a auditoria não pode sumir nem travar a exclusão de quem a
+  // gerou — é exatamente o registro que precisa sobreviver ao autor para provar o que aconteceu.
+  actor User? @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
 
   @@index([entity, entityId])
   @@index([createdAt])
