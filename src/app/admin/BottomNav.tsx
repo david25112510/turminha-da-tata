@@ -18,6 +18,7 @@ const MORE_ITEMS = [
   { href: "/admin/fotos", icon: "📷", label: "Fotos" },
   { href: "/admin/medicamentos", icon: "💊", label: "Medicamentos" },
   { href: "/admin/observacoes", icon: "📝", label: "Observações" },
+  { href: "/admin/solicitacoes", icon: "🆕", label: "Solicitações" },
   { href: "/admin/comunicados", icon: "📣", label: "Comunicados" },
   { href: "/admin/relatorios", icon: "📊", label: "Relatórios" },
   { href: "/admin/notificacoes", icon: "🔔", label: "Notificações" },

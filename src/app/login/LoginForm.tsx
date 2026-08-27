@@ -130,6 +130,15 @@ export function LoginForm() {
               {pending ? "Entrando..." : state?.mfaRequired ? "Confirmar código" : "Entrar"}
             </button>
 
+            {!state?.mfaRequired && (
+              <p className="text-center text-xs text-tata-ink-muted">
+                Ainda não tem conta?{" "}
+                <Link href="/cadastro" className="font-semibold text-tata-green-dark hover:underline">
+                  Criar conta
+                </Link>
+              </p>
+            )}
+
             <p className="text-center text-xs text-tata-ink-muted">
               Acesso restrito à equipe da Turminha da Tata
             </p>

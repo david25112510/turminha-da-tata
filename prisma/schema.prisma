@@ -60,6 +60,8 @@ model User {
   contractAcceptancesMade          ContractAcceptance[]
   consentVersionsCreated           ConsentVersion[]
   consentAcceptancesMade           ConsentAcceptance[]
+  guardianInvitesCreated           GuardianInvite[]           @relation("GuardianInviteCreatedBy")
+  signupRequestsReviewed           SignupRequest[]            @relation("SignupRequestReviewedBy")
 
   @@map("users")
 }
@@ -139,6 +141,7 @@ model Child {
   notifications             Notification[]
   invoices                  MonthlyInvoice[]
   contractAcceptances       ContractAcceptance[]
+  guardianInvites           GuardianInvite[]
 
   @@map("children")
 }
@@ -881,6 +884,81 @@ model PasswordResetToken {
 }
 
 // ---------------------------------------------------------------------------
+// Auto-cadastro (cuidadora/responsável) com aprovação do admin
+// ---------------------------------------------------------------------------
+
+enum GuardianInviteStatus {
+  PENDING
+  USED
+  EXPIRED
+  REVOKED
+}
+
+/// Convite para um responsável se auto-cadastrar vinculado a UMA criança específica — gerado pelo
+/// admin na ficha da criança e repassado pessoalmente à família (não é um link público). Só o hash
+/// do código fica no banco (mesmo padrão de PasswordResetToken); o código bruto só existe na tela
+/// no momento em que é gerado, nunca mais recuperável depois.
+model GuardianInvite {
+  id              String               @id @default(cuid())
+  childId         String
+  codeHash        String               @unique
+  status          GuardianInviteStatus @default(PENDING)
+  expiresAt       DateTime
+  createdByUserId String?
+  usedAt          DateTime?
+
+  createdAt DateTime @default(now())
+
+  child          Child           @relation(fields: [childId], references: [id], onDelete: Cascade)
+  createdBy      User?           @relation("GuardianInviteCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  signupRequests SignupRequest[]
+
+  @@index([childId])
+  @@map("guardian_invites")
+}
+
+enum SignupRequestRole {
+  CAREGIVER
+  GUARDIAN
+}
+
+enum SignupRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+/// Solicitação de conta enviada pela tela pública /cadastro — nunca cria User diretamente. Só vira
+/// conta de verdade (User, e para GUARDIAN também Guardian+GuardianChild) quando o admin aprova em
+/// /admin/solicitacoes. A senha já vem hasheada aqui (nunca em texto plano, mesmo antes da aprovação).
+model SignupRequest {
+  id           String            @id @default(cuid())
+  role         SignupRequestRole
+  name         String
+  email        String
+  passwordHash String
+  phone        String?
+  cpf          String?
+
+  // Só preenchidos quando role == GUARDIAN
+  inviteId     String?
+  relationship Relationship?
+
+  status           SignupRequestStatus @default(PENDING)
+  reviewedByUserId String?
+  reviewedAt       DateTime?
+  reviewNotes      String?
+
+  createdAt DateTime @default(now())
+
+  invite     GuardianInvite? @relation(fields: [inviteId], references: [id], onDelete: SetNull)
+  reviewedBy User?           @relation("SignupRequestReviewedBy", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@map("signup_requests")
+}
+
+// ---------------------------------------------------------------------------
 // Notificações administrativas
 // ---------------------------------------------------------------------------
 
@@ -890,6 +968,7 @@ enum AdminNotificationType {
   INVOICE_OVERDUE
   CAREGIVER_CREATED
   OBSERVATION
+  SIGNUP_REQUEST
 }
 
 model AdminNotification {

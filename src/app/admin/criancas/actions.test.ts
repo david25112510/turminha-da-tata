@@ -13,6 +13,7 @@ const updateChild = vi.fn();
 const deleteChild = vi.fn();
 const recordAuditLog = vi.fn();
 const redirect = vi.fn();
+const createGuardianInvite = vi.fn();
 
 beforeEach(() => {
   vi.resetModules();
@@ -21,6 +22,7 @@ beforeEach(() => {
   vi.doMock("@/lib/authz", () => ({ requireAdmin: (...args: unknown[]) => requireAdmin(...args) }));
   vi.doMock("@/lib/audit-log", () => ({ recordAuditLog: (...args: unknown[]) => recordAuditLog(...args) }));
   vi.doMock("@/lib/storage", () => ({ uploadFile: vi.fn() }));
+  vi.doMock("@/lib/guardian-invite", () => ({ createGuardianInvite: (...args: unknown[]) => createGuardianInvite(...args) }));
   vi.doMock("@/lib/prisma", () => ({
     prisma: {
       child: {
@@ -37,6 +39,7 @@ beforeEach(() => {
   deleteChild.mockReset().mockResolvedValue(undefined);
   recordAuditLog.mockReset().mockResolvedValue(undefined);
   redirect.mockReset();
+  createGuardianInvite.mockReset().mockResolvedValue({ id: "invite-1", code: "A1B2C3D4" });
 });
 
 const baseChild = {
@@ -202,5 +205,30 @@ describe("deleteChildAction", () => {
     expect(deleteChild).toHaveBeenCalledWith({ where: { id: "child-1" } });
     expect(callOrder).toEqual(["audit", "delete"]);
     expect(redirect).toHaveBeenCalledWith("/admin/criancas");
+  });
+});
+
+describe("generateGuardianInviteAction", () => {
+  it("recusa quando a criança não existe", async () => {
+    findUniqueChild.mockResolvedValueOnce(null);
+    const { generateGuardianInviteAction } = await import("./actions");
+
+    const result = await generateGuardianInviteAction(undefined, formData({ childId: "child-1" }));
+
+    expect(result).toEqual({ error: "Criança não encontrada." });
+    expect(createGuardianInvite).not.toHaveBeenCalled();
+  });
+
+  it("CASO 1: gera o convite e devolve o código bruto (só existe nesta resposta)", async () => {
+    findUniqueChild.mockResolvedValueOnce({ id: "child-1", fullName: "Maria" });
+    const { generateGuardianInviteAction } = await import("./actions");
+
+    const result = await generateGuardianInviteAction(undefined, formData({ childId: "child-1" }));
+
+    expect(result).toEqual({ code: "A1B2C3D4" });
+    expect(createGuardianInvite).toHaveBeenCalledWith("child-1", "admin-1");
+    expect(recordAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({ actorUserId: "admin-1", action: "CREATE", entity: "GuardianInvite", entityId: "invite-1" })
+    );
   });
 });

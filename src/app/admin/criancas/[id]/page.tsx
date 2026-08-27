@@ -9,6 +9,7 @@ import { todayRange, formatTime, formatDateTime } from "@/lib/date";
 import { DeleteConfirmDialog } from "@/components/tata/DeleteConfirmDialog";
 import { addAuthorizedPersonAction, toggleAuthorizedPersonStatusAction } from "./actions";
 import { deleteChildAction } from "../actions";
+import { GenerateInviteButton } from "./GenerateInviteButton";
 
 const inputClass =
   "min-h-11 border border-tata-border rounded-xl px-3 py-2 text-sm outline-none focus:border-tata-green transition-colors bg-tata-surface";
@@ -24,6 +25,7 @@ export default async function ChildDetailPage({ params }: { params: Promise<{ id
       guardians: { include: { guardian: true } },
       authorizedPickupPeople: { orderBy: { createdAt: "desc" } },
       photos: { orderBy: { takenAt: "desc" }, take: 12 },
+      guardianInvites: { where: { status: "PENDING" }, orderBy: { createdAt: "desc" } },
     },
   });
   if (!child) notFound();
@@ -106,6 +108,18 @@ export default async function ChildDetailPage({ params }: { params: Promise<{ id
             ))}
           </ul>
         )}
+
+        <div className="h-px bg-tata-border" />
+
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-semibold text-tata-ink-muted uppercase tracking-wide">Convidar responsável</span>
+          {child.guardianInvites.length > 0 && (
+            <p className="text-xs text-tata-ink-muted">
+              {child.guardianInvites.length} convite(s) pendente(s) — gerar um novo não cancela os anteriores.
+            </p>
+          )}
+          <GenerateInviteButton childId={childId} />
+        </div>
       </div>
 
       <div className={cardClass}>

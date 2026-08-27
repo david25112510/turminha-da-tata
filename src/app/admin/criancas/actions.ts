@@ -8,6 +8,7 @@ import { WEEKDAYS } from "@/lib/labels";
 import { requireAdmin } from "@/lib/authz";
 import { recordAuditLog } from "@/lib/audit-log";
 import { uploadFile } from "@/lib/storage";
+import { createGuardianInvite } from "@/lib/guardian-invite";
 
 export async function createChildAction(formData: FormData) {
   const admin = await requireAdmin();
@@ -198,6 +199,37 @@ export async function uploadChildProfilePhotoAction(formData: FormData) {
 
   revalidatePath(`/admin/criancas/${id}`);
   revalidatePath(`/admin/criancas/${id}/editar`);
+}
+
+export type GenerateGuardianInviteState = { code: string } | { error: string } | undefined;
+
+/**
+ * Gera um convite de responsável para esta criança — o código bruto só existe no retorno desta
+ * chamada (ver src/lib/guardian-invite.ts), o admin precisa copiar/anotar e repassar pessoalmente
+ * à família na hora. Válido por 7 dias, uso único.
+ */
+export async function generateGuardianInviteAction(
+  _prevState: GenerateGuardianInviteState,
+  formData: FormData
+): Promise<GenerateGuardianInviteState> {
+  const admin = await requireAdmin();
+  const childId = String(formData.get("childId") ?? "");
+
+  const child = await prisma.child.findUnique({ where: { id: childId } });
+  if (!child) return { error: "Criança não encontrada." };
+
+  const invite = await createGuardianInvite(childId, admin.id);
+
+  await recordAuditLog({
+    actorUserId: admin.id,
+    action: "CREATE",
+    entity: "GuardianInvite",
+    entityId: invite.id,
+    newData: { childId },
+  });
+
+  revalidatePath(`/admin/criancas/${childId}`);
+  return { code: invite.code };
 }
 
 /**
