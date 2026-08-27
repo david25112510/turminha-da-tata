@@ -63,7 +63,11 @@ const baseChild = {
   monthlyFee: { toString: () => "900" },
   overtimeHourRate: { toString: () => "15" },
   dueDay: 5,
-  imageAuthorized: false,
+  imageAuthInternal: false,
+  imageAuthGuardianShare: false,
+  imageAuthInstitutional: false,
+  imageAuthSocialMedia: false,
+  imageAuthAdvertising: false,
 };
 
 function formData(fields: Record<string, string>) {

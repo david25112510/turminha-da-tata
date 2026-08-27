@@ -106,7 +106,14 @@ model Child {
   inactivatedAt    DateTime?
   generalNotes     String?
 
-  imageAuthorized Boolean @default(false)
+  // Autorizações de imagem por finalidade — uma autorização geral antiga não vira autorização
+  // automática para publicidade (ver migration de introdução destes campos). Gerenciadas só pelo
+  // admin (checkboxes na ficha da criança); sem tela própria no Portal dos Pais.
+  imageAuthInternal      Boolean @default(false) // registro interno (diário de cuidados)
+  imageAuthGuardianShare Boolean @default(false) // compartilhamento com o responsável no portal
+  imageAuthInstitutional Boolean @default(false) // comunicação institucional
+  imageAuthSocialMedia   Boolean @default(false) // redes sociais
+  imageAuthAdvertising   Boolean @default(false) // publicidade
 
   contractedEntryTime String
   contractedExitTime  String
@@ -1072,7 +1079,7 @@ model ContractAcceptance {
 
 // ---------------------------------------------------------------------------
 // Consentimento LGPD (tratamento de dados pessoais — distinto da autorização de
-// imagem de Child.imageAuthorized, e distinto do contrato de prestação de serviços acima)
+// imagem de Child.imageAuthX, e distinto do contrato de prestação de serviços acima)
 // ---------------------------------------------------------------------------
 
 enum ConsentVersionStatus {

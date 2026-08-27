@@ -38,6 +38,16 @@ export const WEEKDAY_LABELS: Record<string, string> = {
 
 export const WEEKDAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"] as const;
 
+/** As 5 finalidades de autorização de imagem (Child.imageAuthX) — usado nos formulários de
+ * cadastro/edição de criança e na ficha do admin. Autorização geral não implica as outras. */
+export const IMAGE_AUTH_CATEGORIES = [
+  { field: "imageAuthInternal", label: "Registro interno (diário de cuidados)" },
+  { field: "imageAuthGuardianShare", label: "Compartilhamento com o responsável no portal" },
+  { field: "imageAuthInstitutional", label: "Comunicação institucional" },
+  { field: "imageAuthSocialMedia", label: "Redes sociais" },
+  { field: "imageAuthAdvertising", label: "Publicidade" },
+] as const;
+
 export const MEAL_TYPE_LABELS: Record<string, string> = {
   BREAKFAST: "Café da manhã",
   SNACK: "Lanche",

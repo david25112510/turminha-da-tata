@@ -42,7 +42,8 @@ export default async function globalSetup() {
     monthlyFee: 900,
     overtimeHourRate: 15,
     dueDay: 5,
-    imageAuthorized: false,
+    imageAuthInternal: false,
+    imageAuthGuardianShare: false,
   };
 
   const childA = await prisma.child.create({

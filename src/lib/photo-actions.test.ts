@@ -37,7 +37,7 @@ beforeEach(() => {
   requireAdmin.mockReset().mockResolvedValue({ id: "admin-1" });
   requireCaregiver.mockReset().mockResolvedValue({ id: "caregiver-1" });
   requireActiveChild.mockReset().mockResolvedValue({ id: "child-1", status: "ACTIVE" });
-  findUniqueChild.mockReset().mockResolvedValue({ id: "child-1", fullName: "Maria Silva", preferredName: "Maria", imageAuthorized: true });
+  findUniqueChild.mockReset().mockResolvedValue({ id: "child-1", fullName: "Maria Silva", preferredName: "Maria", imageAuthInternal: true });
   createPhoto.mockReset().mockResolvedValue({ id: "photo-1" });
   uploadFile.mockReset().mockResolvedValue("https://storage.example.com/children/child-1/foto.png");
   notifyGuardians.mockReset().mockResolvedValue(undefined);
@@ -78,7 +78,7 @@ describe("uploadChildPhotoAction", () => {
   });
 
   it("CASO 3: recusa quando a criança não tem autorização de imagem", async () => {
-    findUniqueChild.mockResolvedValueOnce({ id: "child-1", fullName: "Maria Silva", preferredName: "Maria", imageAuthorized: false });
+    findUniqueChild.mockResolvedValueOnce({ id: "child-1", fullName: "Maria Silva", preferredName: "Maria", imageAuthInternal: false });
     const file = new File([PNG_BYTES], "foto.png", { type: "image/png" });
     const { uploadChildPhotoAction } = await import("./photo-actions");
 

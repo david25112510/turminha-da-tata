@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { RELATIONSHIP_LABELS, CHILD_STATUS_LABELS } from "@/lib/labels";
+import { RELATIONSHIP_LABELS, CHILD_STATUS_LABELS, IMAGE_AUTH_CATEGORIES } from "@/lib/labels";
 import { uploadChildPhotoAction } from "@/lib/photo-actions";
 import { buildTimeline } from "@/lib/journey";
 import { todayRange, formatTime, formatDateTime } from "@/lib/date";
@@ -219,7 +219,20 @@ export default async function ChildDetailPage({ params }: { params: Promise<{ id
       <div className={cardClass}>
         <span className={cardTitle}>Fotos</span>
 
-        {!child.imageAuthorized ? (
+        <div className="flex flex-wrap gap-1.5">
+          {IMAGE_AUTH_CATEGORIES.map(({ field, label }) => (
+            <span
+              key={field}
+              className={`text-xs font-semibold rounded-full px-2.5 py-1 ${
+                child[field] ? "bg-tata-green/15 text-tata-green" : "bg-tata-surface-hover text-tata-ink-muted-alt"
+              }`}
+            >
+              {child[field] ? "✓" : "✗"} {label}
+            </span>
+          ))}
+        </div>
+
+        {!child.imageAuthInternal ? (
           <p className="text-sm text-tata-coral-dark">
             Autorização de imagem não concedida — fotos não podem ser registradas para esta criança.
           </p>

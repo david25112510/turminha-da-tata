@@ -19,7 +19,7 @@ pelo nome/contato real (e atualizar `docs/lgpd.md` e o rodapé do termo de conse
 | Identificação e contato do responsável (nome, CPF, telefone, e-mail, endereço) | Pessoal | `Guardian` | Execução de contrato (art. 7º, V) |
 | Identificação da criança (nome, CPF, certidão de nascimento, data de nascimento) | Pessoal | `Child` | Execução de contrato / interesse legítimo |
 | Dados de saúde (alergias, restrições, medicamentos, temperatura, sintomas) | **Sensível** (art. 5º, II) | `HealthProfile`, `HealthLog`, `MedicationAuthorization`/`MedicationAdministration` | Consentimento específico + proteção da vida (art. 11) |
-| Fotografias da criança | Sensível quando permite identificação de criança/adolescente | `Photo`, `Child.imageAuthorized` | Consentimento específico (autorização de imagem — já separada do consentimento LGPD geral, ver abaixo) |
+| Fotografias da criança | Sensível quando permite identificação de criança/adolescente | `Photo`, `Child.imageAuthInternal`/`imageAuthGuardianShare`/`imageAuthInstitutional`/`imageAuthSocialMedia`/`imageAuthAdvertising` | Consentimento específico por finalidade (autorização de imagem — já separada do consentimento LGPD geral, ver abaixo) |
 | Rotina diária (presença, alimentação, sono, higiene, atividades, humor) | Pessoal — inclui geolocalização implícita (a criança esteve em um lugar específico em um horário específico) | `Attendance`, `MealRecord`, `SleepRecord`, `HygieneRecord`, `WaterRecord`, `ActivityChild`, `MoodRecord` | Execução de contrato |
 | Financeiro (mensalidade, pagamentos) | Pessoal | `MonthlyInvoice`, `Payment`, `InvoiceItem` | Execução de contrato / obrigação legal (fiscal) |
 | Credenciais de acesso (senha, sessão) | Pessoal | `User` (hash bcrypt, nunca a senha em claro) | Execução de contrato |
@@ -30,8 +30,12 @@ pelo nome/contato real (e atualizar `docs/lgpd.md` e o rodapé do termo de conse
 Três autorizações independentes existem hoje, cada uma com sua própria finalidade — aceitar uma
 não implica aceitar as outras:
 
-1. **Autorização de imagem** (`Child.imageAuthorized`) — permite fotografar a criança e mostrar
-   as fotos ao responsável. Concedida no cadastro da criança pelo admin, a pedido do responsável.
+1. **Autorização de imagem** (`Child.imageAuthInternal`/`imageAuthGuardianShare`/
+   `imageAuthInstitutional`/`imageAuthSocialMedia`/`imageAuthAdvertising`) — 5 finalidades
+   independentes; conceder uma não concede as outras. Concedidas no cadastro da criança pelo admin,
+   a pedido do responsável. Só `imageAuthInternal` (registro no diário de cuidados) e
+   `imageAuthGuardianShare` (exibir ao responsável no portal) hoje gateiam algum fluxo do app; as
+   outras 3 são capturadas para prova de consentimento, sem uso automatizado ainda.
 2. **Contrato de prestação de serviços** (`ContractVersion`/`ContractAcceptance`,
    `src/app/pais/contrato/`) — aceite da relação contratual em si (horários, mensalidade, rotina
    etc.), por par criança/responsável.

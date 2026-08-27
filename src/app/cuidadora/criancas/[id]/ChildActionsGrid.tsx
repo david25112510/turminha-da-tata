@@ -100,7 +100,7 @@ function SleepButton({
 export function ChildActionsGrid({
   childId,
   revalidateTo,
-  imageAuthorized,
+  imageAuthInternal,
   openSleep,
   medicationAuthorizations,
   addMealAction,
@@ -117,7 +117,7 @@ export function ChildActionsGrid({
 }: {
   childId: string;
   revalidateTo: string;
-  imageAuthorized: boolean;
+  imageAuthInternal: boolean;
   openSleep: OpenSleep;
   medicationAuthorizations: MedicationAuthorization[];
   addMealAction: ActionFn;
@@ -247,7 +247,7 @@ export function ChildActionsGrid({
       </ActionDialogButton>
 
       <ActionDialogButton icon="📸" label="Registrar Momento" dialogTitle="Registrar momento" accent="blue">
-        {!imageAuthorized ? (
+        {!imageAuthInternal ? (
           <p className="text-sm text-tata-coral-dark">Sem autorização de imagem — envio bloqueado.</p>
         ) : (
           <PhotoUploadForm childId={childId} revalidateTo={revalidateTo} action={uploadChildPhotoAction} />

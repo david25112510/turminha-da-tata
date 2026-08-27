@@ -17,7 +17,7 @@ export default async function GuardianPhotosPage({
     return <EmptyState message="Nenhuma criança vinculada à sua conta." />;
   }
 
-  if (!link.viewPhotos || !link.child.imageAuthorized) {
+  if (!link.viewPhotos || !link.child.imageAuthGuardianShare) {
     return <EmptyState message="Não há fotos disponíveis para visualização." />;
   }
 

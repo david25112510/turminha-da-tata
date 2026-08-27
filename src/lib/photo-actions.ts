@@ -35,7 +35,7 @@ export async function uploadChildPhotoAction(formData: FormData) {
 
   const child = await prisma.child.findUnique({ where: { id: childId } });
   if (!child) throw new Error("Criança não encontrada.");
-  if (!child.imageAuthorized) throw new Error("Esta criança não possui autorização de imagem.");
+  if (!child.imageAuthInternal) throw new Error("Esta criança não possui autorização de imagem.");
 
   const fileName = `${Date.now()}-${randomUUID()}.${extensionFor(realType)}`;
   const url = await uploadFile(`children/${childId}/${fileName}`, buffer, realType);

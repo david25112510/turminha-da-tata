@@ -99,7 +99,7 @@ export default async function ChildProfilePage({ params }: { params: Promise<{ i
         <ChildActionsGrid
           childId={childId}
           revalidateTo={revalidateTo}
-          imageAuthorized={child.imageAuthorized}
+          imageAuthInternal={child.imageAuthInternal}
           openSleep={openSleep}
           medicationAuthorizations={medicationAuthorizations}
           addMealAction={addMealAction}

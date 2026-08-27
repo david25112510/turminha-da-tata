@@ -1,5 +1,5 @@
 import { createChildAction } from "../actions";
-import { WEEKDAYS, WEEKDAY_LABELS } from "@/lib/labels";
+import { WEEKDAYS, WEEKDAY_LABELS, IMAGE_AUTH_CATEGORIES } from "@/lib/labels";
 
 const inputClass =
   "min-h-11 border border-tata-border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-tata-green transition-colors bg-tata-surface";
@@ -92,10 +92,17 @@ export default function NewChildPage() {
           <textarea name="generalNotes" rows={3} className={inputClass} />
         </label>
 
-        <label className="flex items-center gap-2 text-sm text-tata-ink-strong">
-          <input type="checkbox" name="imageAuthorized" />
-          Autorização de imagem concedida pelo responsável
-        </label>
+        <div className="flex flex-col gap-1.5">
+          <span className={labelClass}>Autorização de imagem</span>
+          <div className="flex flex-col gap-2">
+            {IMAGE_AUTH_CATEGORIES.map(({ field, label }) => (
+              <label key={field} className="flex items-center gap-2 text-sm text-tata-ink-strong">
+                <input type="checkbox" name={field} />
+                {label}
+              </label>
+            ))}
+          </div>
+        </div>
 
         <button
           type="submit"

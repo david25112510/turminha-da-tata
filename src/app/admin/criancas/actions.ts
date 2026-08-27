@@ -12,6 +12,16 @@ import { createGuardianInvite } from "@/lib/guardian-invite";
 import { detectImageType, extensionFor } from "@/lib/file-validation";
 import { isRateLimited, recordFailedAttempt } from "@/lib/rate-limit";
 
+function parseImageAuthorizations(formData: FormData) {
+  return {
+    imageAuthInternal: formData.get("imageAuthInternal") === "on",
+    imageAuthGuardianShare: formData.get("imageAuthGuardianShare") === "on",
+    imageAuthInstitutional: formData.get("imageAuthInstitutional") === "on",
+    imageAuthSocialMedia: formData.get("imageAuthSocialMedia") === "on",
+    imageAuthAdvertising: formData.get("imageAuthAdvertising") === "on",
+  };
+}
+
 export async function createChildAction(formData: FormData) {
   const admin = await requireAdmin();
 
@@ -30,7 +40,7 @@ export async function createChildAction(formData: FormData) {
   const monthlyFee = String(formData.get("monthlyFee") ?? "0").replace(",", ".");
   const overtimeHourRate = String(formData.get("overtimeHourRate") ?? "0").replace(",", ".");
   const dueDay = Number(formData.get("dueDay") ?? 5);
-  const imageAuthorized = formData.get("imageAuthorized") === "on";
+  const imageAuth = parseImageAuthorizations(formData);
 
   if (!fullName || !birthDate) throw new Error("Nome completo e data de nascimento são obrigatórios.");
   if (!Number.isInteger(toleranceMinutes) || toleranceMinutes < 0) throw new Error("Tolerância inválida.");
@@ -54,7 +64,7 @@ export async function createChildAction(formData: FormData) {
       monthlyFee,
       overtimeHourRate,
       dueDay,
-      imageAuthorized,
+      ...imageAuth,
     },
   });
 
@@ -71,6 +81,7 @@ export async function createChildAction(formData: FormData) {
       contractedExitTime,
       toleranceMinutes,
       dueDay,
+      ...imageAuth,
     },
   });
 
@@ -99,7 +110,7 @@ export async function updateChildAction(formData: FormData) {
   const monthlyFee = String(formData.get("monthlyFee") ?? "0").replace(",", ".");
   const overtimeHourRate = String(formData.get("overtimeHourRate") ?? "0").replace(",", ".");
   const dueDay = Number(formData.get("dueDay") ?? 5);
-  const imageAuthorized = formData.get("imageAuthorized") === "on";
+  const imageAuth = parseImageAuthorizations(formData);
 
   if (!Number.isInteger(toleranceMinutes) || toleranceMinutes < 0) throw new Error("Tolerância inválida.");
   if (!Number.isFinite(Number(monthlyFee)) || Number(monthlyFee) < 0) throw new Error("Mensalidade inválida.");
@@ -130,7 +141,7 @@ export async function updateChildAction(formData: FormData) {
       monthlyFee,
       overtimeHourRate,
       dueDay,
-      imageAuthorized,
+      ...imageAuth,
     },
   });
 
@@ -148,7 +159,11 @@ export async function updateChildAction(formData: FormData) {
       contractedExitTime: child.contractedExitTime,
       toleranceMinutes: child.toleranceMinutes,
       dueDay: child.dueDay,
-      imageAuthorized: child.imageAuthorized,
+      imageAuthInternal: child.imageAuthInternal,
+      imageAuthGuardianShare: child.imageAuthGuardianShare,
+      imageAuthInstitutional: child.imageAuthInstitutional,
+      imageAuthSocialMedia: child.imageAuthSocialMedia,
+      imageAuthAdvertising: child.imageAuthAdvertising,
     },
     newData: {
       preferredName,
@@ -159,7 +174,7 @@ export async function updateChildAction(formData: FormData) {
       contractedExitTime,
       toleranceMinutes,
       dueDay,
-      imageAuthorized,
+      ...imageAuth,
     },
   });
 

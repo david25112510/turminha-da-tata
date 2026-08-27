@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { WEEKDAYS, WEEKDAY_LABELS, CHILD_STATUS_LABELS } from "@/lib/labels";
+import { WEEKDAYS, WEEKDAY_LABELS, CHILD_STATUS_LABELS, IMAGE_AUTH_CATEGORIES } from "@/lib/labels";
 import { updateChildAction, uploadChildProfilePhotoAction } from "../../actions";
 
 const inputClass =
@@ -116,10 +116,17 @@ export default async function EditChildPage({ params }: { params: Promise<{ id: 
           <textarea name="generalNotes" defaultValue={child.generalNotes ?? ""} rows={3} className={inputClass} />
         </label>
 
-        <label className="flex items-center gap-2 text-sm text-tata-ink-strong">
-          <input type="checkbox" name="imageAuthorized" defaultChecked={child.imageAuthorized} />
-          Autorização de imagem concedida pelo responsável
-        </label>
+        <div className="flex flex-col gap-1.5">
+          <span className={labelClass}>Autorização de imagem</span>
+          <div className="flex flex-col gap-2">
+            {IMAGE_AUTH_CATEGORIES.map(({ field, label }) => (
+              <label key={field} className="flex items-center gap-2 text-sm text-tata-ink-strong">
+                <input type="checkbox" name={field} defaultChecked={child[field]} />
+                {label}
+              </label>
+            ))}
+          </div>
+        </div>
 
         <button
           type="submit"
