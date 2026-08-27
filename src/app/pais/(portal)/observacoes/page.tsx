@@ -24,7 +24,7 @@ export default async function GuardianObservationsPage({
   const link = pickChildLink(guardian.children, childId);
 
   if (!link) {
-    return <div className="p-8 text-sm text-tata-ink-muted-alt">Nenhuma criança vinculada à sua conta.</div>;
+    return <EmptyState message="Nenhuma criança vinculada à sua conta." />;
   }
 
   const notes = await prisma.childNote.findMany({

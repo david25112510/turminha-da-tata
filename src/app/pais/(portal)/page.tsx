@@ -6,6 +6,7 @@ import { buildTimeline } from "@/lib/journey";
 import { RELATIONSHIP_LABELS, MEAL_TYPE_LABELS } from "@/lib/labels";
 import { Card } from "@/components/tata/Card";
 import { SectionHeader } from "@/components/tata/SectionHeader";
+import { EmptyState } from "@/components/tata/EmptyState";
 import { ChildSwitcher } from "./ChildSwitcher";
 import { GuardianStatusBadge, type ChildPresenceStatus } from "./GuardianStatusBadge";
 
@@ -35,7 +36,11 @@ export default async function GuardianHomePage({
   const link = pickChildLink(guardian.children, childId);
 
   if (!link) {
-    return <div className="p-8 text-sm text-tata-ink-muted-alt">Nenhuma criança vinculada à sua conta.</div>;
+    return (
+      <div className="p-4 sm:p-6">
+        <EmptyState message="Nenhuma criança vinculada à sua conta ainda. Assim que a escola confirmar seu cadastro, ela aparece por aqui 💛" withMascot />
+      </div>
+    );
   }
 
   const { start, end } = todayRange();

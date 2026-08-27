@@ -3,6 +3,7 @@ import { todayDateOnly, todayRange, formatTime } from "@/lib/date";
 import { buildTimeline } from "@/lib/journey";
 import { prisma } from "@/lib/prisma";
 import { RELATIONSHIP_LABELS } from "@/lib/labels";
+import { EmptyState } from "@/components/tata/EmptyState";
 import { ChildSwitcher } from "../ChildSwitcher";
 import { GuardianStatusBadge, type ChildPresenceStatus } from "../GuardianStatusBadge";
 import { TimelineFilter } from "../TimelineFilter";
@@ -17,15 +18,11 @@ export default async function GuardianJourneyPage({
   const link = pickChildLink(guardian.children, childId);
 
   if (!link) {
-    return <div className="p-8 text-sm text-tata-ink-muted-alt">Nenhuma criança vinculada à sua conta.</div>;
+    return <EmptyState message="Nenhuma criança vinculada à sua conta." />;
   }
 
   if (!link.viewRoutine) {
-    return (
-      <div className="p-8 text-sm text-tata-ink-muted-alt">
-        Você não tem permissão para visualizar a rotina desta criança.
-      </div>
-    );
+    return <EmptyState message="Você não tem permissão para visualizar a rotina desta criança." />;
   }
 
   const { start, end } = todayRange();

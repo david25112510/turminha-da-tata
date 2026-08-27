@@ -9,6 +9,7 @@ import { recordAuditLog } from "@/lib/audit-log";
 import { toggleUserActive } from "@/lib/user-actions";
 import { uploadFile } from "@/lib/storage";
 import { notifyAdmins } from "@/lib/notifications";
+import { detectImageType, extensionFor } from "@/lib/file-validation";
 
 export type CreateCaregiverResult = { error: string } | { success: true; id: string; name: string };
 
@@ -158,7 +159,6 @@ export async function deleteCaregiverAction(formData: FormData) {
 }
 
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
-const ALLOWED_PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 export async function uploadCaregiverPhotoAction(formData: FormData) {
   const admin = await requireAdmin();
@@ -170,12 +170,13 @@ export async function uploadCaregiverPhotoAction(formData: FormData) {
 
   if (!(file instanceof File) || file.size === 0) throw new Error("Selecione um arquivo de imagem.");
   if (file.size > MAX_PHOTO_BYTES) throw new Error("Imagem maior que 4MB.");
-  if (!ALLOWED_PHOTO_TYPES.has(file.type)) throw new Error("Formato de imagem não suportado.");
 
-  const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
-  const fileName = `${Date.now()}-${randomUUID()}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
-  const url = await uploadFile(`caregivers/${id}/${fileName}`, buffer, file.type);
+  const realType = detectImageType(buffer);
+  if (!realType) throw new Error("Formato de imagem não suportado.");
+
+  const fileName = `${Date.now()}-${randomUUID()}.${extensionFor(realType)}`;
+  const url = await uploadFile(`caregivers/${id}/${fileName}`, buffer, realType);
 
   await prisma.user.update({ where: { id }, data: { photoUrl: url } });
 

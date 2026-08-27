@@ -14,6 +14,8 @@ const deleteChild = vi.fn();
 const recordAuditLog = vi.fn();
 const redirect = vi.fn();
 const createGuardianInvite = vi.fn();
+const isRateLimited = vi.fn();
+const recordFailedAttempt = vi.fn();
 
 beforeEach(() => {
   vi.resetModules();
@@ -23,6 +25,10 @@ beforeEach(() => {
   vi.doMock("@/lib/audit-log", () => ({ recordAuditLog: (...args: unknown[]) => recordAuditLog(...args) }));
   vi.doMock("@/lib/storage", () => ({ uploadFile: vi.fn() }));
   vi.doMock("@/lib/guardian-invite", () => ({ createGuardianInvite: (...args: unknown[]) => createGuardianInvite(...args) }));
+  vi.doMock("@/lib/rate-limit", () => ({
+    isRateLimited: (...args: unknown[]) => isRateLimited(...args),
+    recordFailedAttempt: (...args: unknown[]) => recordFailedAttempt(...args),
+  }));
   vi.doMock("@/lib/prisma", () => ({
     prisma: {
       child: {
@@ -40,6 +46,8 @@ beforeEach(() => {
   recordAuditLog.mockReset().mockResolvedValue(undefined);
   redirect.mockReset();
   createGuardianInvite.mockReset().mockResolvedValue({ id: "invite-1", code: "A1B2C3D4" });
+  isRateLimited.mockReset().mockResolvedValue(false);
+  recordFailedAttempt.mockReset().mockResolvedValue(undefined);
 });
 
 const baseChild = {
@@ -230,5 +238,17 @@ describe("generateGuardianInviteAction", () => {
     expect(recordAuditLog).toHaveBeenCalledWith(
       expect.objectContaining({ actorUserId: "admin-1", action: "CREATE", entity: "GuardianInvite", entityId: "invite-1" })
     );
+    expect(recordFailedAttempt).toHaveBeenCalledWith("invite:admin-1");
+  });
+
+  it("CASO 2: respeita o rate limit por admin, sem sequer consultar a criança", async () => {
+    isRateLimited.mockResolvedValueOnce(true);
+    const { generateGuardianInviteAction } = await import("./actions");
+
+    const result = await generateGuardianInviteAction(undefined, formData({ childId: "child-1" }));
+
+    expect(result).toEqual({ error: "Muitos convites gerados em pouco tempo. Tente novamente em alguns minutos." });
+    expect(findUniqueChild).not.toHaveBeenCalled();
+    expect(createGuardianInvite).not.toHaveBeenCalled();
   });
 });

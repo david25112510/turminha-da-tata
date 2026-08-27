@@ -9,6 +9,8 @@ import { requireAdmin } from "@/lib/authz";
 import { recordAuditLog } from "@/lib/audit-log";
 import { uploadFile } from "@/lib/storage";
 import { createGuardianInvite } from "@/lib/guardian-invite";
+import { detectImageType, extensionFor } from "@/lib/file-validation";
+import { isRateLimited, recordFailedAttempt } from "@/lib/rate-limit";
 
 export async function createChildAction(formData: FormData) {
   const admin = await requireAdmin();
@@ -167,8 +169,6 @@ export async function updateChildAction(formData: FormData) {
 }
 
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
-const ALLOWED_PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-
 /** Foto de perfil da criança (Child.photoUrl) — distinta das fotos de rotina em src/lib/photo-actions.ts. */
 export async function uploadChildProfilePhotoAction(formData: FormData) {
   const admin = await requireAdmin();
@@ -180,12 +180,13 @@ export async function uploadChildProfilePhotoAction(formData: FormData) {
 
   if (!(file instanceof File) || file.size === 0) throw new Error("Selecione um arquivo de imagem.");
   if (file.size > MAX_PHOTO_BYTES) throw new Error("Imagem maior que 4MB.");
-  if (!ALLOWED_PHOTO_TYPES.has(file.type)) throw new Error("Formato de imagem não suportado.");
 
-  const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
-  const fileName = `${Date.now()}-${randomUUID()}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
-  const url = await uploadFile(`children/${id}/profile-${fileName}`, buffer, file.type);
+  const realType = detectImageType(buffer);
+  if (!realType) throw new Error("Formato de imagem não suportado.");
+
+  const fileName = `${Date.now()}-${randomUUID()}.${extensionFor(realType)}`;
+  const url = await uploadFile(`children/${id}/profile-${fileName}`, buffer, realType);
 
   await prisma.child.update({ where: { id }, data: { photoUrl: url } });
 
@@ -215,10 +216,15 @@ export async function generateGuardianInviteAction(
   const admin = await requireAdmin();
   const childId = String(formData.get("childId") ?? "");
 
+  if (await isRateLimited(`invite:${admin.id}`)) {
+    return { error: "Muitos convites gerados em pouco tempo. Tente novamente em alguns minutos." };
+  }
+
   const child = await prisma.child.findUnique({ where: { id: childId } });
   if (!child) return { error: "Criança não encontrada." };
 
   const invite = await createGuardianInvite(childId, admin.id);
+  await recordFailedAttempt(`invite:${admin.id}`);
 
   await recordAuditLog({
     actorUserId: admin.id,

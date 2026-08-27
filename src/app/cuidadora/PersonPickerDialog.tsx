@@ -83,7 +83,11 @@ export function PersonPickerDialog({
             </div>
           )}
 
-          {state?.error && <p className="text-sm text-tata-coral-dark font-medium">{state.error}</p>}
+          {state?.error && (
+            <p role="alert" className="text-sm text-tata-coral-dark font-medium">
+              {state.error}
+            </p>
+          )}
 
           <button
             type="button"

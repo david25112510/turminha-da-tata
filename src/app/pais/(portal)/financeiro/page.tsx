@@ -15,15 +15,11 @@ export default async function GuardianFinancialPage({
   const link = pickChildLink(guardian.children, childId);
 
   if (!link) {
-    return <div className="p-8 text-sm text-tata-ink-muted-alt">Nenhuma criança vinculada à sua conta.</div>;
+    return <EmptyState message="Nenhuma criança vinculada à sua conta." />;
   }
 
   if (!link.viewFinancial) {
-    return (
-      <div className="p-8 text-sm text-tata-ink-muted-alt">
-        Você não tem permissão para visualizar o financeiro desta criança.
-      </div>
-    );
+    return <EmptyState message="Você não tem permissão para visualizar o financeiro desta criança." />;
   }
 
   // A fatura já fechada é uma fotografia do período — o detalhamento vem dos InvoiceItems gravados no

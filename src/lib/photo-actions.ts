@@ -7,9 +7,9 @@ import { notifyGuardians } from "@/lib/notifications";
 import { requireActiveChild, requireAdmin, requireCaregiver } from "@/lib/authz";
 import { auth } from "@/auth";
 import { uploadFile } from "@/lib/storage";
+import { detectImageType, extensionFor } from "@/lib/file-validation";
 
 const MAX_SIZE_BYTES = 8 * 1024 * 1024;
-const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 export async function uploadChildPhotoAction(formData: FormData) {
   const childId = String(formData.get("childId") ?? "");
@@ -26,16 +26,19 @@ export async function uploadChildPhotoAction(formData: FormData) {
 
   if (!(file instanceof File) || file.size === 0) throw new Error("Selecione um arquivo de imagem.");
   if (file.size > MAX_SIZE_BYTES) throw new Error("Imagem maior que 8MB.");
-  if (!ALLOWED_TYPES.has(file.type)) throw new Error("Formato de imagem não suportado.");
+
+  // Nunca confia em file.type (só uma sugestão do cliente, forjável) — o tipo real vem dos
+  // magic bytes do próprio arquivo. Ver src/lib/file-validation.ts.
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const realType = detectImageType(buffer);
+  if (!realType) throw new Error("Formato de imagem não suportado.");
 
   const child = await prisma.child.findUnique({ where: { id: childId } });
   if (!child) throw new Error("Criança não encontrada.");
   if (!child.imageAuthorized) throw new Error("Esta criança não possui autorização de imagem.");
 
-  const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
-  const fileName = `${Date.now()}-${randomUUID()}.${ext}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const url = await uploadFile(`children/${childId}/${fileName}`, buffer, file.type);
+  const fileName = `${Date.now()}-${randomUUID()}.${extensionFor(realType)}`;
+  const url = await uploadFile(`children/${childId}/${fileName}`, buffer, realType);
 
   await prisma.photo.create({
     data: {

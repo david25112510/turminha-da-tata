@@ -14,15 +14,11 @@ export default async function GuardianPhotosPage({
   const link = pickChildLink(guardian.children, childId);
 
   if (!link) {
-    return <div className="p-8 text-sm text-tata-ink-muted-alt">Nenhuma criança vinculada à sua conta.</div>;
+    return <EmptyState message="Nenhuma criança vinculada à sua conta." />;
   }
 
   if (!link.viewPhotos || !link.child.imageAuthorized) {
-    return (
-      <div className="p-8 text-sm text-tata-ink-muted-alt">
-        Não há fotos disponíveis para visualização.
-      </div>
-    );
+    return <EmptyState message="Não há fotos disponíveis para visualização." />;
   }
 
   const photos = await prisma.photo.findMany({
