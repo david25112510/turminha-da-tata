@@ -27,9 +27,9 @@ function storageOrigin(): string | null {
  * App Router do Next injeta um <script> inline para transportar o payload de streaming do RSC
  * (`self.__next_f.push(...)`) — bloqueá-lo quebraria a hidratação. Uma CSP com nonce eliminaria essa
  * necessidade, mas exigiria propagar um nonce por requisição (proxy.ts → root layout), mudança maior
- * fora do escopo desta rodada. Mesmo assim, a política concreta ainda bloqueia scripts de outra
- * origem (o vetor mais comum de XSS via injeção de <script src="...">), restringe para onde a página
- * pode enviar dados (`connect-src`) e nega enquadramento por outro site (`frame-ancestors`).
+ * fora do escopo desta rodada. Mesmo assim, a política concreta libera apenas a origem oficial do
+ * Cloudflare Turnstile para script, conexão e iframe, restringe as demais origens e nega enquadramento
+ * da aplicação por outro site (`frame-ancestors`).
  *
  * `'unsafe-eval'` só em desenvolvimento — o React usa eval() para reconstruir call stacks entre
  * servidor/cliente nas mensagens de erro de dev (nunca em produção); confirmado bloqueando de
@@ -40,14 +40,16 @@ function contentSecurityPolicy(): string {
   const storage = storageOrigin();
   const imgSrc = ["'self'", "data:", "blob:", storage].filter(Boolean).join(" ");
   const isDev = process.env.NODE_ENV !== "production";
+  const turnstileOrigin = "https://challenges.cloudflare.com";
 
   return [
     "default-src 'self'",
-    `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+    `script-src 'self' 'unsafe-inline' ${turnstileOrigin}${isDev ? " 'unsafe-eval'" : ""}`,
     "style-src 'self' 'unsafe-inline'",
     `img-src ${imgSrc}`,
     "font-src 'self' data:",
-    "connect-src 'self'",
+    `connect-src 'self' ${turnstileOrigin}`,
+    `frame-src ${turnstileOrigin}`,
     "manifest-src 'self'",
     "worker-src 'self'",
     "frame-ancestors 'none'",
