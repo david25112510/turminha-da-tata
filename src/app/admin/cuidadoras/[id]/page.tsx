@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { DeleteConfirmDialog } from "@/components/tata/DeleteConfirmDialog";
 import { updateCaregiverAction, toggleCaregiverActiveAction, uploadCaregiverPhotoAction, deleteCaregiverAction } from "../actions";
+import { resolveStoredFileUrl } from "@/lib/storage";
 
 const inputClass =
   "min-h-11 border border-tata-border rounded-xl px-3 py-2 text-sm outline-none focus:border-tata-green transition-colors bg-tata-surface";
@@ -20,6 +21,7 @@ export default async function CaregiverDetailPage({ params }: { params: Promise<
 
   const caregiver = await prisma.user.findFirst({ where: { id, role: "CAREGIVER" } });
   if (!caregiver) notFound();
+  const photoUrl = await resolveStoredFileUrl(caregiver.photoUrl);
 
   return (
     <div className="p-4 sm:p-8 flex flex-col gap-6 max-w-2xl">
@@ -43,8 +45,8 @@ export default async function CaregiverDetailPage({ params }: { params: Promise<
         <span className={cardTitle}>Foto</span>
         <div className="flex items-center gap-4">
           <div className="relative w-16 h-16 rounded-full overflow-hidden bg-tata-surface-hover shrink-0">
-            {caregiver.photoUrl && (
-              <Image src={caregiver.photoUrl} alt="" fill sizes="64px" className="object-cover" />
+            {photoUrl && (
+              <Image src={photoUrl} alt="" fill sizes="64px" unoptimized className="object-cover" />
             )}
           </div>
           <form action={uploadCaregiverPhotoAction} encType="multipart/form-data" className="flex gap-2 items-center">

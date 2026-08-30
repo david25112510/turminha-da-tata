@@ -18,10 +18,10 @@ export function AccountForm() {
     <div className="grid sm:grid-cols-2 gap-4"><label className={label}>Telefone<input name="phone" type="tel" inputMode="tel" required className={input}/></label><label className={label}>WhatsApp<input name="whatsapp" type="tel" inputMode="tel" className={input}/></label></div>
     <label className={label}>E-mail<input name="email" type="email" autoComplete="email" required className={input}/></label>
     <div className="grid sm:grid-cols-2 gap-4"><label className={label}>Senha<input name="password" type="password" minLength={8} autoComplete="new-password" required className={input}/></label><label className={label}>Confirmar senha<input name="confirmPassword" type="password" minLength={8} autoComplete="new-password" required className={input}/></label></div>
-    <label className="flex gap-3 text-sm text-tata-ink-soft"><input name="privacyAccepted" type="checkbox" required className="mt-0.5 size-5 accent-tata-green"/><span>Li e aceito a <Link href="/politica-de-privacidade" className="font-bold underline">Política de Privacidade</Link>.</span></label>
+    <label className="flex gap-3 text-sm text-tata-ink-soft"><input name="privacyAccepted" type="checkbox" required className="mt-3 size-5 accent-tata-green"/><span>Li e aceito a <Link href="/politica-de-privacidade" className="inline-flex min-h-11 items-center font-bold underline">Política de Privacidade</Link>.</span></label>
     {state?.error && <p role="alert" className="text-sm font-semibold text-tata-coral-dark">{state.error}</p>}
     <button disabled={pending} className="min-h-12 rounded-2xl bg-tata-coral px-6 font-bold text-white disabled:opacity-60">{pending ? "CRIANDO..." : "CRIAR CONTA"}</button>
-    <p className="text-center text-sm text-tata-ink-soft">Já tem conta? <Link href="/login?callbackUrl=/matricula" className="font-bold text-tata-green-dark">Entrar</Link></p>
+    <p className="text-center text-sm text-tata-ink-soft">Já tem conta? <Link href="/login?callbackUrl=/matricula" className="inline-flex min-h-11 items-center font-bold text-tata-green-dark">Entrar</Link></p>
   </form>;
 }
 

@@ -58,6 +58,9 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
+  // APIs incluem storage privado e dados pessoais: nunca entram no Cache Storage offline.
+  if (url.pathname.startsWith("/api/")) return;
+
   if (request.mode === "navigate") {
     event.respondWith(
       fetch(request).catch(() => caches.match(request).then((cached) => cached || caches.match(OFFLINE_URL)))

@@ -15,7 +15,7 @@ import {
 const relationshipLabel = (relationship: string | null) =>
   relationship ? RELATIONSHIP_LABELS[relationship] ?? relationship : null;
 
-export type TimelineEntry = { time: Date; label: string; detail: string };
+export type TimelineEntry = { time: Date; label: string; detail: string; id?: string; entity?: string; editable?: boolean };
 
 export async function buildTimeline(childId: string, start: Date, end: Date): Promise<TimelineEntry[]> {
   const [attendance, meals, sleeps, hygiene, waters, moods, healthLogs, incidents, medicationAdmins, activityLinks, photos, notes] =
@@ -47,6 +47,7 @@ export async function buildTimeline(childId: string, start: Date, end: Date): Pr
     timeline.push({
       time: attendance.checkInTime,
       label: "Chegada",
+      id: attendance.id, entity: "AttendanceCheckIn", editable: true,
       detail: `Levado por ${attendance.checkInPersonName}${relation ? ` — ${relation}` : ""}`,
     });
   }
@@ -55,16 +56,18 @@ export async function buildTimeline(childId: string, start: Date, end: Date): Pr
     timeline.push({
       time: attendance.checkOutTime,
       label: "Saída",
+      id: attendance.id, entity: "AttendanceCheckOut", editable: true,
       detail: `Retirado por ${attendance.checkOutPersonName}${relation ? ` — ${relation}` : ""}`,
     });
   }
   for (const m of meals) {
-    timeline.push({ time: m.time, label: MEAL_TYPE_LABELS[m.mealType], detail: CONSUMPTION_LABELS[m.consumption] });
+    timeline.push({ time: m.time, label: MEAL_TYPE_LABELS[m.mealType], detail: CONSUMPTION_LABELS[m.consumption], id: m.id, entity: "MealRecord", editable: true });
   }
   for (const s of sleeps) {
     timeline.push({
       time: s.startTime,
       label: "Soneca",
+      id: s.id, entity: "SleepRecord", editable: true,
       detail: s.endTime
         ? `${formatTime(s.startTime)} → ${formatTime(s.endTime)} (${formatDuration(s.startTime.getTime(), s.endTime.getTime())})`
         : "Em andamento",
@@ -74,18 +77,19 @@ export async function buildTimeline(childId: string, start: Date, end: Date): Pr
     const detail = h.diaperType
       ? `${HYGIENE_TYPE_LABELS[h.type]} — ${DIAPER_TYPE_LABELS[h.diaperType]}`
       : HYGIENE_TYPE_LABELS[h.type];
-    timeline.push({ time: h.time, label: "Higiene", detail });
+    timeline.push({ time: h.time, label: "Higiene", detail, id: h.id, entity: "HygieneRecord", editable: true });
   }
   for (const w of waters) {
-    timeline.push({ time: w.time, label: "Água", detail: WATER_AMOUNT_LABELS[w.amount] });
+    timeline.push({ time: w.time, label: "Água", detail: WATER_AMOUNT_LABELS[w.amount], id: w.id, entity: "WaterRecord", editable: true });
   }
   for (const mo of moods) {
-    timeline.push({ time: mo.time, label: "Humor", detail: MOOD_LABELS[mo.mood] });
+    timeline.push({ time: mo.time, label: "Humor", detail: MOOD_LABELS[mo.mood], id: mo.id, entity: "MoodRecord", editable: true });
   }
   for (const hl of healthLogs) {
     timeline.push({
       time: hl.time,
       label: "Saúde",
+      id: hl.id, entity: "HealthLog", editable: true,
       detail: [hl.temperature ? `${hl.temperature}°C` : null, hl.symptoms].filter(Boolean).join(" — ") || "Registro",
     });
   }
@@ -96,7 +100,7 @@ export async function buildTimeline(childId: string, start: Date, end: Date): Pr
     timeline.push({ time: md.time, label: "Medicamento", detail: `${md.authorization.medication} — administrado` });
   }
   for (const al of activityLinks) {
-    timeline.push({ time: al.activity.time, label: "Atividade", detail: ACTIVITY_CATEGORY_LABELS[al.activity.category] });
+    timeline.push({ time: al.activity.time, label: "Atividade", detail: ACTIVITY_CATEGORY_LABELS[al.activity.category], id: al.activity.id, entity: "Activity", editable: true });
   }
   for (const p of photos) {
     timeline.push({ time: p.takenAt, label: "Foto", detail: p.caption || "Registrada" });
@@ -105,6 +109,7 @@ export async function buildTimeline(childId: string, start: Date, end: Date): Pr
     timeline.push({
       time: n.time,
       label: n.authorRole === "GUARDIAN" ? "Observação da família" : "Observação",
+      id: n.id, entity: "ChildNote", editable: n.authorRole === "CAREGIVER",
       detail: n.text,
     });
   }

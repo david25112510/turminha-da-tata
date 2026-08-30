@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { notifyGuardians } from "@/lib/notifications";
 import { requireActiveChild, requireAdmin, requireCaregiver } from "@/lib/authz";
 import { auth } from "@/auth";
-import { uploadFile } from "@/lib/storage";
+import { deleteStoredObject, uploadFile } from "@/lib/storage";
 import { detectImageType, extensionFor } from "@/lib/file-validation";
 
 const MAX_SIZE_BYTES = 8 * 1024 * 1024;
@@ -40,14 +40,13 @@ export async function uploadChildPhotoAction(formData: FormData) {
   const fileName = `${Date.now()}-${randomUUID()}.${extensionFor(realType)}`;
   const url = await uploadFile(`children/${childId}/${fileName}`, buffer, realType);
 
-  await prisma.photo.create({
-    data: {
-      childId,
-      url,
-      caption: caption || null,
-      uploadedById: session.user.id,
-    },
-  });
+  try {
+    await prisma.photo.create({ data: { childId, url, caption: caption || null, uploadedById: session.user.id } });
+  } catch (error) {
+    // Compensação: não deixa objeto órfão quando a persistência falha após o upload.
+    await deleteStoredObject(url).catch(() => {});
+    throw error;
+  }
 
   await notifyGuardians(
     childId,

@@ -2,6 +2,7 @@ import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { EmptyState } from "@/components/tata/EmptyState";
 import { removePhotoAction } from "./actions";
+import { resolveStoredFileUrl } from "@/lib/storage";
 
 const dateTimeFmt = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" });
 
@@ -21,6 +22,8 @@ export default async function AdminPhotosPage({
       include: { child: true, uploadedBy: true },
     }),
   ]);
+
+  const visiblePhotos = await Promise.all(photos.map(async (photo) => ({ ...photo, url: (await resolveStoredFileUrl(photo.url))! })));
 
   return (
     <div className="p-4 sm:p-8 flex flex-col gap-6">
@@ -55,10 +58,10 @@ export default async function AdminPhotosPage({
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-          {photos.map((photo) => (
+          {visiblePhotos.map((photo) => (
             <div key={photo.id} className="bg-tata-surface rounded-2xl shadow-sm overflow-hidden flex flex-col">
               <div className="relative w-full aspect-square bg-tata-surface-hover">
-                <Image src={photo.url} alt={photo.caption || "Foto"} fill className="object-cover" />
+                <Image src={photo.url} alt={photo.caption || "Foto"} fill unoptimized className="object-cover" />
               </div>
               <div className="p-3 flex flex-col gap-1">
                 <p className="text-xs font-semibold text-tata-ink truncate">

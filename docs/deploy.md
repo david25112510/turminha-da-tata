@@ -84,10 +84,12 @@ npm run db:restore -- ./backups/arquivo.dump
 
 ## Uploads de imagem
 
+Novos uploads são privados: o banco persiste referências `storage://...`, e a aplicação gera URLs assinadas com validade de cinco minutos após validar sessão, role, vínculo e autorização de imagem. `STORAGE_S3_PUBLIC_URL` existe somente para compatibilidade e exclusão de URLs antigas; o bucket não deve permitir leitura pública. Em desenvolvimento sem S3, os objetos ficam em `.data/uploads` e passam por `/api/storage/...`, que aplica a mesma autorização e responde com `Cache-Control: private, no-store`.
+
 As fotos enviadas pelo app são gravadas via `src/lib/storage.ts`, que suporta dois modos:
 
-- **Sem configuração** (`STORAGE_S3_BUCKET` vazio): grava em disco local, em `public/uploads/`. Funciona para
-  desenvolvimento e para hospedagem de instância única com disco persistente, mas **não é adequado** para
+- **Sem configuração** (`STORAGE_S3_BUCKET` vazio): grava em disco local privado, em `.data/uploads/`, servido
+  somente pela rota autenticada `/api/storage/...`. Funciona para desenvolvimento e hospedagem de instância única com disco persistente, mas **não é adequado** para
   múltiplas instâncias ou containers efêmeros (Vercel, por exemplo, tem sistema de arquivos somente leitura em
   produção).
 - **Com `STORAGE_S3_BUCKET` configurado**: envia para um bucket S3-compatível (AWS S3, Cloudflare R2 ou
@@ -99,11 +101,11 @@ As fotos enviadas pelo app são gravadas via `src/lib/storage.ts`, que suporta d
   | `STORAGE_S3_REGION` | Região (ex.: `us-east-1` na AWS; `auto` funciona na maioria dos provedores compatíveis, incluindo R2). |
   | `STORAGE_S3_ENDPOINT` | Endpoint customizado (ex.: `https://<account>.r2.cloudflarestorage.com` no R2). Deixe vazio para AWS S3. |
   | `STORAGE_S3_ACCESS_KEY_ID` / `STORAGE_S3_SECRET_ACCESS_KEY` | Credenciais de acesso ao bucket. |
-  | `STORAGE_S3_PUBLIC_URL` | URL pública base do bucket (domínio customizado, CDN, ou o link `r2.dev`/website estático). Usada para montar a URL de cada foto e liberada automaticamente em `next.config.ts` para o `next/image`. |
+  | `STORAGE_S3_PUBLIC_URL` | Compatibilidade para localizar e excluir objetos legados que já tenham URL pública; não é usada por uploads novos. |
+  | `STORAGE_S3_SERVER_SIDE_ENCRYPTION` | Opcional: `AES256` ou `aws:kms`; habilita criptografia server-side no envio. |
 
-  O bucket precisa permitir leitura pública dos objetos enviados (ou estar atrás de um CDN/domínio que sirva
-  publicamente) — hoje as fotos não usam URL assinada, só controle de acesso pela própria aplicação (autorização
-  de imagem da criança, ver seção de Segurança).
+  O bucket deve bloquear acesso público. A aplicação entrega objetos somente após autorização, por URL assinada
+  curta no S3 ou pela rota protegida no modo local.
 
 ## PWA
 

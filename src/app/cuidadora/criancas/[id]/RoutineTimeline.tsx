@@ -1,6 +1,7 @@
 import { formatTime } from "@/lib/date";
 import type { TimelineEntry } from "@/lib/journey";
 import { EmptyState } from "@/components/tata/EmptyState";
+import { RoutineCorrectionForm } from "@/components/tata/RoutineCorrectionForm";
 
 // Mesmo mapa de ícones de src/app/pais/GuardianRoutineTimeline.tsx — duplicado de propósito (mesmo
 // princípio que aquele componente já usa para TimelineEntry: cada papel controla sua própria exibição).
@@ -24,7 +25,7 @@ function iconFor(label: string) {
   return ICONS[label] ?? "🍎"; // refeições têm rótulo dinâmico (Café da manhã, Almoço...) — cai aqui
 }
 
-export function RoutineTimeline({ entries }: { entries: TimelineEntry[] }) {
+export function RoutineTimeline({ entries, childId }: { entries: TimelineEntry[]; childId: string }) {
   if (entries.length === 0) {
     return <EmptyState message="Nenhum registro hoje ainda." withMascot />;
   }
@@ -46,6 +47,7 @@ export function RoutineTimeline({ entries }: { entries: TimelineEntry[] }) {
               <span className="font-semibold text-tata-ink">{entry.label}</span>
             </div>
             <p className="text-tata-ink-soft">{entry.detail}</p>
+            <RoutineCorrectionForm entry={entry} childId={childId} />
           </div>
         </li>
       ))}

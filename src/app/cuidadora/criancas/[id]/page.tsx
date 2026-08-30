@@ -9,6 +9,7 @@ import { RELATIONSHIP_LABELS } from "@/lib/labels";
 import { ChildStatusBadge, IncidentIndicator, type PresenceStatus } from "../../ChildStatusBadge";
 import { ChildActionsGrid } from "./ChildActionsGrid";
 import { RoutineTimeline } from "./RoutineTimeline";
+import { resolveStoredFileUrl } from "@/lib/storage";
 import {
   addMealAction,
   startSleepAction,
@@ -43,6 +44,7 @@ export default async function ChildProfilePage({ params }: { params: Promise<{ i
   const status: PresenceStatus = attendance?.checkOutTime ? "left" : attendance?.checkInTime ? "present" : "waiting";
   const name = child.preferredName || child.fullName;
   const revalidateTo = `/cuidadora/criancas/${childId}`;
+  const visiblePhotos = await Promise.all(photos.map(async (photo) => ({ ...photo, url: (await resolveStoredFileUrl(photo.url))! })));
 
   return (
     <div className="p-4 sm:p-6 flex flex-col gap-5 max-w-2xl mx-auto">
@@ -120,9 +122,9 @@ export default async function ChildProfilePage({ params }: { params: Promise<{ i
         <div>
           <h2 className="font-[family-name:var(--font-baloo)] font-semibold text-sm text-tata-ink mb-2.5">Fotos de hoje</h2>
           <div className="grid grid-cols-3 gap-1.5">
-            {photos.map((p) => (
+            {visiblePhotos.map((p) => (
               <div key={p.id} className="relative aspect-square rounded-xl overflow-hidden bg-tata-surface-hover">
-                <Image src={p.url} alt={p.caption ?? ""} fill sizes="150px" className="object-cover" />
+                <Image src={p.url} alt={p.caption ?? ""} fill sizes="150px" unoptimized className="object-cover" />
               </div>
             ))}
           </div>
@@ -132,7 +134,7 @@ export default async function ChildProfilePage({ params }: { params: Promise<{ i
       <div>
         <h2 className="font-[family-name:var(--font-baloo)] font-semibold text-sm text-tata-ink mb-2.5">Rotina de hoje</h2>
         <div className="bg-tata-surface rounded-tata-lg shadow-tata-card p-5">
-          <RoutineTimeline entries={timeline} />
+          <RoutineTimeline entries={timeline} childId={childId} />
         </div>
       </div>
     </div>

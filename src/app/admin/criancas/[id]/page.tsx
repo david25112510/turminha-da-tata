@@ -10,6 +10,8 @@ import { DeleteConfirmDialog } from "@/components/tata/DeleteConfirmDialog";
 import { addAuthorizedPersonAction, toggleAuthorizedPersonStatusAction } from "./actions";
 import { deleteChildAction } from "../actions";
 import { GenerateInviteButton } from "./GenerateInviteButton";
+import { resolveStoredFileUrl } from "@/lib/storage";
+import { RoutineCorrectionForm } from "@/components/tata/RoutineCorrectionForm";
 
 const inputClass =
   "min-h-11 border border-tata-border rounded-xl px-3 py-2 text-sm outline-none focus:border-tata-green transition-colors bg-tata-surface";
@@ -39,6 +41,7 @@ export default async function ChildDetailPage({ params }: { params: Promise<{ id
       orderBy: [{ version: { createdAt: "desc" } }, { createdAt: "desc" }],
     }),
   ]);
+  const visiblePhotos = await Promise.all(child.photos.map(async (photo) => ({ ...photo, url: (await resolveStoredFileUrl(photo.url))! })));
 
   return (
     <div className="p-4 sm:p-8 flex flex-col gap-6 max-w-4xl">
@@ -83,7 +86,7 @@ export default async function ChildDetailPage({ params }: { params: Promise<{ id
               <li key={i} className="text-sm flex items-baseline gap-3 border-b border-tata-surface-hover pb-2 last:border-0">
                 <span className="text-tata-ink-muted text-xs shrink-0 w-12">{formatTime(entry.time)}</span>
                 <span className="font-medium text-tata-ink shrink-0">{entry.label}</span>
-                <span className="text-tata-ink-soft">{entry.detail}</span>
+                <span className="text-tata-ink-soft flex-1">{entry.detail}<RoutineCorrectionForm entry={entry} childId={childId} /></span>
               </li>
             ))}
           </ul>
@@ -240,9 +243,9 @@ export default async function ChildDetailPage({ params }: { params: Promise<{ id
           <>
             {child.photos.length > 0 && (
               <div className="grid grid-cols-4 gap-2">
-                {child.photos.map((photo) => (
+                {visiblePhotos.map((photo) => (
                   <div key={photo.id} className="relative aspect-square rounded-xl overflow-hidden bg-tata-surface-hover">
-                    <Image src={photo.url} alt={photo.caption ?? ""} fill sizes="150px" className="object-cover" />
+                    <Image src={photo.url} alt={photo.caption ?? ""} fill sizes="150px" unoptimized className="object-cover" />
                   </div>
                 ))}
               </div>

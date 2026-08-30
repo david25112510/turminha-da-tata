@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 function remotePatternsFromPublicUrl() {
-  const publicUrl = process.env.STORAGE_S3_PUBLIC_URL;
+  const publicUrl = process.env.STORAGE_S3_ENDPOINT || process.env.STORAGE_S3_PUBLIC_URL;
   if (!publicUrl) return [];
   try {
     const { protocol, hostname } = new URL(publicUrl);
@@ -13,7 +13,7 @@ function remotePatternsFromPublicUrl() {
 
 /** Origin (schema://host, sem caminho) do bucket S3/R2 configurado, para liberar no img-src do CSP. */
 function storageOrigin(): string | null {
-  const publicUrl = process.env.STORAGE_S3_PUBLIC_URL;
+  const publicUrl = process.env.STORAGE_S3_ENDPOINT || process.env.STORAGE_S3_PUBLIC_URL;
   if (!publicUrl) return null;
   try {
     return new URL(publicUrl).origin;

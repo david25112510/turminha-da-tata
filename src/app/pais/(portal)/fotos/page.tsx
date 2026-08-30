@@ -3,6 +3,7 @@ import { requireGuardian, pickChildLink } from "@/lib/guardian";
 import { EmptyState } from "@/components/tata/EmptyState";
 import { ChildSwitcher } from "../ChildSwitcher";
 import { PhotoGallery } from "../PhotoGallery";
+import { resolveStoredFileUrl } from "@/lib/storage";
 
 export default async function GuardianPhotosPage({
   searchParams,
@@ -27,6 +28,8 @@ export default async function GuardianPhotosPage({
     take: 60,
   });
 
+  const visiblePhotos = await Promise.all(photos.map(async (photo) => ({ ...photo, url: (await resolveStoredFileUrl(photo.url))! })));
+
   return (
     <div className="p-4 sm:p-6 flex flex-col gap-5 max-w-3xl mx-auto">
       <ChildSwitcher basePath="/pais/fotos" activeChildId={link.childId} guardianChildren={guardian.children} />
@@ -38,7 +41,7 @@ export default async function GuardianPhotosPage({
       {photos.length === 0 ? (
         <EmptyState message="Nenhum momento fotografado por aqui ainda 💛" withMascot />
       ) : (
-        <PhotoGallery photos={photos} />
+        <PhotoGallery photos={visiblePhotos} />
       )}
     </div>
   );

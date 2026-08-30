@@ -6,5 +6,7 @@ builder = "NIXPACKS"
 # nova nem faz pergunta interativa; seguro para rodar a cada deploy, inclusive quando não há
 # migration pendente (é um no-op nesse caso).
 startCommand = "npx prisma migrate deploy && npm run start"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3

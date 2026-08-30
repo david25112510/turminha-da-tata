@@ -29,7 +29,7 @@ export function PhotoGallery({ photos }: { photos: GalleryPhoto[] }) {
             aria-label={photo.caption ?? `Foto de ${formatTime(photo.takenAt)}`}
             className="relative aspect-square rounded-2xl overflow-hidden bg-tata-surface-hover min-h-11 hover:brightness-95 active:scale-[0.98] transition-all"
           >
-            <Image src={photo.url} alt={photo.caption ?? ""} fill sizes="200px" className="object-cover" />
+            <Image src={photo.url} alt={photo.caption ?? ""} fill sizes="200px" unoptimized className="object-cover" />
           </button>
         ))}
       </div>
@@ -46,7 +46,7 @@ export function PhotoGallery({ photos }: { photos: GalleryPhoto[] }) {
         {active && (
           <div className="bg-tata-surface rounded-2xl overflow-hidden">
             <div className="relative aspect-square w-full bg-tata-surface-hover">
-              <Image src={active.url} alt={active.caption ?? ""} fill sizes="500px" className="object-contain" />
+              <Image src={active.url} alt={active.caption ?? ""} fill sizes="500px" unoptimized className="object-contain" />
             </div>
             <div className="p-4 flex items-center justify-between gap-3">
               <div>

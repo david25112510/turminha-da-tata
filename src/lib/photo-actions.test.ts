@@ -24,7 +24,7 @@ beforeEach(() => {
     requireCaregiver: (...args: unknown[]) => requireCaregiver(...args),
     requireActiveChild: (...args: unknown[]) => requireActiveChild(...args),
   }));
-  vi.doMock("@/lib/storage", () => ({ uploadFile: (...args: unknown[]) => uploadFile(...args) }));
+  vi.doMock("@/lib/storage", () => ({ uploadFile: (...args: unknown[]) => uploadFile(...args), deleteStoredObject: vi.fn() }));
   vi.doMock("@/lib/notifications", () => ({ notifyGuardians: (...args: unknown[]) => notifyGuardians(...args) }));
   vi.doMock("@/lib/prisma", () => ({
     prisma: {

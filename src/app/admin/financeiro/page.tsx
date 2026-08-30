@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { getMonthlyOvertimeBreakdown, effectiveStatus } from "@/lib/financial";
+import { getMonthlyOvertimeBreakdownBatch, effectiveStatus } from "@/lib/financial";
 import { INVOICE_STATUS_LABELS, INVOICE_STATUS_TONE, MONTH_LABELS } from "@/lib/labels";
 
 const currency = (n: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
@@ -18,13 +18,8 @@ export default async function FinancialOverviewPage() {
     },
   });
 
-  const rows = await Promise.all(
-    children.map(async (child) => {
-      const { total: overtimeSoFar } = await getMonthlyOvertimeBreakdown(child.id, month, year);
-      const invoice = child.invoices[0];
-      return { child, overtimeSoFar, invoice };
-    })
-  );
+  const overtimeByChild = await getMonthlyOvertimeBreakdownBatch(children.map((child) => child.id), month, year);
+  const rows = children.map((child) => ({ child, overtimeSoFar: overtimeByChild.get(child.id)?.total ?? 0, invoice: child.invoices[0] }));
 
   return (
     <div className="p-4 sm:p-8 flex flex-col gap-6">

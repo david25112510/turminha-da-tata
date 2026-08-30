@@ -4,12 +4,14 @@ const requireAdmin = vi.fn();
 const findUniquePhoto = vi.fn();
 const deletePhoto = vi.fn();
 const recordAuditLog = vi.fn();
+const deleteStoredObject = vi.fn();
 
 beforeEach(() => {
   vi.resetModules();
   vi.doMock("next/cache", () => ({ revalidatePath: () => {} }));
   vi.doMock("@/lib/authz", () => ({ requireAdmin: (...args: unknown[]) => requireAdmin(...args) }));
   vi.doMock("@/lib/audit-log", () => ({ recordAuditLog: (...args: unknown[]) => recordAuditLog(...args) }));
+  vi.doMock("@/lib/storage", () => ({ deleteStoredObject: (...args: unknown[]) => deleteStoredObject(...args) }));
   vi.doMock("@/lib/prisma", () => ({
     prisma: {
       photo: {
@@ -23,6 +25,7 @@ beforeEach(() => {
   findUniquePhoto.mockReset();
   deletePhoto.mockReset().mockResolvedValue(undefined);
   recordAuditLog.mockReset().mockResolvedValue(undefined);
+  deleteStoredObject.mockReset().mockResolvedValue(undefined);
 });
 
 function formData(fields: Record<string, string>) {
@@ -65,6 +68,7 @@ describe("removePhotoAction", () => {
     deletePhoto.mockImplementationOnce(async () => {
       callOrder.push("delete");
     });
+    deleteStoredObject.mockImplementationOnce(async () => { callOrder.push("storage"); });
 
     const { removePhotoAction } = await import("./actions");
     await removePhotoAction(formData({ id: "photo-1", reason: "Solicitado pela família" }));
@@ -80,6 +84,15 @@ describe("removePhotoAction", () => {
       })
     );
     expect(deletePhoto).toHaveBeenCalledWith({ where: { id: "photo-1" } });
-    expect(callOrder).toEqual(["audit", "delete"]);
+    expect(deleteStoredObject).toHaveBeenCalledWith("/uploads/foto.jpg");
+    expect(callOrder).toEqual(["audit", "storage", "delete"]);
+  });
+
+  it("mantém o registro quando a exclusão física falha", async () => {
+    findUniquePhoto.mockResolvedValueOnce({ id: "photo-1", childId: "child-1", url: "storage://children/child-1/a.png", caption: null, takenAt: new Date(), child: { preferredName: "Ana", fullName: "Ana" } });
+    deleteStoredObject.mockRejectedValueOnce(new Error("storage indisponível"));
+    const { removePhotoAction } = await import("./actions");
+    await expect(removePhotoAction(formData({ id: "photo-1", reason: "Duplicada" }))).rejects.toThrow("storage indisponível");
+    expect(deletePhoto).not.toHaveBeenCalled();
   });
 });

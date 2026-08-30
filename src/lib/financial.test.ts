@@ -155,6 +155,21 @@ describe("getMonthlyOvertimeBreakdown — lê do snapshot quando a fatura já ex
   });
 });
 
+describe("getMonthlyOvertimeBreakdownBatch", () => {
+  it("consulta em lote e preserva snapshot fechado versus cálculo ao vivo", async () => {
+    const invoiceFindMany = vi.fn().mockResolvedValue([{ childId: "child-1", createdAt: new Date("2026-09-30T00:00:00Z"), items: [{ quantity: 15, amount: 3.75, metadata: { date: "2026-09-05T00:00:00Z" } }] }]);
+    const childFindMany = vi.fn().mockResolvedValue([{ id: "child-1", overtimeHourRate: 15, contractedExitTime: "17:30", toleranceMinutes: 15 }, { id: "child-2", overtimeHourRate: 12, contractedExitTime: "17:30", toleranceMinutes: 0 }]);
+    const attendanceFindMany = vi.fn().mockResolvedValue([{ childId: "child-2", date: new Date(2026, 8, 8), checkOutTime: new Date(2026, 8, 8, 18, 0) }]);
+    vi.resetModules();
+    vi.doMock("@/lib/prisma", () => ({ prisma: { monthlyInvoice: { findMany: invoiceFindMany }, child: { findMany: childFindMany }, attendance: { findMany: attendanceFindMany } } }));
+    const { getMonthlyOvertimeBreakdownBatch } = await import("./financial");
+    const result = await getMonthlyOvertimeBreakdownBatch(["child-1", "child-2"], 9, 2026);
+    expect(invoiceFindMany).toHaveBeenCalledOnce(); expect(childFindMany).toHaveBeenCalledOnce(); expect(attendanceFindMany).toHaveBeenCalledOnce();
+    expect(result.get("child-1")?.total).toBe(3.75);
+    expect(result.get("child-2")?.total).toBe(6);
+  });
+});
+
 describe("closeMonth", () => {
   const findUniqueInvoice = vi.fn();
   const findUniqueOrThrowChild = vi.fn();

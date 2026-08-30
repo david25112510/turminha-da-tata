@@ -2,6 +2,7 @@ name: CI
 
 on:
   push:
+    branches: [master]
   pull_request:
 
 jobs:
@@ -43,6 +44,8 @@ jobs:
         run: npx prisma migrate deploy
 
       - run: npm run lint
+
+      - run: npx tsc --noEmit
 
       - run: npm run test
 

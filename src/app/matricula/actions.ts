@@ -32,10 +32,20 @@ export async function createEnrollmentAccountAction(_prev: EnrollmentState, form
   }
   const passwordHash = await bcrypt.hash(password, 10);
   const user = await prisma.$transaction(async (tx) => {
+    // Locks transacionais tornam a checagem + criação atômica também para CPF, que é nullable e
+    // legado sem índice único. A ordem fixa evita deadlock entre solicitações concorrentes.
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${`enrollment-account-email:${email}`}))`;
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${`enrollment-account-cpf:${cpf}`}))`;
+    const concurrentExisting = await tx.user.findFirst({ where: { OR: [{ email }, { cpf }] }, select: { id: true } });
+    if (concurrentExisting) return null;
     const created = await tx.user.create({ data: { name, email, cpf, phone, birthDate: new Date(`${birthDateText}T12:00:00`), passwordHash, role: "GUARDIAN" } });
     await tx.guardian.create({ data: { userId: created.id, name, email, cpf, phone, whatsapp: whatsapp || phone, birthDate: new Date(`${birthDateText}T12:00:00`) } });
     return created;
-  });
+  }, { isolationLevel: "Serializable" });
+  if (!user) {
+    await recordFailedAttempt(`enrollment-account:${email}`);
+    return { error: "Já existe uma conta com este e-mail ou CPF. Entre para continuar." };
+  }
   await recordAuditLog({ actorUserId: user.id, action: "CONTA_MATRICULA_CRIADA", entity: "User", entityId: user.id, newData: { role: "GUARDIAN" } });
   return { success: true };
 }
@@ -57,11 +67,21 @@ export async function submitEnrollmentAction(_prev: EnrollmentState, formData: F
   let authorizedPeople: Array<{ name: string; cpf?: string; phone: string; relationship: string; notes?: string }> = [];
   try { authorizedPeople = JSON.parse(String(formData.get("authorizedPeople") ?? "[]")); } catch { return { error: "Revise as pessoas autorizadas." }; }
   if (authorizedPeople.length > 10 || authorizedPeople.some((p) => !p.name?.trim() || !p.phone?.trim())) return { error: "Preencha nome e telefone de cada pessoa autorizada." };
-  const duplicate = await prisma.enrollmentRequest.findFirst({ where: { guardianId: guardian.id, childFullName: { equals: fullName, mode: "insensitive" }, childBirthDate: birthDate, status: { in: ["SUBMITTED", "UNDER_REVIEW", "APPROVED"] } } });
-  if (duplicate) return { error: "Já existe uma matrícula ativa para esta criança." };
   const relationship = String(formData.get("relationship") ?? "LEGAL_GUARDIAN");
-  const request = await prisma.enrollmentRequest.create({
-    data: {
+  const normalizedName = fullName.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase().replace(/\s+/g, " ");
+  const request = await prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${`enrollment:${guardian.id}:name:${normalizedName}:birth:${birthDateText}`}))`;
+    if (childCpf) await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${`enrollment:${guardian.id}:cpf:${childCpf}`}))`;
+    const activeRequests = await tx.enrollmentRequest.findMany({
+      where: { guardianId: guardian.id, status: { in: ["SUBMITTED", "UNDER_REVIEW", "APPROVED"] } },
+      select: { id: true, childFullName: true, childBirthDate: true, childCpf: true },
+    });
+    const duplicate = activeRequests.find((item) =>
+      (Boolean(childCpf) && item.childCpf === childCpf)
+      || (item.childBirthDate.getTime() === birthDate.getTime() && item.childFullName.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase().replace(/\s+/g, " ") === normalizedName)
+    );
+    if (duplicate) return null;
+    return tx.enrollmentRequest.create({ data: {
       guardianId: guardian.id, status: "SUBMITTED", submittedAt: new Date(), childFullName: fullName,
       childPreferredName: String(formData.get("childPreferredName") ?? "").trim() || null, childBirthDate: birthDate,
       childSex: sex as "FEMALE" | "MALE", childCpf: childCpf || null,
@@ -80,8 +100,9 @@ export async function submitEnrollmentAction(_prev: EnrollmentState, formData: F
       imageAuthSocialMedia: formData.get("imageAuthSocialMedia") === "on",
       imageAuthAdvertising: formData.get("imageAuthAdvertising") === "on",
       authorizedPeople: { create: authorizedPeople.map((p) => ({ name: p.name.trim(), cpf: digits(p.cpf ?? "") || null, phone: p.phone.trim(), relationship: (p.relationship || "OTHER") as never, notes: p.notes?.trim() || null })) },
-    },
-  });
+    } });
+  }, { isolationLevel: "Serializable" });
+  if (!request) return { error: "Já existe uma matrícula ativa para esta criança." };
   await recordAuditLog({ actorUserId: session.user.id, action: "MATRICULA_ENVIADA", entity: "EnrollmentRequest", entityId: request.id, newData: { status: "SUBMITTED", childFullName: fullName } });
   await notifyAdmins("SIGNUP_REQUEST", "Nova matrícula", `${guardian.name} enviou a matrícula de ${fullName}.`, { entity: "EnrollmentRequest", entityId: request.id });
   revalidatePath("/matricula"); revalidatePath("/admin/matriculas");

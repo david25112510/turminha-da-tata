@@ -96,6 +96,29 @@ export async function getMonthlyOvertimeBreakdown(childId: string, month: number
   return { entries, total };
 }
 
+/** Versão em lote para listagens: no máximo três queries, independentemente do número de crianças. */
+export async function getMonthlyOvertimeBreakdownBatch(childIds: string[], month: number, year: number) {
+  const result = new Map<string, { entries: OvertimeEntry[]; total: number }>();
+  if (!childIds.length) return result;
+  const start = new Date(year, month - 1, 1), end = new Date(year, month, 1);
+  const [invoices, children, attendances] = await Promise.all([
+    prisma.monthlyInvoice.findMany({ where: { childId: { in: childIds }, referenceMonth: month, referenceYear: year }, include: { items: { where: { type: "OVERTIME" } } } }),
+    prisma.child.findMany({ where: { id: { in: childIds } }, select: { id: true, overtimeHourRate: true, contractedExitTime: true, toleranceMinutes: true } }),
+    prisma.attendance.findMany({ where: { childId: { in: childIds }, date: { gte: start, lt: end }, checkOutTime: { not: null } }, orderBy: { date: "asc" } }),
+  ]);
+  const invoiceByChild = new Map(invoices.map((invoice) => [invoice.childId, invoice]));
+  const attendanceByChild = new Map<string, typeof attendances>();
+  for (const attendance of attendances) attendanceByChild.set(attendance.childId, [...(attendanceByChild.get(attendance.childId) ?? []), attendance]);
+  for (const child of children) {
+    const invoice = invoiceByChild.get(child.id);
+    const entries: OvertimeEntry[] = invoice
+      ? invoice.items.map((item) => { const metadata = item.metadata as { date?: string } | null; return { date: metadata?.date ? new Date(metadata.date) : invoice.createdAt, minutesLate: Number(item.quantity ?? 0), amount: Number(item.amount) }; })
+      : (attendanceByChild.get(child.id) ?? []).map((attendance) => { const { minutesLate, amount } = calculateOvertimeForAttendance(attendance.checkOutTime!, child.contractedExitTime, child.toleranceMinutes, Number(child.overtimeHourRate)); return { date: attendance.date, minutesLate, amount }; }).filter((entry) => entry.minutesLate > 0);
+    result.set(child.id, { entries, total: Math.round(entries.reduce((sum, entry) => sum + entry.amount, 0) * 100) / 100 });
+  }
+  return result;
+}
+
 const IMMUTABLE_INVOICE_STATUSES = new Set(["PAID", "PARTIALLY_PAID", "CANCELLED"]);
 
 type InvoiceItemInput = {

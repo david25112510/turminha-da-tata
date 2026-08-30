@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { WEEKDAYS, WEEKDAY_LABELS, CHILD_STATUS_LABELS, IMAGE_AUTH_CATEGORIES } from "@/lib/labels";
 import { updateChildAction, uploadChildProfilePhotoAction } from "../../actions";
+import { resolveStoredFileUrl } from "@/lib/storage";
 
 const inputClass =
   "min-h-11 border border-tata-border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-tata-green transition-colors bg-tata-surface";
@@ -13,6 +14,7 @@ export default async function EditChildPage({ params }: { params: Promise<{ id: 
   const { id } = await params;
   const child = await prisma.child.findUnique({ where: { id } });
   if (!child) notFound();
+  const photoUrl = await resolveStoredFileUrl(child.photoUrl);
 
   return (
     <div className="p-4 sm:p-8 flex flex-col gap-6 max-w-2xl">
@@ -31,9 +33,9 @@ export default async function EditChildPage({ params }: { params: Promise<{ id: 
       <div className="bg-tata-surface rounded-tata-lg shadow-tata-card p-6 flex flex-col gap-4">
         <span className={labelClass}>Foto de perfil</span>
         <div className="flex items-center gap-4">
-          {child.photoUrl && (
+          {photoUrl && (
             <div className="relative w-16 h-16 rounded-full overflow-hidden bg-tata-surface-hover shrink-0">
-              <Image src={child.photoUrl} alt="" fill className="object-cover" />
+              <Image src={photoUrl} alt="" fill unoptimized className="object-cover" />
             </div>
           )}
           <form action={uploadChildProfilePhotoAction} encType="multipart/form-data" className="flex gap-2 items-center">

@@ -4,11 +4,12 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/authz";
 import { recordAuditLog } from "@/lib/audit-log";
+import { deleteStoredObject } from "@/lib/storage";
 
 /**
  * Remove uma foto do mural — nunca silenciosamente: exige motivo e grava o registro completo
- * (quem removeu, quando, a foto e a criança) em AuditLog antes de apagar. Remove só o registro do
- * banco (Photo), não o objeto no storage — consistente com src/lib/storage.ts não expor delete hoje.
+ * (quem removeu, quando, a foto e a criança) em AuditLog antes de apagar. O objeto privado é
+ * removido antes do registro Photo; falhas preservam o registro para permitir nova tentativa.
  */
 export async function removePhotoAction(formData: FormData) {
   const admin = await requireAdmin();
@@ -34,6 +35,8 @@ export async function removePhotoAction(formData: FormData) {
     newData: { reason },
   });
 
+  // A remoção física vem primeiro. Se falhar, o registro permanece para permitir retry seguro.
+  await deleteStoredObject(photo.url);
   await prisma.photo.delete({ where: { id } });
 
   revalidatePath("/admin/fotos");

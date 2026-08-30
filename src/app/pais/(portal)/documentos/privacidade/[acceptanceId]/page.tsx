@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireGuardian } from "@/lib/guardian";
 import { formatDateTime } from "@/lib/date";
+import { resolveStoredFileUrl } from "@/lib/storage";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ export default async function GuardianPrivacyPolicyDetailPage({ params }: { para
     include: { version: true },
   });
   if (!acceptance) notFound();
+  const signatureUrl = await resolveStoredFileUrl(acceptance.signatureUrl);
 
   return (
     <div className="p-4 sm:p-6 flex flex-col gap-5 max-w-2xl mx-auto">
@@ -50,11 +52,11 @@ export default async function GuardianPrivacyPolicyDetailPage({ params }: { para
           )}
         </div>
 
-        {acceptance.signatureUrl && (
+        {signatureUrl && (
           <div className="p-5 pt-0 flex flex-col gap-1.5">
             <span className="text-xs font-semibold text-tata-ink-muted uppercase tracking-wide">Assinatura do responsável</span>
             <div className="w-full max-w-[300px] h-[100px] relative bg-white border border-tata-border rounded-xl overflow-hidden">
-              <Image src={acceptance.signatureUrl} alt={`Assinatura de ${guardian.name}`} fill className="object-contain" />
+              <Image src={signatureUrl} alt={`Assinatura de ${guardian.name}`} fill unoptimized className="object-contain" />
             </div>
           </div>
         )}
