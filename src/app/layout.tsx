@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import type { ReactNode } from "react";
 import { Baloo_2, Poppins } from "next/font/google";
 import "./globals.css";
 import { RegisterServiceWorker } from "./RegisterServiceWorker";
@@ -33,7 +34,7 @@ export const viewport: Viewport = {
   themeColor: "#1FA787",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="pt-BR"
