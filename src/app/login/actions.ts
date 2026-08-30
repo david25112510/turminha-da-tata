@@ -6,6 +6,7 @@ import { AuthError } from "next-auth";
 import { signIn } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { isRateLimited } from "@/lib/rate-limit";
+import { TURNSTILE_FIELD, turnstileError, verifyTurnstileToken } from "@/lib/turnstile";
 
 const HOME_BY_ROLE: Record<string, string> = {
   ADMIN: "/admin",
@@ -16,10 +17,11 @@ const HOME_BY_ROLE: Record<string, string> = {
 export async function loginAction(
   _prevState: { error?: string; mfaRequired?: boolean } | undefined,
   formData: FormData
-) {
+): Promise<{ error?: string; mfaRequired?: boolean } | undefined> {
   const email = String(formData.get("email") ?? "");
   const password = formData.get("password");
   const totpCode = String(formData.get("totpCode") ?? "").trim();
+  const turnstileToken = String(formData.get(TURNSTILE_FIELD) ?? "");
 
   // Enforcement (recording attempts, resetting on success) happens inside
   // auth.ts's authorize(), since that's reached by every sign-in path, not
@@ -40,12 +42,15 @@ export async function loginAction(
     });
     if (account?.active && account.role === "ADMIN" && account.totpEnabled && password) {
       const passwordMatches = await bcrypt.compare(String(password), account.passwordHash);
-      if (passwordMatches) return { mfaRequired: true };
+      if (passwordMatches) {
+        if (!(await verifyTurnstileToken(turnstileToken))) return turnstileError();
+        return { mfaRequired: true };
+      }
     }
   }
 
   try {
-    await signIn("credentials", { email, password, totpCode, redirect: false });
+    await signIn("credentials", { email, password, totpCode, turnstileToken, redirect: false });
   } catch (error) {
     if (error instanceof AuthError) {
       return { error: "E-mail ou senha inválidos." };

@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { TataScene } from "./TataScene";
 
 type EmptyStateProps = {
   message: string;
@@ -12,7 +12,7 @@ export function EmptyState({ message, withMascot }: EmptyStateProps) {
     <div className="flex flex-col items-center gap-2 py-8 text-center">
       {withMascot && (
         <div className="relative w-16 h-20 mb-1 tata-mascot-idle">
-          <Image src="/images/tata-mascote.png" alt="" fill className="object-contain opacity-90" />
+          <TataScene scene="EMPTY" className="opacity-90" />
         </div>
       )}
       <p className="text-sm text-tata-ink-muted-alt max-w-[220px]">{message}</p>

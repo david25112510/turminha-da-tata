@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import Link from "next/link";
 import { RELATIONSHIP_LABELS } from "@/lib/labels";
 import { requestSignupAction, type SignupState } from "./actions";
+import { HumanVerification } from "@/components/security/HumanVerification";
 
 const inputClass =
   "min-h-11 border border-tata-border rounded-xl px-4 py-3 text-sm outline-none focus:border-tata-green transition-colors";
@@ -125,6 +126,8 @@ export function SignupForm() {
           {state.error}
         </p>
       )}
+
+      <HumanVerification pending={pending} />
 
       <button
         type="submit"

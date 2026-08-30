@@ -4,13 +4,15 @@ import { prisma } from "@/lib/prisma";
 import { isRateLimited, recordFailedAttempt } from "@/lib/rate-limit";
 import { createPasswordResetToken } from "@/lib/password-reset";
 import { sendEmail } from "@/lib/email";
+import { TURNSTILE_FIELD, turnstileError, verifyTurnstileToken } from "@/lib/turnstile";
 
 const GENERIC_MESSAGE = "Se este e-mail estiver cadastrado, enviamos instruções de recuperação para ele.";
 
 export async function requestPasswordResetAction(
   _prevState: { message?: string; error?: string } | undefined,
   formData: FormData
-) {
+): Promise<{ message?: string; error?: string } | undefined> {
+  if (!(await verifyTurnstileToken(formData.get(TURNSTILE_FIELD)))) return turnstileError();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   if (!email) return { error: "Informe um e-mail." };
 

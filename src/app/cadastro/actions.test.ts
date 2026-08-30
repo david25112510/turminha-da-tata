@@ -21,6 +21,11 @@ beforeEach(() => {
     isRateLimited: (...args: unknown[]) => isRateLimited(...args),
     recordFailedAttempt: (...args: unknown[]) => recordFailedAttempt(...args),
   }));
+  vi.doMock("@/lib/turnstile", () => ({
+    TURNSTILE_FIELD: "cf-turnstile-response",
+    verifyTurnstileToken: vi.fn().mockResolvedValue(true),
+    turnstileError: () => ({ error: "Falha na verificação." }),
+  }));
   vi.doMock("@/lib/guardian-invite", () => ({ consumeGuardianInvite: (...args: unknown[]) => consumeGuardianInvite(...args) }));
   vi.doMock("@/lib/notifications", () => ({ notifyAdmins: (...args: unknown[]) => notifyAdmins(...args) }));
   vi.doMock("@/lib/prisma", () => ({

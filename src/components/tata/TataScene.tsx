@@ -1,0 +1,4 @@
+import Image from "next/image";
+export type TataSceneName = "WELCOME" | "LOGIN" | "SECURITY" | "ENROLLMENT" | "GUIDE_LEFT" | "GUIDE_RIGHT" | "THINKING" | "SUCCESS" | "CELEBRATION" | "EMPTY" | "ERROR" | "PARENTS" | "CAREGIVER" | "SLEEPING" | "PHOTO";
+const assets: Record<TataSceneName, string> = Object.fromEntries(["WELCOME","LOGIN","SECURITY","ENROLLMENT","GUIDE_LEFT","GUIDE_RIGHT","THINKING","SUCCESS","CELEBRATION","EMPTY","ERROR","PARENTS","CAREGIVER","SLEEPING","PHOTO"].map((name) => [name, `/images/tata/scenes/tata-${name.toLowerCase().replace("_", "-")}.webp`])) as Record<TataSceneName, string>;
+export function TataScene({ scene, className = "", priority = false, alt = "" }: { scene: TataSceneName; className?: string; priority?: boolean; alt?: string }) { return <Image src={assets[scene]} alt={alt} fill sizes="(max-width: 768px) 50vw, 420px" priority={priority} className={`object-contain ${className}`} />; }

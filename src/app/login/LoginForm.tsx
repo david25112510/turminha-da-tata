@@ -1,9 +1,10 @@
 "use client";
 
 import { useActionState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { DevFooter } from "@/components/tata/DevFooter";
+import { TataScene } from "@/components/tata/TataScene";
+import { HumanVerification } from "@/components/security/HumanVerification";
 import { loginAction } from "./actions";
 
 export function LoginForm() {
@@ -15,14 +16,7 @@ export function LoginForm() {
         {/* Mobile: faixa compacta com a mascote no topo, em vez do formulário flutuando isolado no meio da tela */}
         <div className="flex md:hidden flex-col items-center gap-2 bg-tata-green px-6 pt-10 pb-8 rounded-b-[32px]">
           <div className="relative w-20 h-24 tata-mascot-idle">
-            <Image
-              src="/images/tata-mascote.png"
-              alt="Tata, mascote da Turminha da Tata"
-              fill
-              sizes="80px"
-              className="object-contain"
-              priority
-            />
+            <TataScene scene="LOGIN" alt="Tata dando boas-vindas" priority />
           </div>
           <div className="flex items-baseline gap-1.5 font-[family-name:var(--font-baloo)] font-bold text-xl text-tata-surface">
             <span>Turminha</span>
@@ -39,14 +33,7 @@ export function LoginForm() {
 
           <div className="flex flex-col items-center gap-4">
             <div className="relative w-44 h-56 tata-mascot-idle">
-              <Image
-                src="/images/tata-mascote.png"
-                alt="Tata, mascote da Turminha da Tata"
-                fill
-                sizes="176px"
-                className="object-contain"
-                priority
-              />
+              <TataScene scene="LOGIN" alt="Tata dando boas-vindas" priority />
             </div>
             <p className="text-center text-sm text-tata-surface/90 max-w-[220px]">
               Cuidado, segurança e alegria acompanhando cada criança, todos os dias.
@@ -121,6 +108,8 @@ export function LoginForm() {
                 {state.error}
               </p>
             )}
+
+            <HumanVerification pending={pending} />
 
             <button
               type="submit"

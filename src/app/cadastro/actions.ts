@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { isRateLimited, recordFailedAttempt } from "@/lib/rate-limit";
 import { consumeGuardianInvite } from "@/lib/guardian-invite";
 import { notifyAdmins } from "@/lib/notifications";
+import { TURNSTILE_FIELD, turnstileError, verifyTurnstileToken } from "@/lib/turnstile";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -17,6 +18,7 @@ export type SignupState = { success: true } | { error: string } | undefined;
  * de adivinhar um código de convite ou descobrir e-mails já cadastrados.
  */
 export async function requestSignupAction(_prevState: SignupState, formData: FormData): Promise<SignupState> {
+  if (!(await verifyTurnstileToken(formData.get(TURNSTILE_FIELD)))) return turnstileError();
   const role = String(formData.get("role") ?? "");
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();

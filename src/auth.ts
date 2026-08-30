@@ -4,6 +4,7 @@ import { verifyCredentials } from "@/lib/verify-credentials";
 import { isRateLimited, recordFailedAttempt, resetAttempts } from "@/lib/rate-limit";
 import { checkMfaRequirement } from "@/lib/mfa";
 import { prisma } from "@/lib/prisma";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   session: { strategy: "jwt" },
@@ -15,12 +16,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       credentials: {
         email: { label: "E-mail", type: "email" },
         password: { label: "Senha", type: "password" },
+        turnstileToken: { label: "Verificacao humana", type: "text" },
         totpCode: { label: "Código de autenticação", type: "text" },
       },
       async authorize(credentials) {
         const email = credentials?.email as string | undefined;
         const password = credentials?.password as string | undefined;
         const totpCode = credentials?.totpCode as string | undefined;
+        const turnstileToken = credentials?.turnstileToken as string | undefined;
+
+        if (!(await verifyTurnstileToken(turnstileToken ?? null))) return null;
 
         if (email && (await isRateLimited(email))) return null;
 

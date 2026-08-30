@@ -42,6 +42,11 @@ beforeEach(() => {
   vi.doMock("@/lib/rate-limit", () => ({
     isRateLimited: (...args: unknown[]) => isRateLimited(...args),
   }));
+  vi.doMock("@/lib/turnstile", () => ({
+    TURNSTILE_FIELD: "cf-turnstile-response",
+    verifyTurnstileToken: vi.fn().mockResolvedValue(true),
+    turnstileError: () => ({ error: "Falha na verificação." }),
+  }));
   vi.doMock("bcryptjs", () => ({
     default: { compare: (...args: unknown[]) => bcryptCompare(...args) },
   }));
@@ -78,6 +83,7 @@ describe("loginAction", () => {
       email: "a@b.com",
       password: "senha-correta",
       totpCode: "",
+      turnstileToken: "",
       redirect: false,
     });
     expect(redirectSpy).toHaveBeenCalledWith(expectedPath);
@@ -136,6 +142,7 @@ describe("loginAction — pré-checagem de MFA", () => {
       email: "admin@b.com",
       password: "senha-errada",
       totpCode: "",
+      turnstileToken: "",
       redirect: false,
     });
   });
@@ -177,6 +184,7 @@ describe("loginAction — pré-checagem de MFA", () => {
       email: "admin@b.com",
       password: "senha-correta",
       totpCode: "123456",
+      turnstileToken: "",
       redirect: false,
     });
     // Só uma chamada a findUnique: a busca do papel para o redirect após o signIn.

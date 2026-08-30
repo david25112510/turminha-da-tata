@@ -8,11 +8,13 @@ import { isRateLimited, recordFailedAttempt } from "@/lib/rate-limit";
 import { digits, isValidCpf } from "@/lib/cpf";
 import { recordAuditLog } from "@/lib/audit-log";
 import { notifyAdmins } from "@/lib/notifications";
+import { TURNSTILE_FIELD, turnstileError, verifyTurnstileToken } from "@/lib/turnstile";
 
 export type EnrollmentState = { success?: true; error?: string } | undefined;
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function createEnrollmentAccountAction(_prev: EnrollmentState, formData: FormData): Promise<EnrollmentState> {
+  if (!(await verifyTurnstileToken(formData.get(TURNSTILE_FIELD)))) return turnstileError();
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const cpf = digits(String(formData.get("cpf") ?? ""));

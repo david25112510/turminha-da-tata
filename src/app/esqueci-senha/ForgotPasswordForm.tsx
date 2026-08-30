@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { requestPasswordResetAction } from "./actions";
+import { HumanVerification } from "@/components/security/HumanVerification";
 
 export function ForgotPasswordForm() {
   const [state, formAction, pending] = useActionState(requestPasswordResetAction, undefined);
@@ -42,6 +43,8 @@ export function ForgotPasswordForm() {
                 {state.error}
               </p>
             )}
+
+            <HumanVerification pending={pending} />
 
             <button
               type="submit"
