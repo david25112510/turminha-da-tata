@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useCallback, useState } from "react";
 import Link from "next/link";
 import { DevFooter } from "@/components/tata/DevFooter";
 import { TataScene } from "@/components/tata/TataScene";
@@ -10,6 +10,8 @@ import { loginAction } from "./actions";
 
 export function LoginForm() {
   const [state, formAction, pending] = useActionState(loginAction, undefined);
+  const [securityVerified, setSecurityVerified] = useState(false);
+  const handleVerification = useCallback((verified: boolean) => setSecurityVerified(verified), []);
 
   return (
     <main className="min-h-screen flex flex-col md:items-center md:justify-center bg-tata-bg md:p-6">
@@ -111,14 +113,14 @@ export function LoginForm() {
               </p>
             )}
 
-            <HumanVerification pending={pending} />
+            <HumanVerification pending={pending} onVerifiedChange={handleVerification} />
 
             <button
               type="submit"
-              disabled={pending}
+              disabled={pending || !securityVerified}
               className="min-h-11 bg-tata-coral text-white rounded-xl py-3 font-[family-name:var(--font-baloo)] font-semibold text-sm disabled:opacity-60 transition-opacity"
             >
-              {pending ? "Entrando..." : state?.mfaRequired ? "Confirmar código" : "Entrar"}
+              {pending ? "Entrando..." : !securityVerified ? "Aguardando verificação..." : state?.mfaRequired ? "Confirmar código" : "Entrar"}
             </button>
 
             {!state?.mfaRequired && (
