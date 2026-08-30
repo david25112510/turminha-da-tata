@@ -17,7 +17,7 @@ const NAV_ITEMS = [
   { href: "/admin/medicamentos", label: "Medicamentos" },
   { href: "/admin/observacoes", label: "Observações" },
   { href: "/admin/solicitacoes", label: "Solicitações" },
-  { href: "/admin/matriculas", label: "🎒 Matrículas" },
+  { href: "/admin/matriculas", label: "Matrículas" },
   { href: "/admin/comunicados", label: "Comunicados" },
   { href: "/admin/financeiro", label: "Financeiro" },
   { href: "/admin/contratos", label: "Contratos" },
@@ -46,7 +46,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             aria-label={unreadNotifications > 0 ? `Notificações — ${unreadNotifications} não lidas` : "Notificações"}
             className="relative min-h-11 min-w-11 flex items-center justify-center text-lg"
           >
-            <span aria-hidden="true">🔔</span>
+            <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
             {unreadNotifications > 0 && (
               <span aria-hidden="true" className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-tata-coral" />
             )}
