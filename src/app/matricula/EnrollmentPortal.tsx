@@ -4,6 +4,7 @@ import { useActionState, useMemo, useState } from "react";
 import Link from "next/link";
 import { createEnrollmentAccountAction, submitEnrollmentAction } from "./actions";
 import { HumanVerification } from "@/components/security/HumanVerification";
+import { TataLoading } from "@/components/tata/TataLoading";
 
 const input = "min-h-12 w-full rounded-2xl border border-tata-border bg-white px-4 py-3 text-sm outline-none focus:border-tata-green focus:ring-2 focus:ring-tata-green/20";
 const label = "flex flex-col gap-1.5 text-sm font-semibold text-tata-ink";
@@ -12,7 +13,7 @@ type Person = { name: string; cpf: string; phone: string; relationship: string; 
 export function AccountForm() {
   const [state, action, pending] = useActionState(createEnrollmentAccountAction, undefined);
   if (state?.success) return <div className="rounded-3xl bg-white p-6 shadow-tata-card text-center"><div className="text-4xl">💛</div><h2 className="font-[family-name:var(--font-baloo)] text-xl font-bold text-tata-green-dark">Conta criada!</h2><p className="mt-2 text-sm text-tata-ink-soft">Entre com seu e-mail e senha para continuar a matrícula.</p><Link href="/login?callbackUrl=/matricula" className="mt-5 inline-flex min-h-12 items-center rounded-2xl bg-tata-coral px-6 font-bold text-white">ENTRAR E CONTINUAR</Link></div>;
-  return <form action={action} className="rounded-3xl bg-white p-5 sm:p-7 shadow-tata-card flex flex-col gap-4">
+  return <form action={action} aria-busy={pending} className="rounded-3xl bg-white p-5 sm:p-7 shadow-tata-card flex flex-col gap-4"><TataLoading active={pending} context="SUBMIT" message="Criando conta..." />
     <div><p className="text-xs font-bold uppercase tracking-wider text-tata-green-dark">Etapa 1 de 7</p><h1 className="font-[family-name:var(--font-baloo)] text-2xl font-bold text-tata-ink">Crie sua conta de responsável</h1><p className="text-sm text-tata-ink-soft">Ela será usada para acompanhar a solicitação com segurança.</p></div>
     <label className={label}>Nome completo<input name="name" autoComplete="name" required className={input}/></label>
     <div className="grid sm:grid-cols-2 gap-4"><label className={label}>CPF<input name="cpf" inputMode="numeric" required className={input}/></label><label className={label}>Data de nascimento<input name="birthDate" type="date" required className={input}/></label></div>
@@ -32,7 +33,7 @@ export function EnrollmentWizard({ guardianName, guardianCpf, guardianPhone, gua
   const [people, setPeople] = useState<Person[]>([]); const [draft, setDraft] = useState<Person>({ name: "", cpf: "", phone: "", relationship: "OTHER", notes: "" });
   const title = useMemo(() => ["", "", "Responsável", "Criança", "Cuidados", "Pessoas autorizadas", "Revisão"][step], [step]);
   if (state?.success) return <div className="rounded-3xl bg-white p-7 shadow-tata-card text-center"><div className="text-5xl">💛</div><h1 className="font-[family-name:var(--font-baloo)] text-2xl font-bold text-tata-green-dark">Matrícula enviada!</h1><p className="mt-2 text-tata-ink-soft">Recebemos os dados. Nossa equipe fará a análise e você verá a decisão aqui.</p><div className="mt-5 rounded-2xl bg-tata-yellow/15 px-4 py-3 font-bold text-tata-yellow-dark">🟡 AGUARDANDO APROVAÇÃO</div></div>;
-  return <form action={action} className="rounded-3xl bg-white p-5 sm:p-7 shadow-tata-card flex flex-col gap-5">
+  return <form action={action} aria-busy={pending} className="rounded-3xl bg-white p-5 sm:p-7 shadow-tata-card flex flex-col gap-5"><TataLoading active={pending} context="ENROLLMENT" />
     <input type="hidden" name="authorizedPeople" value={JSON.stringify(people)}/>
     <div><div className="flex justify-between text-xs font-bold text-tata-green-dark"><span>Etapa {step} de 7</span><span>{title}</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-tata-green/10"><div className="h-full rounded-full bg-tata-green transition-all" style={{width:`${step / 7 * 100}%`}}/></div></div>
     <section className={step === 2 ? "flex flex-col gap-3" : "hidden"}><h2 className="font-[family-name:var(--font-baloo)] text-xl font-bold">Olá, {guardianName.split(" ")[0]}!</h2><p className="text-sm text-tata-ink-soft">Vamos iniciar a matrícula da sua criança? Seus dados já estão seguros conosco.</p><div className="rounded-2xl bg-tata-surface-alt p-4 text-sm"><p><b>Nome:</b> {guardianName}</p><p><b>CPF:</b> {guardianCpf}</p><p><b>Telefone:</b> {guardianPhone}</p><p><b>E-mail:</b> {guardianEmail}</p></div><label className={label}>Relação com a criança<select name="relationship" defaultValue="LEGAL_GUARDIAN" className={input}><option value="MOTHER">Mãe</option><option value="FATHER">Pai</option><option value="LEGAL_GUARDIAN">Responsável legal</option><option value="OTHER">Outro</option></select></label></section>

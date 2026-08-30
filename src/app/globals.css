@@ -179,10 +179,17 @@ body {
   transform-origin: bottom center;
 }
 
+@keyframes tata-loading-breathe { 0%, 100% { transform: translateY(0) rotate(-0.4deg); } 50% { transform: translateY(-4px) rotate(0.4deg); } }
+@keyframes tata-heart-pulse { 0%, 25% { opacity: 0; transform: translate(-50%, -50%) scale(.9); } 45% { opacity: .9; transform: translate(-50%, -50%) scale(1.05); } 70%, 100% { opacity: .3; transform: translate(-50%, -50%) scale(1); } }
+.tata-loading-character { animation: tata-loading-breathe 3.2s ease-in-out infinite; transform-origin: 50% 80%; }
+.tata-loading-heart { position: absolute; left: 50%; top: 47%; color: var(--color-tata-coral); font-size: 1.25rem; filter: drop-shadow(0 2px 5px rgb(239 111 108 / .3)); animation: tata-heart-pulse 2.1s var(--ease-tata) infinite; }
+
 @media (prefers-reduced-motion: reduce) {
   .tata-animate-in,
   .tata-animate-pop,
   .tata-mascot-idle {
     animation: none;
   }
+  .tata-loading-character,
+  .tata-loading-heart { animation: none; }
 }

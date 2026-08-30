@@ -20,6 +20,7 @@ const scenes = {
   caregiver: "exec-31dd948a-1daa-4548-b6c8-d08a3de9bbec.png",
   sleeping: "exec-7d9bc897-0013-4dad-a66a-8a288c7cdea4.png",
   photo: "exec-05715766-e45b-43ea-ad5d-9bcb0b59bd1d.png",
+  "loading-heart": "exec-b4d5d53e-048b-4bcb-8ffd-54f29ce9e0fc.png",
 };
 
 await mkdir(outputRoot, { recursive: true });

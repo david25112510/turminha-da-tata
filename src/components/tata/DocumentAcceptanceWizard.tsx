@@ -5,6 +5,7 @@ import Image from "next/image";
 import { formatDateTime } from "@/lib/date";
 import { toUserMessage } from "@/lib/user-error-message";
 import { SignaturePad, type SignaturePadHandle } from "@/components/tata/SignaturePad";
+import { TataLoading } from "@/components/tata/TataLoading";
 
 type ActionState = { success?: true; error?: string } | null;
 type Step = "ler" | "assinar" | "confirmar";
@@ -98,6 +99,7 @@ export function DocumentAcceptanceWizard({
 
   return (
     <div className="bg-tata-surface rounded-tata-lg shadow-tata-card overflow-hidden flex flex-col">
+      <TataLoading active={pending} context="DOCUMENT" />
       <div className="p-5 pb-3 border-b border-tata-border flex flex-col gap-0.5">
         <p className="font-[family-name:var(--font-baloo)] font-semibold text-tata-ink">{documentTitle}</p>
         {identificationLines.map(({ label, value }) => (
@@ -183,7 +185,7 @@ export function DocumentAcceptanceWizard({
               </p>
             )}
 
-            <form action={formAction} className="flex gap-2.5">
+            <form action={formAction} aria-busy={pending} className="flex gap-2.5">
               <input type="hidden" name="acceptanceId" value={acceptanceId} />
               <input type="hidden" name="agreed" value="on" />
               <input type="hidden" name="signature" value={signatureDataUrl} />

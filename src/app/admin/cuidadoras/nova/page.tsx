@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { createCaregiverAction } from "../actions";
+import { TataLoading } from "@/components/tata/TataLoading";
 
 const inputClass =
   "min-h-11 border border-tata-border rounded-xl px-4 py-2.5 text-sm outline-none focus:border-tata-green transition-colors bg-tata-surface";
@@ -46,7 +47,8 @@ export default function NewCaregiverPage() {
         Nova cuidadora
       </h1>
 
-      <form action={formAction} className="bg-tata-surface rounded-2xl shadow-sm p-6 flex flex-col gap-5">
+      <form action={formAction} aria-busy={pending} className="bg-tata-surface rounded-2xl shadow-sm p-6 flex flex-col gap-5">
+        <TataLoading active={pending} context="SAVE" level="contextual" />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <label className="flex flex-col gap-1.5 sm:col-span-2">
             <span className={labelClass}>Nome completo</span>

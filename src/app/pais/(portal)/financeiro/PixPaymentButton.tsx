@@ -3,6 +3,7 @@
 import { useActionState, useRef, useState } from "react";
 import Image from "next/image";
 import { generatePixChargeAction, type PixChargeState } from "./actions";
+import { TataLoading } from "@/components/tata/TataLoading";
 
 /**
  * Botão + <dialog> nativo para gerar/mostrar a cobrança Pix de uma fatura em aberto — mesmo padrão
@@ -88,7 +89,8 @@ export function PixPaymentButton({ invoiceId, childId }: { invoiceId: string; ch
               </p>
             </div>
           ) : (
-            <form action={formAction} className="flex flex-col gap-3">
+            <form action={formAction} aria-busy={pending} className="flex flex-col gap-3">
+              <TataLoading active={pending} context="PAYMENT" level="contextual" />
               <input type="hidden" name="invoiceId" value={invoiceId} />
               <input type="hidden" name="childId" value={childId} />
               <p className="text-sm text-tata-ink-soft">Gere um QR Code Pix para pagar esta mensalidade agora.</p>

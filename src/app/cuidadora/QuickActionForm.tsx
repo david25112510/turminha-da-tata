@@ -3,6 +3,7 @@
 import { useActionState, useEffect } from "react";
 import { useDialogClose } from "./DialogContext";
 import { toUserMessage } from "@/lib/user-error-message";
+import { TataLoading } from "@/components/tata/TataLoading";
 
 type ActionState = { success?: string; error?: string } | null;
 
@@ -51,7 +52,8 @@ export function QuickActionForm({
   }, [state?.success, closeDialog]);
 
   return (
-    <form action={formAction} className="flex flex-col gap-2.5">
+    <form action={formAction} aria-busy={pending} className="flex flex-col gap-2.5">
+      <TataLoading active={pending} context="ROUTINE" level="contextual" />
       {Object.entries(hiddenFields).map(([name, value]) => (
         <input key={name} type="hidden" name={name} value={value} />
       ))}

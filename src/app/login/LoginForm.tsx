@@ -5,6 +5,7 @@ import Link from "next/link";
 import { DevFooter } from "@/components/tata/DevFooter";
 import { TataScene } from "@/components/tata/TataScene";
 import { HumanVerification } from "@/components/security/HumanVerification";
+import { TataLoading } from "@/components/tata/TataLoading";
 import { loginAction } from "./actions";
 
 export function LoginForm() {
@@ -12,6 +13,7 @@ export function LoginForm() {
 
   return (
     <main className="min-h-screen flex flex-col md:items-center md:justify-center bg-tata-bg md:p-6">
+      <TataLoading active={pending} context="LOGIN" />
       <div className="w-full md:max-w-4xl md:flex md:rounded-[28px] md:overflow-hidden md:shadow-xl bg-tata-surface">
         {/* Mobile: faixa compacta com a mascote no topo, em vez do formulário flutuando isolado no meio da tela */}
         <div className="flex md:hidden flex-col items-center gap-2 bg-tata-green px-6 pt-10 pb-8 rounded-b-[32px]">
@@ -44,7 +46,7 @@ export function LoginForm() {
         </div>
 
         <div className="flex-1 flex flex-col justify-center p-6 md:p-10">
-          <form action={formAction} className="w-full max-w-sm mx-auto flex flex-col gap-5">
+          <form action={formAction} aria-busy={pending} className="w-full max-w-sm mx-auto flex flex-col gap-5">
             <div className="flex flex-col gap-1">
               <h1 className="font-[family-name:var(--font-baloo)] font-semibold text-2xl text-tata-ink">
                 {state?.mfaRequired ? "Verificação em duas etapas" : "Bem-vinda de volta"}

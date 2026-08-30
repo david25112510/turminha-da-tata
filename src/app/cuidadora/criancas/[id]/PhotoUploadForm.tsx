@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { useDialogClose } from "../../DialogContext";
 import { toUserMessage } from "@/lib/user-error-message";
 import { compressImage } from "@/lib/image-compression";
+import { TataLoading } from "@/components/tata/TataLoading";
 
 type ActionState = { success?: string; error?: string } | null;
 
@@ -65,7 +66,9 @@ export function PhotoUploadForm({
   }
 
   return (
-    <form action={formAction} className="flex flex-col gap-2.5">
+    <form action={formAction} aria-busy={pending || compressing} className="flex flex-col gap-2.5">
+      <TataLoading active={compressing} context="PHOTO" message="Preparando a foto..." level="contextual" />
+      <TataLoading active={pending} context="PHOTO" level="contextual" />
       <input type="hidden" name="childId" value={childId} />
       <input type="hidden" name="revalidateTo" value={revalidateTo} />
 

@@ -3,6 +3,7 @@
 import { useActionState, useRef } from "react";
 import { toUserMessage } from "@/lib/user-error-message";
 import { requestMedicationAuthorizationAction } from "./actions";
+import { TataLoading } from "@/components/tata/TataLoading";
 
 type State = { error: string } | { success: true } | null;
 
@@ -66,7 +67,8 @@ export function RequestMedicationForm({ childId }: { childId: string }) {
               ✓ Enviado! Este medicamento ficará pendente de confirmação pela escola.
             </p>
           ) : (
-            <form ref={formRef} action={formAction} className="flex flex-col gap-3">
+            <form ref={formRef} action={formAction} aria-busy={pending} className="flex flex-col gap-3">
+              <TataLoading active={pending} context="SUBMIT" level="contextual" />
               <input type="hidden" name="childId" value={childId} />
 
               <label className={labelClass}>
