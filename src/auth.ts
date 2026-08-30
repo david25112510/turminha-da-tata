@@ -4,6 +4,7 @@ import { verifyCredentials } from "@/lib/verify-credentials";
 import { isRateLimited, recordFailedAttempt, resetAttempts } from "@/lib/rate-limit";
 import { checkMfaRequirement } from "@/lib/mfa";
 import { prisma } from "@/lib/prisma";
+import { revalidateSessionToken } from "@/lib/session-security";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -57,34 +58,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         return token;
       }
 
-      // JWTs emitidos anteriormente não podem manter acesso depois que a conta é desativada,
-      // removida ou tem o papel alterado. Como este sistema trata dados de crianças, a revogação
-      // efetiva tem prioridade sobre evitar esta consulta indexada por id em requisições autenticadas.
-      if (token.id) {
-        const currentUser = await prisma.user.findUnique({
-          where: { id: String(token.id) },
-          select: { id: true, role: true, active: true },
-        });
-
-        if (!currentUser?.active) {
-          delete token.id;
-          delete token.role;
-          delete token.sub;
-          return token;
-        }
-
-        // Não confia indefinidamente no role gravado no JWT: uma alteração administrativa passa a
-        // valer na próxima leitura da sessão, evitando privilégios antigos até o token expirar.
-        token.role = currentUser.role;
-      }
-
-      return token;
+      // JWTs emitidos anteriormente não mantêm privilégios indefinidamente: status e role são
+      // revalidados contra o banco em toda leitura autenticada. Isso permite revogação efetiva de
+      // contas desativadas/removidas antes da expiração natural do token.
+      return revalidateSessionToken(token);
     },
     async session({ session, token }) {
       if (session.user) {
         if (!token.id || !token.role) {
-          // Mantém a sessão estruturalmente válida para o Auth.js, mas sem identidade autorizável.
-          // Todas as áreas protegidas já exigem id + role e, portanto, negarão o acesso.
+          // Mantém a estrutura esperada pelo Auth.js sem fornecer uma identidade autorizável.
+          // Todas as áreas protegidas exigem id + role e negarão a sessão revogada.
           delete (session.user as { id?: string }).id;
           delete (session.user as { role?: string }).role;
           return session;
