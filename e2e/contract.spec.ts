@@ -56,21 +56,22 @@ async function completeDocumentWizard(
 }
 
 /**
- * Fluxo completo do contrato digital + consentimento LGPD pela UI real: cadastrar criança e
- * responsável gera os dois pendentes automaticamente (ensureContractAcceptance +
- * ensureConsentAcceptance, mesmo ponto de criação); o responsável cai em /pais/contrato primeiro,
- * depois /pais/consentimento (mesmo wizard de 3 passos — ler, assinar com o mouse, confirmar —
- * compartilhado via DocumentAcceptanceWizard), e só depois dos dois é que o portal abre. O contrato
- * assinado fica visível tanto para o responsável (/pais/documentos) quanto para o admin
- * (/admin/contratos/[id]). Cria sua própria criança/responsável (não reaproveita E2E_CHILD_A/B) e
- * não publica nenhuma nova versão de contrato — a regra "nova versão gera pendência só para
- * vínculos ativos" já é coberta por src/app/admin/contratos/actions.test.ts a nível de unidade, de
- * propósito: publicar uma versão nova aqui afetaria TODOS os vínculos ativos do banco (inclusive os
- * guardians fixos A/B usados por outros specs), o que quebraria a suíte inteira dependendo da ordem
- * de execução dos arquivos.
+ * Fluxo completo do contrato digital + consentimento LGPD + Política de Privacidade pela UI real:
+ * cadastrar criança e responsável gera os três pendentes automaticamente (ensureContractAcceptance
+ * → ensureConsentAcceptance → ensurePrivacyPolicyAcceptance, mesmo ponto de criação); o responsável
+ * cai em /pais/contrato primeiro, depois /pais/consentimento, depois /pais/privacidade (mesmo
+ * wizard de 3 passos — ler, assinar com o mouse, confirmar — compartilhado via
+ * DocumentAcceptanceWizard), e só depois dos três é que o portal abre. O contrato e a política de
+ * privacidade assinados ficam visíveis tanto para o responsável (/pais/documentos) quanto — no caso
+ * do contrato — para o admin (/admin/contratos/[id]). Cria sua própria criança/responsável (não
+ * reaproveita E2E_CHILD_A/B) e não publica nenhuma nova versão de contrato — a regra "nova versão
+ * gera pendência só para vínculos ativos" já é coberta por src/app/admin/contratos/actions.test.ts
+ * a nível de unidade, de propósito: publicar uma versão nova aqui afetaria TODOS os vínculos ativos
+ * do banco (inclusive os guardians fixos A/B usados por outros specs), o que quebraria a suíte
+ * inteira dependendo da ordem de execução dos arquivos.
  */
-test("cadastro de criança e responsável gera contrato + consentimento LGPD pendentes; assinar os dois libera o portal", async ({ page }) => {
-  test.setTimeout(120_000);
+test("cadastro de criança e responsável gera contrato + consentimento LGPD + política de privacidade pendentes; assinar os três libera o portal", async ({ page }) => {
+  test.setTimeout(150_000);
 
   await loginAsAdmin(page);
 
@@ -121,21 +122,40 @@ test("cadastro de criança e responsável gera contrato + consentimento LGPD pen
     successText: "Consentimento registrado com sucesso!",
   });
 
+  // E, por último, a Política de Privacidade pendente (ensurePrivacyPolicyAcceptance, mesmo ponto
+  // de criação) — "Continuar para o Portal" leva a /pais/privacidade antes do portal em si.
+  await page.waitForURL("**/pais/privacidade", { timeout: 10_000 });
+  await completeDocumentWizard(page, {
+    checkboxLabel: "Li e compreendi a Política de Privacidade.",
+    confirmText: "Você está prestes a confirmar a leitura da Política de Privacidade",
+    submitLabel: "FINALIZAR E CONFIRMAR LEITURA",
+    successText: "Política de Privacidade confirmada!",
+  });
+
   await page.waitForURL("**/pais", { timeout: 10_000 });
   // Confirma que o portal realmente abriu (não foi bloqueado de novo por engano).
   await expect(page).toHaveURL(/\/pais$/);
 
-  // O contrato assinado fica disponível em Perfil → Documentos, para este responsável.
+  // O contrato e a política de privacidade assinados ficam disponíveis em Perfil → Documentos.
+  // Timeout maior nestas duas navegações: são a primeira visita real destas rotas de detalhe (o
+  // proxy redireciona qualquer aquecimento não-autenticado antes do Next.js compilar o componente
+  // — só compila de verdade quando um responsável autenticado navega até aqui, o que só acontece
+  // aqui neste teste).
   await page.goto("/pais/documentos");
   await page.locator("a", { hasText: `Contrato — ${CHILD_PREFERRED_NAME}` }).click();
-  await page.waitForURL(/\/pais\/documentos\/.+/, { timeout: 10_000 });
+  await page.waitForURL(/\/pais\/documentos\/.+/, { timeout: 20_000 });
+  await expect(page.getByRole("img", { name: /Assinatura/ })).toBeVisible({ timeout: 10_000 });
+
+  await page.goto("/pais/documentos");
+  await page.locator("a", { hasText: "Política de Privacidade" }).click();
+  await page.waitForURL(/\/pais\/documentos\/privacidade\/.+/, { timeout: 20_000 });
   await expect(page.getByRole("img", { name: /Assinatura/ })).toBeVisible({ timeout: 10_000 });
 
   // E o admin consegue ver a mesma assinatura na ficha do contrato.
   await loginAsAdmin(page);
   await page.goto(`/admin/contratos?q=${encodeURIComponent(CHILD_PREFERRED_NAME)}`);
   await page.locator("a", { hasText: CHILD_PREFERRED_NAME }).click();
-  await page.waitForURL(/\/admin\/contratos\/.+/, { timeout: 10_000 });
+  await page.waitForURL(/\/admin\/contratos\/.+/, { timeout: 20_000 });
   await expect(page.getByText("Assinado:")).toContainText("✓ Sim", { timeout: 10_000 });
   await expect(page.getByRole("img", { name: /Assinatura/ })).toBeVisible({ timeout: 10_000 });
 });

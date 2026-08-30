@@ -23,6 +23,7 @@ beforeEach(() => {
   vi.doMock("@/lib/audit-log", () => ({ recordAuditLog: (...args: unknown[]) => recordAuditLog(...args) }));
   vi.doMock("@/lib/contract", () => ({ ensureContractAcceptance: vi.fn() }));
   vi.doMock("@/lib/consent", () => ({ ensureConsentAcceptance: vi.fn() }));
+  vi.doMock("@/lib/privacy-policy", () => ({ ensurePrivacyPolicyAcceptance: vi.fn() }));
   vi.doMock("bcryptjs", () => ({ default: { hash: vi.fn() } }));
   vi.doMock("@/lib/prisma", () => ({
     prisma: {

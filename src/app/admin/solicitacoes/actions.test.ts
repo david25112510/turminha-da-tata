@@ -15,6 +15,7 @@ const createGuardianChild = vi.fn();
 const recordAuditLog = vi.fn();
 const ensureContractAcceptance = vi.fn();
 const ensureConsentAcceptance = vi.fn();
+const ensurePrivacyPolicyAcceptance = vi.fn();
 
 beforeEach(() => {
   vi.resetModules();
@@ -23,6 +24,7 @@ beforeEach(() => {
   vi.doMock("@/lib/audit-log", () => ({ recordAuditLog: (...args: unknown[]) => recordAuditLog(...args) }));
   vi.doMock("@/lib/contract", () => ({ ensureContractAcceptance: (...args: unknown[]) => ensureContractAcceptance(...args) }));
   vi.doMock("@/lib/consent", () => ({ ensureConsentAcceptance: (...args: unknown[]) => ensureConsentAcceptance(...args) }));
+  vi.doMock("@/lib/privacy-policy", () => ({ ensurePrivacyPolicyAcceptance: (...args: unknown[]) => ensurePrivacyPolicyAcceptance(...args) }));
   vi.doMock("@/lib/prisma", () => ({
     prisma: {
       signupRequest: {
@@ -44,6 +46,7 @@ beforeEach(() => {
   recordAuditLog.mockReset().mockResolvedValue(undefined);
   ensureContractAcceptance.mockReset().mockResolvedValue(undefined);
   ensureConsentAcceptance.mockReset().mockResolvedValue(undefined);
+  ensurePrivacyPolicyAcceptance.mockReset().mockResolvedValue(undefined);
 });
 
 function formData(fields: Record<string, string>) {
@@ -124,6 +127,7 @@ describe("approveSignupRequestAction", () => {
     });
     expect(ensureContractAcceptance).toHaveBeenCalledWith({ childId: "child-1", guardianId: "guardian-1", actorUserId: "admin-1" });
     expect(ensureConsentAcceptance).toHaveBeenCalledWith({ guardianId: "guardian-1", actorUserId: "admin-1" });
+    expect(ensurePrivacyPolicyAcceptance).toHaveBeenCalledWith({ guardianId: "guardian-1", actorUserId: "admin-1" });
   });
 
   it("recusa aprovar GUARDIAN sem convite associado (dado inconsistente)", async () => {

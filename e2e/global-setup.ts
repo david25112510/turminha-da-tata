@@ -105,5 +105,16 @@ export default async function globalSetup() {
     ],
   });
 
+  // Mesmo raciocínio para a Política de Privacidade — bloqueia o portal do mesmo jeito.
+  const privacyPolicyVersion = await prisma.privacyPolicyVersion.create({
+    data: { version: "1.0", content: "Política de Privacidade de teste e2e.", status: "PUBLISHED", createdById: admin.id, publishedAt: new Date() },
+  });
+  await prisma.privacyPolicyAcceptance.createMany({
+    data: [
+      { guardianId: guardianA.id, versionId: privacyPolicyVersion.id, status: "ACCEPTED", acceptedAt: new Date(), acceptedByUserId: guardianUserA.id },
+      { guardianId: guardianB.id, versionId: privacyPolicyVersion.id, status: "ACCEPTED", acceptedAt: new Date(), acceptedByUserId: guardianUserB.id },
+    ],
+  });
+
   await prisma.$disconnect();
 }

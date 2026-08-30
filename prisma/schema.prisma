@@ -60,8 +60,11 @@ model User {
   contractAcceptancesMade          ContractAcceptance[]
   consentVersionsCreated           ConsentVersion[]
   consentAcceptancesMade           ConsentAcceptance[]
+  privacyPolicyVersionsCreated     PrivacyPolicyVersion[]
+  privacyPolicyAcceptancesMade     PrivacyPolicyAcceptance[]
   guardianInvitesCreated           GuardianInvite[]           @relation("GuardianInviteCreatedBy")
   signupRequestsReviewed           SignupRequest[]            @relation("SignupRequestReviewedBy")
+  enrollmentRequestsReviewed       EnrollmentRequest[]        @relation("EnrollmentRequestReviewedBy")
 
   @@map("users")
 }
@@ -180,6 +183,8 @@ model Guardian {
   attendanceCheckOuts      Attendance[]              @relation("AttendanceCheckOutGuardian")
   contractAcceptances      ContractAcceptance[]
   consentAcceptances       ConsentAcceptance[]
+  privacyPolicyAcceptances PrivacyPolicyAcceptance[]
+  enrollmentRequests       EnrollmentRequest[]
   childNotesAuthored       ChildNote[]               @relation("ChildNoteAuthorGuardian")
 
   @@map("guardians")
@@ -965,6 +970,77 @@ model SignupRequest {
   @@map("signup_requests")
 }
 
+enum EnrollmentRequestStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+/// Solicitação pública de matrícula. Mantém os dados da criança isolados do cadastro operacional
+/// até a decisão administrativa; `approvedChildId` torna a materialização idempotente.
+model EnrollmentRequest {
+  id         String                  @id @default(cuid())
+  guardianId String
+  status     EnrollmentRequestStatus @default(DRAFT)
+
+  childFullName        String
+  childPreferredName   String?
+  childBirthDate       DateTime
+  childSex             Sex
+  childCpf             String?
+  birthCertificate     String?
+  childPhotoUrl        String?
+  allergies            String?
+  dietaryRestrictions  String?
+  medications          String?
+  relevantConditions   String?
+  specificNeeds        String?
+  importantCareInfo    String?
+  generalNotes         String?
+  relationship         Relationship @default(LEGAL_GUARDIAN)
+  imageAuthInternal      Boolean @default(false)
+  imageAuthGuardianShare Boolean @default(false)
+  imageAuthInstitutional Boolean @default(false)
+  imageAuthSocialMedia   Boolean @default(false)
+  imageAuthAdvertising   Boolean @default(false)
+
+  submittedAt      DateTime?
+  reviewedByUserId String?
+  reviewedAt       DateTime?
+  rejectionReason  String?
+  approvedChildId  String? @unique
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  guardian        Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+  reviewedBy      User? @relation("EnrollmentRequestReviewedBy", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+  authorizedPeople EnrollmentAuthorizedPerson[]
+
+  @@index([guardianId, status])
+  @@index([status, submittedAt])
+  @@map("enrollment_requests")
+}
+
+model EnrollmentAuthorizedPerson {
+  id                  String @id @default(cuid())
+  enrollmentRequestId String
+  name                 String
+  cpf                  String?
+  phone                String
+  relationship         Relationship
+  notes                String?
+  photoUrl             String?
+  createdAt            DateTime @default(now())
+
+  enrollmentRequest EnrollmentRequest @relation(fields: [enrollmentRequestId], references: [id], onDelete: Cascade)
+
+  @@index([enrollmentRequestId])
+  @@map("enrollment_authorized_people")
+}
+
 // ---------------------------------------------------------------------------
 // Notificações administrativas
 // ---------------------------------------------------------------------------
@@ -1132,4 +1208,62 @@ model ConsentAcceptance {
   @@unique([guardianId, versionId])
   @@index([guardianId, status])
   @@map("consent_acceptances")
+}
+
+// ---------------------------------------------------------------------------
+// Política de Privacidade — distinta do Consentimento LGPD acima (que é o aceite específico para
+// o tratamento de dados pessoais) e do Contrato de prestação de serviços. Mesmo desenho do
+// Consentimento (por guardian, com assinatura manuscrita completa), documento separado por ser
+// uma finalidade legal distinta.
+// ---------------------------------------------------------------------------
+
+enum PrivacyPolicyVersionStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model PrivacyPolicyVersion {
+  id          String                      @id @default(cuid())
+  version     String
+  content     String
+  status      PrivacyPolicyVersionStatus  @default(PUBLISHED)
+  createdById String?
+  createdAt   DateTime                    @default(now())
+  publishedAt DateTime?
+
+  createdBy   User?                      @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  acceptances PrivacyPolicyAcceptance[]
+
+  @@map("privacy_policy_versions")
+}
+
+enum PrivacyPolicyAcceptanceStatus {
+  PENDING
+  ACCEPTED
+}
+
+/// Por guardian, não por criança — mesmo raciocínio de ConsentAcceptance: a política de
+/// privacidade é sobre como a instituição trata dados em geral, não específica de uma criança.
+model PrivacyPolicyAcceptance {
+  id               String                         @id @default(cuid())
+  guardianId       String
+  versionId        String
+  status           PrivacyPolicyAcceptanceStatus  @default(PENDING)
+  acceptedAt       DateTime?
+  acceptedByUserId String?
+  ip               String?
+  userAgent        String?
+  signatureUrl     String?
+  signedAt         DateTime?
+  documentHash     String?
+  createdAt        DateTime                       @default(now())
+
+  guardian       Guardian              @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+  version        PrivacyPolicyVersion  @relation(fields: [versionId], references: [id])
+  acceptedByUser User?                 @relation(fields: [acceptedByUserId], references: [id], onDelete: SetNull)
+
+  @@unique([guardianId, versionId])
+  @@index([guardianId, status])
+  @@map("privacy_policy_acceptances")
 }

@@ -1,5 +1,9 @@
 # LGPD — proteção de dados pessoais
 
+## Dados de matrícula
+
+Dados de saúde e cuidado permanecem em `EnrollmentRequest` durante a análise e não entram nas consultas operacionais. Autorizações de imagem são coletadas por finalidade; publicidade nunca é presumida. Após aprovação, somente os dados necessários são materializados, com acesso condicionado a RBAC, vínculo e aceites documentais.
+
 Referência de conformidade com a Lei nº 13.709/2018 (LGPD). Complementa `architecture.md`
 (implementação técnica) e `spec.md` (comportamento do produto) — este documento existe para
 responder "que dados tratamos, por quê, e sob qual base legal", que nenhum dos outros dois cobre.
@@ -23,11 +27,11 @@ pelo nome/contato real (e atualizar `docs/lgpd.md` e o rodapé do termo de conse
 | Rotina diária (presença, alimentação, sono, higiene, atividades, humor) | Pessoal — inclui geolocalização implícita (a criança esteve em um lugar específico em um horário específico) | `Attendance`, `MealRecord`, `SleepRecord`, `HygieneRecord`, `WaterRecord`, `ActivityChild`, `MoodRecord` | Execução de contrato |
 | Financeiro (mensalidade, pagamentos) | Pessoal | `MonthlyInvoice`, `Payment`, `InvoiceItem` | Execução de contrato / obrigação legal (fiscal) |
 | Credenciais de acesso (senha, sessão) | Pessoal | `User` (hash bcrypt, nunca a senha em claro) | Execução de contrato |
-| Assinatura manuscrita + IP/user-agent do aceite | Pessoal | `ContractAcceptance`, `ConsentAcceptance` | Consentimento + prova do próprio aceite |
+| Assinatura manuscrita + IP/user-agent do aceite | Pessoal | `ContractAcceptance`, `ConsentAcceptance`, `PrivacyPolicyAcceptance` | Consentimento + prova do próprio aceite |
 
-## Os dois consentimentos são distintos, de propósito
+## Os quatro consentimentos são distintos, de propósito
 
-Três autorizações independentes existem hoje, cada uma com sua própria finalidade — aceitar uma
+Quatro autorizações independentes existem hoje, cada uma com sua própria finalidade — aceitar uma
 não implica aceitar as outras:
 
 1. **Autorização de imagem** (`Child.imageAuthInternal`/`imageAuthGuardianShare`/
@@ -41,11 +45,17 @@ não implica aceitar as outras:
    etc.), por par criança/responsável.
 3. **Consentimento LGPD** (`ConsentVersion`/`ConsentAcceptance`, `src/app/pais/consentimento/`)
    — aceite específico para o **tratamento de dados pessoais**, por responsável (não duplicado por
-   criança — é sobre os dados do próprio responsável enquanto titular). Gerado automaticamente no
-   mesmo momento que o contrato (`ensureConsentAcceptance`, chamada logo após
-   `ensureContractAcceptance` em `createGuardianAction`), bloqueia o Portal dos Pais da mesma forma
-   (ver `src/app/pais/(portal)/layout.tsx`) — contrato primeiro, consentimento depois, se os dois
-   estiverem pendentes.
+   criança — é sobre os dados do próprio responsável enquanto titular).
+4. **Política de Privacidade** (`PrivacyPolicyVersion`/`PrivacyPolicyAcceptance`,
+   `src/app/pais/privacidade/`) — o documento que descreve, de forma geral, como a instituição
+   trata dados pessoais; distinto do Consentimento LGPD (que é o aceite pontual da finalidade de
+   tratamento). Também por responsável, com assinatura manuscrita completa.
+
+Os 3 últimos (contrato, consentimento, política de privacidade) são gerados automaticamente juntos
+(`ensureContractAcceptance` → `ensureConsentAcceptance` → `ensurePrivacyPolicyAcceptance`, chamadas
+em sequência em `createGuardianAction`/`approveSignupRequestAction`) e bloqueiam o Portal dos Pais
+na mesma ordem (ver `src/app/pais/(portal)/layout.tsx`) — um de cada vez, nunca dois ao mesmo
+tempo na tela.
 
 ## Retenção e encerramento
 

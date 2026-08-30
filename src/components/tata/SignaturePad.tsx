@@ -69,9 +69,19 @@ export const SignaturePad = forwardRef<
   }
 
   function handlePointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
+    e.preventDefault();
     e.currentTarget.setPointerCapture(e.pointerId);
     drawingRef.current = true;
-    lastPointRef.current = pointFromEvent(e);
+    const point = pointFromEvent(e);
+    lastPointRef.current = point;
+    const ctx = getContext();
+    if (ctx) {
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, 1.25, 0, Math.PI * 2);
+      ctx.fillStyle = "#2b2116";
+      ctx.fill();
+      setEmpty(false);
+    }
   }
 
   function handlePointerMove(e: React.PointerEvent<HTMLCanvasElement>) {
@@ -93,7 +103,7 @@ export const SignaturePad = forwardRef<
   function handlePointerUp(e: React.PointerEvent<HTMLCanvasElement>) {
     drawingRef.current = false;
     lastPointRef.current = null;
-    e.currentTarget.releasePointerCapture(e.pointerId);
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
   }
 
   useImperativeHandle(ref, () => ({

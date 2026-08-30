@@ -57,6 +57,10 @@ export async function loginAction(
   // signIn() acabou de gravar (o cookie de sessão ainda não está visível para uma releitura dentro
   // do mesmo request) — isso fazia todo login válido cair de volta em "/login". As credenciais já
   // foram validadas por signIn() não ter lançado erro; só falta saber o papel para redirecionar.
-  const user = await prisma.user.findUnique({ where: { email }, select: { role: true } });
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { role: true, guardian: { select: { _count: { select: { children: true } } } } },
+  });
+  if (user?.role === "GUARDIAN" && user.guardian?._count.children === 0) redirect("/matricula");
   redirect(HOME_BY_ROLE[user?.role ?? ""] ?? "/login");
 }

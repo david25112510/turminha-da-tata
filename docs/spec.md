@@ -1,5 +1,9 @@
 # TURMINHA DA TATA
 
+## Portal de Matrícula
+
+Fluxo: início → `/matricula` → conta → criança/cuidados/autorizados → revisão → `SUBMITTED` → análise → `APPROVED` ou `REJECTED`. Somente a aprovação cria/reutiliza a criança operacional e gera pendências das versões publicadas de contrato, consentimento LGPD e política de privacidade.
+
 ## Especificação Oficial do Sistema de Gestão e Acompanhamento Infantil
 
 **Versão:** 1.0

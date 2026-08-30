@@ -1,5 +1,3 @@
-import { redirect } from "next/navigation";
-
-export default function Home() {
-  redirect("/login");
-}
+import Image from "next/image";
+import Link from "next/link";
+export default function Home() { return <main className="min-h-screen overflow-hidden bg-tata-bg"><div className="mx-auto grid min-h-screen max-w-6xl items-center gap-8 px-5 py-10 md:grid-cols-2"><section className="flex flex-col items-start gap-5"><p className="font-[family-name:var(--font-baloo)] text-xl font-bold text-tata-green-dark">Turminha da Tata</p><h1 className="font-[family-name:var(--font-baloo)] text-4xl font-bold leading-tight text-tata-ink sm:text-5xl">💛 Cuidar. Acompanhar. Conectar.</h1><div><h2 className="font-[family-name:var(--font-baloo)] text-2xl font-bold text-tata-coral-dark">Quer fazer parte da Turminha da Tata?</h2><p className="mt-2 max-w-xl text-tata-ink-soft">Solicite a matrícula da sua criança de forma rápida e segura.</p></div><div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row"><Link href="/matricula" className="min-h-14 inline-flex items-center justify-center rounded-2xl bg-tata-coral px-7 font-bold text-white shadow-lg">🎒 QUERO FAZER UMA MATRÍCULA</Link><Link href="/login" className="min-h-14 inline-flex items-center justify-center rounded-2xl border-2 border-tata-green px-7 font-bold text-tata-green-dark">🔐 ENTRAR</Link></div></section><section className="relative mx-auto h-[360px] w-full max-w-md rounded-[40px] bg-tata-yellow-soft"><Image src="/images/tata-mascote.png" alt="Tata, mascote da Turminha da Tata" fill priority className="object-contain p-8 tata-mascot-idle"/></section></div></main> }

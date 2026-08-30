@@ -6,6 +6,7 @@ import { requireAdmin } from "@/lib/authz";
 import { recordAuditLog } from "@/lib/audit-log";
 import { ensureContractAcceptance } from "@/lib/contract";
 import { ensureConsentAcceptance } from "@/lib/consent";
+import { ensurePrivacyPolicyAcceptance } from "@/lib/privacy-policy";
 
 async function findPendingRequestOrThrow(id: string) {
   const request = await prisma.signupRequest.findUnique({ where: { id }, include: { invite: true } });
@@ -90,6 +91,7 @@ export async function approveSignupRequestAction(formData: FormData) {
 
   await ensureContractAcceptance({ childId: request.invite.childId, guardianId: guardian.id, actorUserId: admin.id });
   await ensureConsentAcceptance({ guardianId: guardian.id, actorUserId: admin.id });
+  await ensurePrivacyPolicyAcceptance({ guardianId: guardian.id, actorUserId: admin.id });
 
   await prisma.signupRequest.update({
     where: { id },

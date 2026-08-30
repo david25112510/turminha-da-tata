@@ -1,0 +1,3 @@
+import Link from "next/link";
+import { DEFAULT_PRIVACY_POLICY_CONTENT } from "@/lib/privacy-policy-template";
+export default function PublicPrivacyPolicy(){return <main className="min-h-screen bg-tata-bg p-4 sm:p-8"><article className="mx-auto max-w-3xl rounded-3xl bg-white p-6 sm:p-10 shadow-sm"><Link href="/matricula" className="text-sm font-bold text-tata-green-dark">← Voltar</Link><h1 className="mt-4 font-[family-name:var(--font-baloo)] text-2xl font-bold">🔐 Política de Privacidade</h1><div className="mt-5 whitespace-pre-wrap text-sm leading-7 text-tata-ink-soft">{DEFAULT_PRIVACY_POLICY_CONTENT}</div></article></main>}

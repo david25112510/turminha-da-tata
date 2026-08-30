@@ -1,5 +1,9 @@
 # Turminha da Tata
 
+## Portal de Matrícula
+
+O portal público `/matricula` oferece formulário mobile-first e aprovação em `/admin/matriculas`. A solicitação fica isolada do domínio operacional até a decisão; a aprovação materializa criança, vínculo e pendências documentais de forma transacional e idempotente.
+
 Sistema de gestão e acompanhamento infantil — área administrativa, portal das cuidadoras e portal dos pais.
 
 Especificação completa: [docs/spec.md](docs/spec.md)

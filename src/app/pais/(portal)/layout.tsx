@@ -38,6 +38,13 @@ export default async function GuardianLayout({ children }: { children: React.Rea
   });
   if (pendingConsents > 0) redirect("/pais/consentimento");
 
+  // Verificada por último, mesmo motivo: contrato → consentimento → política de privacidade, uma
+  // pendência de cada vez.
+  const pendingPrivacyPolicies = await prisma.privacyPolicyAcceptance.count({
+    where: { guardianId: guardian.id, status: "PENDING" },
+  });
+  if (pendingPrivacyPolicies > 0) redirect("/pais/privacidade");
+
   const unreadCount = await prisma.notification.count({
     where: { guardianId: guardian.id, read: false },
   });
