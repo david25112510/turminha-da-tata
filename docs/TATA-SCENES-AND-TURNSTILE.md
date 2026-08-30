@@ -2,7 +2,8 @@
 
 `TataScene` centraliza 16 cenas determinísticas: `WELCOME`, `LOGIN`, `SECURITY`, `ENROLLMENT`,
 `GUIDE_LEFT`, `GUIDE_RIGHT`, `THINKING`, `SUCCESS`, `CELEBRATION`, `EMPTY`, `ERROR`, `PARENTS`,
-`CAREGIVER`, `SLEEPING` e `PHOTO`. Os WebP otimizados ficam em `public/images/tata/scenes`.
+`CAREGIVER`, `SLEEPING` e `PHOTO`. Os WebP otimizados ficam em `public/images/tata/scenes`; todos
+possuem canal alfa real para integração sem painéis ou fundos retangulares.
 
 `LOADING_HEART` é a cena de processamento. `TataLoading` oferece níveis `micro`, `contextual` e
 `immersive`, mensagens por contexto, espera de 250 ms para evitar flashes, permanência visual
