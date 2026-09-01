@@ -11,6 +11,7 @@ const updateAcceptance = vi.fn();
 const recordAuditLog = vi.fn();
 const guardianFindUnique = vi.fn();
 const uploadFile = vi.fn();
+const deleteStoredObject = vi.fn();
 
 const FAKE_SIGNATURE = `data:image/png;base64,${"A".repeat(300)}`;
 
@@ -22,18 +23,19 @@ beforeEach(() => {
     prisma: {
       consentAcceptance: {
         findFirst: (...args: unknown[]) => findFirstAcceptance(...args),
-        update: (...args: unknown[]) => updateAcceptance(...args),
+        updateMany: (...args: unknown[]) => updateAcceptance(...args),
       },
       guardian: { findUnique: (...args: unknown[]) => guardianFindUnique(...args) },
     },
   }));
   vi.doMock("@/lib/audit-log", () => ({ recordAuditLog: (...args: unknown[]) => recordAuditLog(...args) }));
-  vi.doMock("@/lib/storage", () => ({ uploadFile: (...args: unknown[]) => uploadFile(...args) }));
+  vi.doMock("@/lib/storage", () => ({ uploadFile: (...args: unknown[]) => uploadFile(...args), deleteStoredObject: (...args: unknown[]) => deleteStoredObject(...args) }));
 
   auth.mockReset().mockResolvedValue({ user: { id: "guardian-user-1", role: "GUARDIAN" } });
   guardianFindUnique.mockReset().mockResolvedValue({ id: "guardian-1", userId: "guardian-user-1", children: [] });
   findFirstAcceptance.mockReset();
-  updateAcceptance.mockReset().mockResolvedValue(undefined);
+  updateAcceptance.mockReset().mockResolvedValue({ count: 1 });
+  deleteStoredObject.mockReset().mockResolvedValue(undefined);
   recordAuditLog.mockReset().mockResolvedValue(undefined);
   uploadFile.mockReset().mockResolvedValue("https://cdn.example.com/consents/guardian-1/acc-1.png");
 });
@@ -63,7 +65,7 @@ describe("acceptConsentAction", () => {
       where: { id: "acc-1", guardianId: "guardian-1" },
       include: { version: true },
     });
-    expect(uploadFile).toHaveBeenCalledWith("consents/guardian-1/acc-1.png", expect.any(Buffer), "image/png");
+    expect(uploadFile).toHaveBeenCalledWith(expect.stringMatching(/^consents\/guardian-1\/acc-1-[a-f0-9]{64}-.+\.png$/), expect.any(Buffer), "image/png");
 
     const data = (updateAcceptance.mock.calls[0][0] as { data: Record<string, unknown> }).data;
     expect(data.status).toBe("ACCEPTED");

@@ -1,12 +1,12 @@
 "use server";
 
-import { createHash } from "node:crypto";
 import { headers } from "next/headers";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { requireGuardian } from "@/lib/guardian";
 import { recordAuditLog } from "@/lib/audit-log";
-import { uploadFile } from "@/lib/storage";
+import { deleteStoredObject, uploadFile } from "@/lib/storage";
+import { acceptedDocumentDigest, immutableSignatureKey } from "@/lib/document-evidence";
 
 const DATA_URL_PREFIX = "data:image/png;base64,";
 // Mesmo raciocínio de src/app/pais/contrato/actions.ts: sanidade contra campo vazio/forjado, não
@@ -36,19 +36,20 @@ export async function acceptPrivacyPolicyAction(formData: FormData) {
   if (acceptance.status === "ACCEPTED") return;
 
   const buffer = Buffer.from(signatureDataUrl.slice(DATA_URL_PREFIX.length), "base64");
-  const signatureUrl = await uploadFile(`privacy-policy/${acceptance.guardianId}/${acceptance.id}.png`, buffer, "image/png");
-
-  const documentHash = createHash("sha256")
-    .update(`${acceptance.versionId}:${acceptance.version.content}:${acceptance.guardianId}:${signatureUrl}`)
-    .digest("hex");
+  const signatureUrl = await uploadFile(immutableSignatureKey("privacy-policy", acceptance.guardianId, acceptance.id, buffer), buffer, "image/png");
+  const documentHash = acceptedDocumentDigest(
+    [acceptance.versionId, acceptance.version.content, acceptance.guardianId],
+    signatureUrl,
+    buffer
+  );
 
   const h = await headers();
   const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || null;
   const userAgent = h.get("user-agent");
   const now = new Date();
 
-  await prisma.privacyPolicyAcceptance.update({
-    where: { id: acceptance.id },
+  const accepted = await prisma.privacyPolicyAcceptance.updateMany({
+    where: { id: acceptance.id, guardianId: guardian.id, status: "PENDING" },
     data: {
       status: "ACCEPTED",
       acceptedAt: now,
@@ -60,6 +61,10 @@ export async function acceptPrivacyPolicyAction(formData: FormData) {
       userAgent,
     },
   });
+  if (accepted.count !== 1) {
+    await deleteStoredObject(signatureUrl).catch(() => {});
+    return;
+  }
 
   await recordAuditLog({
     actorUserId: session.user.id,
