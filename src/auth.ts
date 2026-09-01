@@ -4,6 +4,7 @@ import { verifyCredentials } from "@/lib/verify-credentials";
 import { isRateLimited, recordFailedAttempt, resetAttempts } from "@/lib/rate-limit";
 import { checkMfaRequirement } from "@/lib/mfa";
 import { prisma } from "@/lib/prisma";
+import { revalidateSessionToken } from "@/lib/session-security";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
@@ -54,11 +55,23 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.role = user.role;
         token.id = user.id;
         await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } }).catch(() => {});
+        return token;
       }
-      return token;
+
+      // JWTs emitidos anteriormente não mantêm privilégios indefinidamente: status e role são
+      // revalidados contra o banco em toda leitura autenticada. Isso permite revogação efetiva de
+      // contas desativadas/removidas antes da expiração natural do token.
+      return revalidateSessionToken(token);
     },
     async session({ session, token }) {
       if (session.user) {
+        if (!token.id || !token.role) {
+          // Mantém a estrutura esperada pelo Auth.js sem fornecer uma identidade autorizável.
+          // Todas as áreas protegidas exigem id + role e negarão a sessão revogada.
+          delete (session.user as { id?: string }).id;
+          delete (session.user as { role?: string }).role;
+          return session;
+        }
         session.user.id = token.id as string;
         session.user.role = token.role as "ADMIN" | "CAREGIVER" | "GUARDIAN";
       }

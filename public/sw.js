@@ -1,6 +1,22 @@
-const CACHE_NAME = "turminha-da-tata-v3";
+const CACHE_NAME = "turminha-da-tata-v4";
 const OFFLINE_URL = "/offline";
 const PRECACHE_URLS = [OFFLINE_URL, "/icons/icon-192.png", "/icons/icon-512.png"];
+
+const SENSITIVE_PREFIXES = [
+  "/admin",
+  "/cuidadora",
+  "/pais",
+  "/api/",
+  "/matricula",
+  "/cadastro",
+  "/login",
+  "/esqueci-senha",
+  "/redefinir-senha",
+];
+
+function isSensitivePath(pathname) {
+  return SENSITIVE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`) || (prefix.endsWith("/") && pathname.startsWith(prefix)));
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -58,22 +74,28 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  // APIs incluem storage privado e dados pessoais: nunca entram no Cache Storage offline.
-  if (url.pathname.startsWith("/api/")) return;
-
-  if (request.mode === "navigate") {
-    event.respondWith(
-      fetch(request).catch(() => caches.match(request).then((cached) => cached || caches.match(OFFLINE_URL)))
-    );
+  // Dados de crianças, responsáveis, saúde, contratos, financeiro, autenticação e storage privado
+  // seguem sempre pela rede. Nunca salvamos essas respostas no Cache Storage do PWA.
+  if (isSensitivePath(url.pathname)) {
+    if (request.mode === "navigate") {
+      event.respondWith(fetch(request).catch(() => caches.match(OFFLINE_URL)));
+    }
     return;
   }
 
+  if (request.mode === "navigate") {
+    event.respondWith(fetch(request).catch(() => caches.match(OFFLINE_URL)));
+    return;
+  }
+
+  // Apenas assets públicos do próprio produto entram no cache offline. Uploads de usuários são
+  // servidos em /api/storage e já foram excluídos acima.
   if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/icons/") || url.pathname.startsWith("/images/")) {
     event.respondWith(
       caches.match(request).then((cached) => {
         const network = fetch(request)
           .then((response) => {
-            if (response.ok) {
+            if (response.ok && response.type === "basic") {
               caches.open(CACHE_NAME).then((cache) => cache.put(request, response.clone()));
             }
             return response;
