@@ -13,6 +13,7 @@ const updateAcceptance = vi.fn();
 const recordAuditLog = vi.fn();
 const guardianFindUnique = vi.fn();
 const uploadFile = vi.fn();
+const deleteStoredObject = vi.fn();
 
 // PNG "de verdade" não importa aqui — uploadFile está mockado, só o tamanho do base64 é validado.
 const FAKE_SIGNATURE = `data:image/png;base64,${"A".repeat(300)}`;
@@ -25,18 +26,19 @@ beforeEach(() => {
     prisma: {
       contractAcceptance: {
         findFirst: (...args: unknown[]) => findFirstAcceptance(...args),
-        update: (...args: unknown[]) => updateAcceptance(...args),
+        updateMany: (...args: unknown[]) => updateAcceptance(...args),
       },
       guardian: { findUnique: (...args: unknown[]) => guardianFindUnique(...args) },
     },
   }));
   vi.doMock("@/lib/audit-log", () => ({ recordAuditLog: (...args: unknown[]) => recordAuditLog(...args) }));
-  vi.doMock("@/lib/storage", () => ({ uploadFile: (...args: unknown[]) => uploadFile(...args) }));
+  vi.doMock("@/lib/storage", () => ({ uploadFile: (...args: unknown[]) => uploadFile(...args), deleteStoredObject: (...args: unknown[]) => deleteStoredObject(...args) }));
 
   auth.mockReset().mockResolvedValue({ user: { id: "guardian-user-1", role: "GUARDIAN" } });
   guardianFindUnique.mockReset().mockResolvedValue({ id: "guardian-1", userId: "guardian-user-1", children: [] });
   findFirstAcceptance.mockReset();
-  updateAcceptance.mockReset().mockResolvedValue(undefined);
+  updateAcceptance.mockReset().mockResolvedValue({ count: 1 });
+  deleteStoredObject.mockReset().mockResolvedValue(undefined);
   recordAuditLog.mockReset().mockResolvedValue(undefined);
   uploadFile.mockReset().mockResolvedValue("https://cdn.example.com/contracts/child-1/acc-1.png");
 });
@@ -67,7 +69,7 @@ describe("acceptContractAction", () => {
       where: { id: "acc-1", guardianId: "guardian-1" },
       include: { version: true },
     });
-    expect(uploadFile).toHaveBeenCalledWith("contracts/child-1/acc-1.png", expect.any(Buffer), "image/png");
+    expect(uploadFile).toHaveBeenCalledWith(expect.stringMatching(/^contracts\/child-1\/acc-1-[a-f0-9]{64}-.+\.png$/), expect.any(Buffer), "image/png");
     expect(updateAcceptance).toHaveBeenCalledOnce();
 
     const data = (updateAcceptance.mock.calls[0][0] as { data: Record<string, unknown> }).data;
@@ -126,6 +128,17 @@ describe("acceptContractAction", () => {
 
     expect(uploadFile).not.toHaveBeenCalled();
     expect(updateAcceptance).not.toHaveBeenCalled();
+    expect(recordAuditLog).not.toHaveBeenCalled();
+  });
+
+  it("descarta a assinatura perdedora quando outro aceite vence a concorrência", async () => {
+    findFirstAcceptance.mockResolvedValueOnce(PENDING_ACCEPTANCE);
+    updateAcceptance.mockResolvedValueOnce({ count: 0 });
+    const { acceptContractAction } = await import("./actions");
+
+    await acceptContractAction(formData({ acceptanceId: "acc-1", agreed: "on", signature: FAKE_SIGNATURE }));
+
+    expect(deleteStoredObject).toHaveBeenCalledWith("https://cdn.example.com/contracts/child-1/acc-1.png");
     expect(recordAuditLog).not.toHaveBeenCalled();
   });
 });

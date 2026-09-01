@@ -13,6 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:e2e:security": "playwright test --config playwright.security.config.ts",
     "test:e2e:ui": "playwright test --ui",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
@@ -20,6 +21,8 @@
     "db:studio": "prisma studio",
     "db:backup": "node scripts/backup-db.mjs",
     "db:restore": "node scripts/restore-db.mjs",
+    "storage:audit": "node scripts/audit-storage.mjs",
+    "storage:migrate": "tsx scripts/migrate-storage.ts",
     "icons:generate": "node scripts/generate-icons.mjs"
   },
   "dependencies": {

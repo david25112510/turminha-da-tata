@@ -16,6 +16,7 @@ const findUniqueInvoice = vi.fn();
 const createPayment = vi.fn();
 const updateInvoice = vi.fn();
 const updatePixCharge = vi.fn();
+const updateManyPixCharges = vi.fn();
 
 const originalSecret = process.env.MERCADO_PAGO_WEBHOOK_SECRET;
 
@@ -46,7 +47,7 @@ beforeEach(() => {
         callback({
           monthlyInvoice: { findUnique: findUniqueInvoice, update: updateInvoice },
           payment: { create: createPayment },
-          pixCharge: { update: updatePixCharge },
+          pixCharge: { update: updatePixCharge, updateMany: updateManyPixCharges },
         }),
     },
   }));
@@ -60,9 +61,11 @@ beforeEach(() => {
   createPayment.mockReset();
   updateInvoice.mockReset();
   updatePixCharge.mockReset();
+  updateManyPixCharges.mockReset().mockResolvedValue({ count: 1 });
 });
 
 afterEach(() => {
+  vi.unstubAllEnvs();
   if (originalSecret === undefined) delete process.env.MERCADO_PAGO_WEBHOOK_SECRET;
   else process.env.MERCADO_PAGO_WEBHOOK_SECRET = originalSecret;
 });
@@ -110,6 +113,16 @@ describe("POST /api/webhooks/mercadopago", () => {
     const response = await POST(webhookRequest({ type: "payment", data: { id: "1" } }, { "x-signature": "ts=1,v1=x", "x-request-id": "r1" }));
 
     expect(response.status).toBe(401);
+    expect(getPayment).not.toHaveBeenCalled();
+  });
+
+  it("CASO 4B: produção falha de modo seguro quando o segredo de webhook está ausente", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    const { POST } = await import("./route");
+
+    const response = await POST(webhookRequest({ type: "payment", data: { id: "1" } }));
+
+    expect(response.status).toBe(503);
     expect(getPayment).not.toHaveBeenCalled();
   });
 
@@ -216,5 +229,29 @@ describe("POST /api/webhooks/mercadopago", () => {
     await POST(webhookRequest({ type: "payment", data: { id: "1" } }));
 
     expect(updateInvoice).toHaveBeenCalledWith({ where: { id: "inv-1" }, data: { paidAmount: 300, status: "PARTIALLY_PAID" } });
+  });
+
+  it("CASO 12: somente o vencedor do claim atômico credita webhooks concorrentes", async () => {
+    getPayment.mockResolvedValueOnce({ status: "approved" });
+    findUniquePixCharge.mockResolvedValueOnce({
+      id: "charge-1",
+      invoiceId: "inv-1",
+      status: "pending",
+      amount: 900,
+      initiatedByUserId: "user-1",
+    });
+    findUniqueInvoice.mockResolvedValueOnce({ id: "inv-1", status: "PENDING", paidAmount: 0, totalAmount: 900, childId: "child-1" });
+    updateManyPixCharges.mockResolvedValueOnce({ count: 0 });
+    const { POST } = await import("./route");
+
+    const response = await POST(webhookRequest({ type: "payment", data: { id: "1" } }));
+
+    expect(response.status).toBe(200);
+    expect(updateManyPixCharges).toHaveBeenCalledWith({
+      where: { id: "charge-1", status: "pending" },
+      data: { status: "processing" },
+    });
+    expect(createPayment).not.toHaveBeenCalled();
+    expect(updateInvoice).not.toHaveBeenCalled();
   });
 });

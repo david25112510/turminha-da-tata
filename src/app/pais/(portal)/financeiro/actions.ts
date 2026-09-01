@@ -1,6 +1,6 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { requireGuardianChildPermission } from "@/lib/authz";
 import { createPixCharge, isMercadoPagoConfigured } from "@/lib/mercadopago";
@@ -52,6 +52,18 @@ export async function generatePixChargeAction(_prevState: PixChargeState, formDa
     };
   }
 
+  // Todas as requisições concorrentes para o mesmo estado financeiro usam a mesma chave do
+  // provedor. A última cobrança expirada diferencia uma nova rodada sem transformar duplo clique
+  // em duas cobranças externas.
+  const latestPending = await prisma.pixCharge.findFirst({
+    where: { invoiceId, status: "pending" },
+    orderBy: { createdAt: "desc" },
+    select: { id: true },
+  });
+  const idempotencyKey = createHash("sha256")
+    .update(["pix-charge-v1", invoice.id, String(invoice.paidAmount), String(invoice.totalAmount), latestPending?.id ?? "initial"].join(":"))
+    .digest("hex");
+
   let charge;
   try {
     charge = await createPixCharge({
@@ -61,24 +73,33 @@ export async function generatePixChargeAction(_prevState: PixChargeState, formDa
       payerEmail: guardian.email,
       payerFirstName: guardian.name.split(" ")[0],
       payerLastName: guardian.name.split(" ").slice(1).join(" ") || undefined,
-      idempotencyKey: randomUUID(),
+      idempotencyKey,
     });
   } catch {
     return { error: "Não foi possível gerar a cobrança Pix agora. Tente novamente em instantes." };
   }
 
-  const created = await prisma.pixCharge.create({
-    data: {
-      invoiceId,
-      externalPaymentId: charge.externalPaymentId,
-      initiatedByUserId: user.id,
-      status: "pending",
-      amount: remaining,
-      qrCode: charge.qrCode,
-      qrCodeText: charge.qrCodeText,
-      expiresAt: charge.expiresAt,
-    },
-  });
+  let created;
+  try {
+    created = await prisma.pixCharge.create({
+      data: {
+        invoiceId,
+        externalPaymentId: charge.externalPaymentId,
+        initiatedByUserId: user.id,
+        status: "pending",
+        amount: remaining,
+        qrCode: charge.qrCode,
+        qrCodeText: charge.qrCodeText,
+        expiresAt: charge.expiresAt,
+      },
+    });
+  } catch {
+    // O provedor devolve o mesmo pagamento para a chave idempotente. Se outra requisição já
+    // persistiu esse externalPaymentId, ela é a vencedora e esta chamada apenas reaproveita o QR.
+    const winner = await prisma.pixCharge.findUnique({ where: { externalPaymentId: charge.externalPaymentId } });
+    if (winner) return { qrCode: winner.qrCode, qrCodeText: winner.qrCodeText, expiresAt: winner.expiresAt.toISOString() };
+    return { error: "Não foi possível salvar a cobrança Pix agora. Tente novamente em instantes." };
+  }
 
   await recordAuditLog({
     actorUserId: user.id,
