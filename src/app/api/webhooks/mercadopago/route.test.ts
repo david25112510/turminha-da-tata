@@ -65,6 +65,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.unstubAllEnvs();
   if (originalSecret === undefined) delete process.env.MERCADO_PAGO_WEBHOOK_SECRET;
   else process.env.MERCADO_PAGO_WEBHOOK_SECRET = originalSecret;
 });
@@ -112,6 +113,16 @@ describe("POST /api/webhooks/mercadopago", () => {
     const response = await POST(webhookRequest({ type: "payment", data: { id: "1" } }, { "x-signature": "ts=1,v1=x", "x-request-id": "r1" }));
 
     expect(response.status).toBe(401);
+    expect(getPayment).not.toHaveBeenCalled();
+  });
+
+  it("CASO 4B: produção falha de modo seguro quando o segredo de webhook está ausente", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    const { POST } = await import("./route");
+
+    const response = await POST(webhookRequest({ type: "payment", data: { id: "1" } }));
+
+    expect(response.status).toBe(503);
     expect(getPayment).not.toHaveBeenCalled();
   });
 

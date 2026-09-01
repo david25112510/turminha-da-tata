@@ -21,6 +21,10 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const secret = process.env.MERCADO_PAGO_WEBHOOK_SECRET;
+  if (!secret && process.env.NODE_ENV === "production") {
+    console.error("[webhook mercadopago] configuração de assinatura ausente em produção");
+    return Response.json({ error: "Webhook indisponível." }, { status: 503 });
+  }
   if (secret) {
     const verified = verifyMercadoPagoSignature({
       xSignature: request.headers.get("x-signature"),
@@ -37,8 +41,8 @@ export async function POST(request: Request): Promise<Response> {
   let payment;
   try {
     payment = await getPayment(String(dataId));
-  } catch (error) {
-    console.error("[webhook mercadopago] falha ao consultar pagamento:", error);
+  } catch {
+    console.error("[webhook mercadopago] falha ao consultar pagamento");
     return Response.json({ error: "Falha ao consultar pagamento." }, { status: 502 });
   }
 
