@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const requireGuardianChildPermission = vi.fn();
 const findUniqueInvoice = vi.fn();
 const findFirstPixCharge = vi.fn();
+const findUniquePixCharge = vi.fn();
 const createPixChargeDb = vi.fn();
 const createPixCharge = vi.fn();
 const isMercadoPagoConfigured = vi.fn();
@@ -28,6 +29,7 @@ beforeEach(() => {
       monthlyInvoice: { findUnique: (...args: unknown[]) => findUniqueInvoice(...args) },
       pixCharge: {
         findFirst: (...args: unknown[]) => findFirstPixCharge(...args),
+        findUnique: (...args: unknown[]) => findUniquePixCharge(...args),
         create: (...args: unknown[]) => createPixChargeDb(...args),
       },
     },
@@ -40,6 +42,7 @@ beforeEach(() => {
   isMercadoPagoConfigured.mockReset().mockReturnValue(true);
   findUniqueInvoice.mockReset();
   findFirstPixCharge.mockReset().mockResolvedValue(null);
+  findUniquePixCharge.mockReset().mockResolvedValue(null);
   createPixCharge.mockReset();
   createPixChargeDb.mockReset().mockResolvedValue({ id: "charge-1" });
   recordAuditLog.mockReset().mockResolvedValue(undefined);
@@ -183,5 +186,29 @@ describe("generatePixChargeAction", () => {
 
     expect(result).toEqual({ error: "Não foi possível gerar a cobrança Pix agora. Tente novamente em instantes." });
     expect(createPixChargeDb).not.toHaveBeenCalled();
+  });
+
+  it("CASO 10: concorrência reaproveita a cobrança persistida pela requisição vencedora", async () => {
+    findUniqueInvoice.mockResolvedValueOnce(openInvoice);
+    createPixCharge.mockResolvedValueOnce({
+      externalPaymentId: "mp-shared",
+      status: "pending",
+      qrCode: "qr-provider",
+      qrCodeText: "text-provider",
+      expiresAt: new Date("2026-09-01T12:00:00.000Z"),
+    });
+    createPixChargeDb.mockRejectedValueOnce(new Error("unique constraint"));
+    findUniquePixCharge.mockResolvedValueOnce({
+      qrCode: "qr-winner",
+      qrCodeText: "text-winner",
+      expiresAt: new Date("2026-09-01T12:00:00.000Z"),
+    });
+    const { generatePixChargeAction } = await import("./actions");
+
+    const result = await generatePixChargeAction(undefined, formData({ invoiceId: "inv-1", childId: "child-1" }));
+
+    expect(createPixCharge).toHaveBeenCalledWith(expect.objectContaining({ idempotencyKey: expect.stringMatching(/^[a-f0-9]{64}$/) }));
+    expect(result).toEqual({ qrCode: "qr-winner", qrCodeText: "text-winner", expiresAt: "2026-09-01T12:00:00.000Z" });
+    expect(recordAuditLog).not.toHaveBeenCalled();
   });
 });
