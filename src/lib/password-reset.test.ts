@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const createToken = vi.fn();
 const findUniqueToken = vi.fn();
-const updateToken = vi.fn();
+const updateManyTokens = vi.fn();
 
 beforeEach(() => {
   vi.resetModules();
@@ -12,13 +12,13 @@ beforeEach(() => {
       passwordResetToken: {
         create: (...args: unknown[]) => createToken(...args),
         findUnique: (...args: unknown[]) => findUniqueToken(...args),
-        update: (...args: unknown[]) => updateToken(...args),
+        updateMany: (...args: unknown[]) => updateManyTokens(...args),
       },
     },
   }));
   createToken.mockReset().mockResolvedValue(undefined);
   findUniqueToken.mockReset();
-  updateToken.mockReset().mockResolvedValue(undefined);
+  updateManyTokens.mockReset().mockResolvedValue({ count: 1 });
 });
 
 function hash(token: string) {
@@ -49,7 +49,7 @@ describe("consumePasswordResetToken", () => {
     findUniqueToken.mockResolvedValueOnce(null);
     const { consumePasswordResetToken } = await import("./password-reset");
     expect(await consumePasswordResetToken("token-inexistente")).toBeNull();
-    expect(updateToken).not.toHaveBeenCalled();
+    expect(updateManyTokens).not.toHaveBeenCalled();
   });
 
   it("returns null and does not consume when the token was already used", async () => {
@@ -59,9 +59,10 @@ describe("consumePasswordResetToken", () => {
       usedAt: new Date(),
       expiresAt: new Date(Date.now() + 60_000),
     });
+    updateManyTokens.mockResolvedValueOnce({ count: 0 });
     const { consumePasswordResetToken } = await import("./password-reset");
     expect(await consumePasswordResetToken("token-ja-usado")).toBeNull();
-    expect(updateToken).not.toHaveBeenCalled();
+    expect(updateManyTokens).toHaveBeenCalledOnce();
   });
 
   it("returns null and does not consume an expired token", async () => {
@@ -71,9 +72,10 @@ describe("consumePasswordResetToken", () => {
       usedAt: null,
       expiresAt: new Date(Date.now() - 60_000),
     });
+    updateManyTokens.mockResolvedValueOnce({ count: 0 });
     const { consumePasswordResetToken } = await import("./password-reset");
     expect(await consumePasswordResetToken("token-expirado")).toBeNull();
-    expect(updateToken).not.toHaveBeenCalled();
+    expect(updateManyTokens).toHaveBeenCalledOnce();
   });
 
   it("returns the userId and marks the token as used for a valid token", async () => {
@@ -87,6 +89,27 @@ describe("consumePasswordResetToken", () => {
     const userId = await consumePasswordResetToken("token-valido");
 
     expect(userId).toBe("user-1");
-    expect(updateToken).toHaveBeenCalledWith({ where: { id: "reset-1" }, data: { usedAt: expect.any(Date) } });
+    expect(updateManyTokens).toHaveBeenCalledWith({
+      where: {
+        id: "reset-1",
+        tokenHash: hash("token-valido"),
+        usedAt: null,
+        expiresAt: { gt: expect.any(Date) },
+      },
+      data: { usedAt: expect.any(Date) },
+    });
+  });
+
+  it("allows only one winner when the token was consumed concurrently", async () => {
+    findUniqueToken.mockResolvedValueOnce({
+      id: "reset-1",
+      userId: "user-1",
+      usedAt: null,
+      expiresAt: new Date(Date.now() + 60_000),
+    });
+    updateManyTokens.mockResolvedValueOnce({ count: 0 });
+    const { consumePasswordResetToken } = await import("./password-reset");
+
+    await expect(consumePasswordResetToken("token-em-disputa")).resolves.toBeNull();
   });
 });

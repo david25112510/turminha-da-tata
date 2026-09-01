@@ -54,6 +54,14 @@ export async function POST(request: Request): Promise<Response> {
     const invoice = await tx.monthlyInvoice.findUnique({ where: { id: charge.invoiceId } });
     if (!invoice || invoice.status === "CANCELLED") return null;
 
+    // Faz a transição de pending -> processing dentro da mesma transação. Entregas simultâneas do
+    // mesmo webhook competem por esta condição e somente uma delas pode criar/creditar Payment.
+    const claimed = await tx.pixCharge.updateMany({
+      where: { id: charge.id, status: "pending" },
+      data: { status: "processing" },
+    });
+    if (claimed.count !== 1) return null;
+
     const paymentRow = await tx.payment.create({
       data: {
         invoiceId: invoice.id,

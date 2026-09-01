@@ -26,12 +26,18 @@ export async function createPasswordResetToken(userId: string): Promise<string> 
 export async function consumePasswordResetToken(token: string): Promise<string | null> {
   if (!token) return null;
 
-  const record = await prisma.passwordResetToken.findUnique({ where: { tokenHash: hashToken(token) } });
+  const tokenHash = hashToken(token);
+  const record = await prisma.passwordResetToken.findUnique({ where: { tokenHash } });
   if (!record) return null;
-  if (record.usedAt) return null;
-  if (record.expiresAt < new Date()) return null;
+  const now = new Date();
 
-  await prisma.passwordResetToken.update({ where: { id: record.id }, data: { usedAt: new Date() } });
+  // A condição faz do consumo uma operação atômica. Em duas requisições concorrentes somente uma
+  // consegue trocar usedAt de null; a outra recebe count=0 e não pode redefinir a senha.
+  const consumed = await prisma.passwordResetToken.updateMany({
+    where: { id: record.id, tokenHash, usedAt: null, expiresAt: { gt: now } },
+    data: { usedAt: now },
+  });
+  if (consumed.count !== 1) return null;
 
   return record.userId;
 }
